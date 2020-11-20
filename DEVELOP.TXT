@@ -1,0 +1,47 @@
+DFM290 Development
+==================
+
+Philip Sargent
+24-May-1990 21:06 
+
+1.	Check it's OK if > 40 materials
+
+2.	Swap order of parameters 8/9 10/11 12/13 15/16 to make it easier to do physical checks i.e to set the pre-exp.
+	terms AFTER the activation energies so that we can check via the melting point diffusivities.
+
+3.	Amalgamate Variables and Parameters into a single array.
+
+4.	Change to 3-page paginated edits.
+
+5.	Use indirection array to locate current line on editing page.
+
+6.	Keep a lsit of "dirty" (recently changed) lines
+
+7. Option to save as a different material AFTER editing.
+
+8.	Add HoSung's SCREEN PRINT routine from my book as a command-line switch /d ?
+
+9.	Add command line switch to simulate pressing PrtScr anyway - need both in case user has GraphPlus.
+
+10.	Construct a completely NON-GRAPHICAL version, just data handling, as a first step towards a port to the MACINTOSH
+under turbo Pascal.  
+
+11.	Chnage from UNIAXIAL to SHEAR stress for all input, output & plots, but allow a shear-stress PLOT option still.
+
+12.	Add REFERENCE STRESS calculation window as in HIP6.
+
+13.	Put back SNdiff check for convergence check for contours.
+
+14.	Make contour the NEXT iteration rather than the PREVIOUS result.
+
+15.	Set visible/invisible contour attributes properly.
+
+16.	Use ASSERTION technique on the BINARY CHOP search.
+
+
+
+BUG List 
+========
+
+1.	BackSpace goes backwards on ReadStr, goes beyond beginning. Do StringIO check.
+

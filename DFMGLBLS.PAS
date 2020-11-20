@@ -1,11 +1,37 @@
 { DfmGlbls.pas	}
-{ PMS 24-May-1990 16:49 }
+{ PMS 12-June-1993 04:27 }
+{---------------------------------------------------------------------------}
+{ $Revision:   1.2  $
+  $Date:   12 Jun 1993  4:30:38  $
+  $Logfile:   C:/DFMAP/VCSFILES/DFMGLBLS.PAV  $
+ ---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
-	*************     Department, Cambridge, UK.     **************
+   *************     Department, Cambridge, UK.     **************
    *************   P.M.Sargent and M.F.Ashby        **************
-   *************   April 1990                       **************
-}
+   *************   June 1993                        **************
+
+   This is free software, you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published
+   by the Free Software Foundation; either version 2 of the License,
+   or (at your option) any later version.
+	This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of 
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+   General Public License for more details.
+   The file COPYING enclosed with this software contains a copy of
+   version 2 of the GNU General Public License which should not be
+   altered in any way. If it is missing, write to the Free Software
+   Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ ---------------------------------------------------------------------------}
+{ $Log:   C:/DFMAP/VCSFILES/DFMGLBLS.PAV  $
+ * 
+ *    Rev 1.2   12 Jun 1993  4:30:38   PMSargent
+ * Fixed Warranty & Copying info.
+ * 
+ *    Rev 1.1   12 Jun 1993  4:09:40   PMSargent
+ * Added GNU Public License details
+ ---------------------------------------------------------------------------}
 {$IFDEF  contour}		{	ensure compiler directives are consistent	}
 {$DEFINE  debug}
 {$ENDIF}
@@ -28,10 +54,10 @@ Uses
 	Crt;
 
 CONST
-	copyright = '(C) Copyright 1980,1990 P.M.Sargent & M.F.Ashby';
-	VersionDate			= '24 May 1990';
+	copyright = '(C) Copyright 1980,1991 P.M.Sargent & M.F.Ashby';
+	VersionDate			= '05 Dec 1991';
 	Version				= 'DFM290';
-	Release				= '0.88';
+	Release				= '0.89';
 	DF						= -32768;		{	Default.. for floats, longint, int	}
 
 	avogadro				= 6.022045e23;
@@ -293,8 +319,13 @@ PROCEDURE SCAN_DATA_FILE (scribble: BOOLEAN);
 PROCEDURE GiveCommandLineHelp;
 
 PROCEDURE HELP_1;
-
 { --- provides HELP at level 1 --- }
+
+PROCEDURE WARRANTY;
+{ --- provides information on GNU Public License --- }
+
+PROCEDURE COPYING;
+{ --- provides information on GNU Public License --- }
 
 PROCEDURE HELP_2;
 
@@ -762,6 +793,121 @@ BEGIN
 
 END;   { HELP_1.   }
 {-------------------------------------------------------------------}
+PROCEDURE WARRANTY;
+
+VAR
+	ch	:	CHAR;
+{ --- provides information on GNU Public License --- }
+
+BEGIN
+
+	DATE_AND_TIME;
+
+	CLEAN_WINDOW;
+	textcolor(C_subdued);
+
+	gotoXY(1,2);
+	writeln('                    WARRANTY                                ');
+	gotoXY(1,6);
+	write  ('       '); UnderLine(45); writeln('        ');
+	writeln('       Section from GNU Public License (Version 2)          ');
+	writeln('                                                            ');
+	write  ('       '); UnderLine(45); writeln('        ');
+	writeln;
+	writeln('  BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS  ');
+	writeln('  NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY   ');
+	writeln('  APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING  ');
+	writeln('  THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES PROVIDE THE    ');
+	writeln('  PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER      ');
+	writeln('  EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE  ');
+	writeln('  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A   ');
+	writeln('  PARTICULAR PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY    ');
+	writeln('  AND PERFORMANCE OF THE PROGRAM IS WITH YOU. SHOULD THE    ');
+	writeln('  PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL       ');
+	writeln('  NECESSARY SERVICING, REPAIR OR CORRECTION.                ');
+
+	gotoXY(1,24);  textcolor(C_bright);
+	write  ('                PRESS ANY KEY TO CONTINUE                    ');
+	textcolor(C_text);
+
+	repeat until keypressed;
+	Ch:=ReadKey;
+	If Ch=CtrlC THEN Finish(0);
+	textcolor(C_text);
+
+END;   { WARRANTY.   }
+{-------------------------------------------------------------------}
+PROCEDURE COPYING;
+
+VAR
+	ch	:	CHAR;
+{ --- provides information on GNU Public License --- }
+
+BEGIN
+
+	DATE_AND_TIME;
+
+	CLEAN_WINDOW;
+	textcolor(C_subdued);
+
+	gotoXY(1,2);
+	writeln('                    COPYING                                 ');
+	gotoXY(1,6);
+	writeln(' You may copy and distribute the Program (or a work based   ');
+	writeln(' on it, under Section 2) in object code or executable form  ');
+	writeln(' under the terms of Sections 1 and 2 (of the complete GNU   ');
+	writeln(' Public License) provided that you also do one of the       ');
+	writeln(' following:                                                 ');
+	writeln(' a) Accompany it with the complete corresponding            ');
+	writeln(' machine-readable source code, which must be distributed    ');
+	writeln(' under the terms of Sections 1 and 2 on a medium            ');
+	writeln(' customarily used for software interchange; or,             ');
+	writeln(' b) Accompany it with a written offer, valid for at least   ');
+	writeln(' three years, to give any third party, for a charge no      ');
+	writeln(' more than your cost of physically performing source        ');
+	writeln(' distribution, a complete machine -readable copy of the     ');
+	writeln(' corresponding source code, to be distributed under the     ');
+	writeln(' terms of Sections 1 and 2 above on a medium customarily    ');
+	writeln(' used for software interchange; or,                         ');
+
+	gotoXY(1,24);  textcolor(C_bright);
+	write  ('                PRESS ANY KEY TO CONTINUE                   ');
+	textcolor(C_text);
+
+	repeat until keypressed;
+	Ch:=ReadKey;
+	If Ch=CtrlC THEN Finish(0);
+	textcolor(C_text);
+
+
+	CLEAN_WINDOW;
+	textcolor(C_subdued);
+
+	gotoXY(1,2);
+	writeln('                    COPYING continued                       ');
+	gotoXY(1,5);
+	writeln(' c) Accompany it with the information you received as to    ');
+	writeln(' the offer to distribute corresponding source code.  (This  ');
+	writeln(' alternative is allowed only for noncommercial              ');
+	writeln(' distribution and only if you received the program in       ');
+	writeln(' object code or executable form with such an offer, in      ');
+	writeln(' accord with Subsection b above.)                           ');
+	writeln('                                                            ');
+	write  ('       '); UnderLine(45); writeln('        ');
+	writeln('       Section from GNU Public License (Version 2)          ');
+	writeln('                                                            ');
+	write  ('       '); UnderLine(45); writeln('        ');
+	writeln('                                                            ');
+	gotoXY(1,24);   textcolor(C_bright);
+	write  ('                PRESS ANY KEY TO CONTINUE                   ');
+	textcolor(C_text);
+	repeat until keypressed;
+	Ch:=ReadKey;
+	If Ch=CtrlC THEN Finish(0);
+	textcolor(C_text);
+
+END;   { COPYING.   }
+{-------------------------------------------------------------------}
 PROCEDURE HELP_2;
 VAR
 	ch	:	CHAR;
@@ -854,12 +1000,12 @@ BEGIN
 	writeln('   This program calculates and plots Deformation Mechanism  ');
 	writeln('   Maps.  Details of the equations and of the models on     ');
 	writeln('   which they are based are given in:                       ');
-	writeln('                                                            ');
-	writeln('   1.  H.J.Frost & M.F.Ashby, "Deformation Mechanism Maps", ');
-	writeln('         Pergamon Press, Oxford, UK. (1983).                ');
-	writeln('                                                            ');
-	writeln('                                                            ');
-	writeln('                                                            ');
+	writeln('   H.J.Frost & M.F.Ashby, "Deformation Mechanism Maps",     ');
+	writeln('   Pergamon Press, Oxford, UK. (1983).                      ');
+	writeln('   This program comes with ABSOLUTELY NO WARRANTY but you   ');
+	writeln('   have the right to distribute it under certain conditions ');
+	writeln('    Press   W   for details on warranty                     ');
+	writeln('    Press   C   for details on redistribution conditions    ');
 	writeln('    Press   H   for help, including some useful hints       ');
 
 	gotoXY(1,24);   textcolor(C_bright);
@@ -869,6 +1015,18 @@ BEGIN
 	answer:=Readkey;  gotoXY(1,22);
 	textcolor(C_text);
 	if answer in ['h','H'] then HELP_1;
+	if answer in ['c','C'] THEN
+		BEGIN
+			COPYING;
+			WARRANTY;
+			HELP_1;
+		END;
+	if answer in ['w','W'] THEN
+		BEGIN
+			WARRANTY;
+			COPYING;
+			HELP_1;
+		END;
 	if answer = CtrlC THEN	{	cannot use Finish(0), debug file not open }
 		BEGIN
 			ExitProc := OldExitProc;

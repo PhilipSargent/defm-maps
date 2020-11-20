@@ -1,13 +1,48 @@
 File README.TXT supplied with DFM290
 ====================================
 
-Version 0.8
-23-March-1990 11:48 
+Version 0.88
+26-May-1990 01:54 
 
 THIS IS A PRE-RELEASE VERSION, CURRENTLY BEING DEBUGGED
 
-The documentation is currently being typed by Jane, but it
-will need completing after that.
+The documentation is currently being written and edited, a current
+incomplete draft should accompany this version.
+
+CONTOURING PROBLEMS: READ THIS
+==============================
+Version 0.88 is supplied in TWO forms: DFM290.exe and DFMFIX.exe because
+of bugs/inconveniences in the contour plotting routines.  Both forms are
+identical in everything except the algorithms used to plot the strain-rate
+contours.  Both are supplied because each has strong points and each has
+failings.
+The hardcopy output tells you which you ran, If it says:
+   DFM290 v0.88 (24 May 1990)
+   (Compiler options:+Debug+Contour+CntrFix)
+   (C) Copyright 1980,1990 P.M.Sargent & M.F.Ashby
+then you ran dfmFIX.exe, if it says
+   (Compiler options:+Debug+Contour)
+then you ran dfm290.exe.  When running, both say "DFM290" in headings.
+
+UNCHECKED CALCULATIONS
+======================
+I have NOT CHECKED that the mechanism calculations are CORRECT yet.
+In particular, I suspect problems with POWER-LAW BREAKDOWN.
+
+The MECHANISM PRIORITY decisions are defined in a data table rather than
+being embedded in a large number of IF..THEN statements.  Currently this
+does not handle direct competition between DIFFUSION mechanisms and OBSTACLE
+controlled glide as one might expect (fine-grained fcc materials develop
+boundary-diffusion creep which is faster than phonon-controlled glide).
+
+Low Temperature Power-Law Creep
+-------------------------------
+The program now uses the same constituitive equation as in the Frost & Ashby
+book.  Note that this means that the values of AcDoc are correct with respect
+to the materials in the book, but OUT BY A FACTOR OF Dov for the materials
+Zirconium, Potassium, InSb, Cobalt etc., everything that was done using the
+FORTRAN program as modified by me (Philip Sargent) AFTER the work done by
+Harold Frost.
 
 Stopping and Interrupting
 -------------------------
@@ -30,8 +65,9 @@ facility can be activated by typing " /o" on the command line just
 after you type "DFM290".  You will need to consult your MS-DOS manual
 about printing the high resolution graphs, e.g. Olivetti machines
 require that you type "GRAPHICS /D/U" instead of just "GRAPHICS"
-before you run DFM290 (see section 7.4, page 49). This only works
-with copies of Olivetti's graphics.com dated 28 July 1986 or later.
+before you run DFM290 (see User Manual section 7.4, page 49). 
+This only works with copies of Olivetti's graphics.com dated 28 July 1986 
+or later.
 
 8087 
 ---- 
@@ -79,12 +115,16 @@ MATLREFS.DAT
 If you have a pre-release copy of the program, i.e. before v1.0, the
 program will produce a debug file DEBUG.TXT on the disc. This may get very 
 large and you should delete it.
+Because of the size of the debug file, THIS VERSION WILL NOT RUN FROM THE
+FLOPPY DISC ON WHICH IT IS DISTRIBUTED. You will have to copy it to your
+hard disc first.
 
 Losing Data
 -----------
 If you crash your computer (e.g. by turning off the power) while DFM290
 is in the middle of re-writing the data files, the old copy of the data
-will STILL be present in a MATL????.TMP file.  It is very safe.
+will STILL be present in a MATL????.TMP file even if the MATL????.DAT files
+get corrupted.  It is fail-safe.
 
 Command Line Options
 --------------------
@@ -103,8 +143,8 @@ e.g.    DFM290 copper /f /w:\op\copper.lst /p-
           /s-     do not produce a pressure map at all
 
 /t      options for temperature map (as for /p)
-          /t+     produce a temperature map (default)
-          /t-     do not produce a temperature map at all
+          /t+     produce a temperature map (default) NOT IMPLEMENTED YET
+          /t-     do not produce a temperature map at all 
 
 /l      produce a listing to the printer
 /w:<fn> sends the listing to a file instead of the printer

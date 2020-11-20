@@ -1,6 +1,34 @@
 {	old_cntr.pas	from dfmplots.pas }
-{ PMS 24-May-1990 16:10 }
+{ PMS 12-June-1993 03:04 }
 {---------------------------------------------------------------------------}
+{ $Revision:   1.1  $
+  $Date:   12 Jun 1993  4:13:12  $
+  $Logfile:   C:/DFMAP/VCSFILES/OLD_CNTR.PAV  $
+ ---------------------------------------------------------------------------}
+{  *************   COPYRIGHT (C) Materials Group,   **************
+   *************   Cambridge University Engineering **************
+   *************     Department, Cambridge, UK.     **************
+   *************   P.M.Sargent and M.F.Ashby        **************
+   *************   June 1993                        **************
+
+   This is free software, you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published
+   by the Free Software Foundation; either version 2 of the License,
+   or (at your option) any later version.
+	This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of 
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+   General Public License for more details.
+   The file COPYING enclosed with this software contains a copy of
+   version 2 of the GNU General Public License which should not be
+   altered in any way. If it is missing, write to the Free Software
+   Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ ---------------------------------------------------------------------------}
+{ $Log:   C:/DFMAP/VCSFILES/OLD_CNTR.PAV  $
+ * 
+ *    Rev 1.1   12 Jun 1993  4:13:12   PMSargent
+ * New headers
+ ---------------------------------------------------------------------------}
 PROCEDURE Contours_Loop (temp_step: Word);
 CONST
 	fudge	=	0.3;
