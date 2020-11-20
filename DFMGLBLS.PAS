@@ -1,11 +1,11 @@
 { Dfmglbls.pas	}
-{ PMS 15-December-1989 04:26 }
+{ PMS 2-February-1990 03:10 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
-   *************   M.F.Ashby and P.M.Sargent        **************
-   *************   June  1988                       **************
+   *************   P.M.Sargent and M.F.Ashby        **************
+   *************   January 1990                     **************
 }
 {$R+}    {Range checking on}
 {$B+}	{Boolean complete evaluation on}
@@ -40,6 +40,8 @@ CONST
 	parm_name_length	=	6;
 	desclength			= 28;
 	unitlength			= 10;
+	reflength			= 1158;	{	61 * 19   - 1 }
+	reflines				= 19;
 
 	pathlength			= 30;
 	lbllength	 		= 16;
@@ -60,6 +62,17 @@ CONST
 	MLC					= #195;
 	MRC					= #180;
 
+	CR						=	#13;
+	LF						=	#10;
+	Bksp					=	#8;
+
+{	Codes for function keys After #0 read	}
+	Left					=	#75;
+	Right					=	#77;
+	Down					=	#80;
+	Up						=	#72;
+	Home					=	#71;
+
 	C_text				= yellow;
 	C_screen				= blue;
 	C_back				= black;
@@ -69,7 +82,7 @@ CONST
 	Horiz					= #196;
 	Vert					= #179;
 
-	VersionDate			= '27th June 1988';
+	VersionDate			= '22nd December 1989';
 {$IFOPT N-}
 	Version				= 'DFM1s ';
 	SpeedValue			= 3.28e-4;
@@ -130,6 +143,8 @@ TYPE
 	filestring			= string[pathlength];
 	parrange				= 0..numberofparameters;
 	vblrange				= 1..numberofvariables;
+	refrange				= 1..reflength;
+	pagedepth			= 1..reflines;
 
 	lblstring			=	array[1..lbllength] of char;
 	chararray			= array[1..12] of char;
@@ -137,6 +152,7 @@ TYPE
 	timer_string		= string[11];
 	pararray				= array[parrange] of a_real;
 	vblarray				= array[vblrange] of a_real;
+	refarray				= array[refrange] of char;
 
 VAR
 	imc				:	T_imc_classes;
@@ -227,12 +243,14 @@ VAR
 	u					:  T_unitstring;
 	id					:	T_id_string;
 	vbl				:  vblarray;
+	ref				:  refarray;
 	matlname			:  filestring;
 	listfilename	:  filestring;
 	ppicfilename	:  filestring;
 	tpicfilename	:  filestring;
 	time_string		:  timer_string;
 	date_string		:  timer_string;
+	weekday			:	timer_string;
 	par				:  pararray;
 	vblnumber		:  vblrange;
 	datalabel		:  datastring;
@@ -293,6 +311,10 @@ PROCEDURE LIST_PARAMETERS;
 PROCEDURE LIST_VARIABLES;
 
 { -------- Prints out the material variables as a table -------- }
+
+PROCEDURE LIST_REFERENCES;
+
+{ -------- Prints out the material reference -------- }
 
 {===========================================================================}
 
@@ -357,37 +379,44 @@ END;
 PROCEDURE DATE_AND_TIME;
 
 var
-	regs			                  :  Registers;
-	hour,min,sec,frac             :  integer;
-	year,month,day                :  integer;
-	hour_st,min_st,sec_st,frac_st :  timer_string;
-	year_st,month_st,day_st       :  timer_string;
+	hour,min,sec,sec100			: Word;
+	year,month,day,day_of_week	: Word;
+	hour_st,min_st,sec_st		: timer_string;
+	year_st,month_st,day_st		: timer_string;
 
 BEGIN
-
-	with regs do
-	BEGIN
-		AX := $2C00;     {2C sets current time settings in registers CX and DX}
-		MsDos(regs);
-		hour := hi(CX);       {CX and DX are two-byte registers:}
-		min := lo(CX);
-		sec := hi(DX);        {CX is bytes CH (15-8) and CL (7-0),}
-		frac := lo(DX);       {DX is bytes DH (15-8) and DL (7-0).}
-
-		AX := $2A00;     {2A sets current date settings in registers CX and DX}
-		MsDos(regs);
-		year := CX;           {MsDos(---) is a standard turbo PROCEDURE}
-		month := hi(DX);
-		day := lo(DX);
-	END;
+	GetTime(hour,min,sec,sec100);
 
 	{Convert time and date integer values into strings, and write them}
 
-	Str(hour,hour_st); Str(min,min_st); Str(sec,sec_st); Str(frac,frac_st);
+	Str(hour,hour_st); Str(min,min_st); Str(sec,sec_st); 
+	IF hour < 10 THEN
+		hour_st := '0'+hour_st;
+	IF min < 10 THEN
+		min_st := '0'+min_st;
+	IF sec < 10 THEN
+		sec_st := '0'+sec_st;
 	time_string := hour_st+':'+min_st+'      ';
 
+	GetDate(year, month, day, day_of_week);
 	Str(year,year_st); Str(month,month_st); Str(day,day_st);
-	date_string := day_st+'-'+month_st+'-'+year_st;
+
+	CASE day_of_week OF
+		0:	weekday := 'Sunday   ';
+		1:	weekday := 'Monday   ';
+		2:	weekday := 'Tuesday  ';
+		3:	weekday := 'Wednesday';
+		4:	weekday := 'Thursday ';
+		5:	weekday := 'Friday   ';
+		6:	weekday := 'Saturday ';
+		ELSE
+			weekday := 'Turdsday';
+	END;	{	Case	}
+{$IFDEF USA}
+	date_string := month_st+'/'+day_st+'/'+year_st;
+{$ELSE}
+	date_string := day_st+'/'+month_st+'/'+year_st;
+{$ENDIF}
 
 END;   {DATE_AND_TIME.    }
 
@@ -504,73 +533,7 @@ BEGIN
 	textbackground(C_back);
 
 END;     {CLEAN_WINDOW.    }
-{-------------------------------------------------------------------}
-PROCEDURE LIST_DIRECTORY(directory_name:chararray);
 
-{ This lists the directory defined by directory_name }
-
-type
-	String20             = string[20];
-
-var
-	Regs                 : Registers;
-	DTA                  : array [ 1..43 ] of Byte;
-	Mask                 : chararray;
-	NamR                 : String20;
-	Error, I             : Integer;
-
-BEGIN                      { main body of PROCEDURE LIST_DIRECTORY }
-
-	FillChar(DTA,SizeOf(DTA),0);        { Initialize the DTA buffer }
-	FillChar(NamR,SizeOf(NamR),0);      { Initialize the file name }
-	FillChar(Mask,SizeOf(Mask),0);      { Initialize the mask }
-
-	CLEAN_WINDOW;
-	gotoXY(1,2);
-
-	WriteLn('           THE  DIRECTORY  CURRENTLY  CONTAINS:              ');
-	gotoXY(1,6);
-	Regs.AX := $1A00;         { Function used to set the DTA }
-	Regs.DS := Seg(DTA);      { store the parameter segment in DS }
-	Regs.DX := Ofs(DTA);      {   "    "      "     offset in DX }
-	MSDos(Regs);              { Set DTA location }
-	Error := 0;
-	Mask := directory_name;    { Search directory required }
-	Regs.AX := $4E00;          { Get first directory entry }
-	Regs.DS := Seg(Mask);      { Point to the file Mask }
-	Regs.DX := Ofs(Mask);
-	Regs.CX := 22;             { Store the option }
-	MSDos(Regs);               { Execute MSDos call }
-	Error := Regs.AX and $FF;  { Get Error return }
-	I := 1;                    { initialize 'I' to the first element }
-	if (Error = 0) then
-	repeat
-		NamR[I] := Chr(Mem[Seg(DTA):Ofs(DTA)+29+I]);
-		I := I + 1;
-	until not (NamR[I-1] in [' '..'~']) or (I>20);
-
-	NamR[0] := Chr(I-1);          { set string length because assigning }
-	delete(NamR,pos('.',NamR),4);    { by element does not set length }
-	write(NamR:20);
-	while (Error = 0) do BEGIN
-	Error := 0;
-	Regs.AX := $4F00;           { Function used to get the next }
-		                          { directory entry }
-	Regs.CX := 22;              { Set the file option }
-	MSDos(Regs);              { Call MSDos }
-	Error := Regs.AX and $FF;   { get the Error return }
-	I := 1;
-	repeat
-		NamR[I] := Chr(Mem[Seg(DTA):Ofs(DTA)+29+I]);
-		I := I + 1;
-	until not (NamR[I-1] in [' '..'~'] ) or (I > 20);
-	NamR[0] := Chr(I-1);
-	if (Error = 0) then BEGIN
-		delete(NamR,pos('.',NamR),4);
-		Write(NamR:20);
-	END;
-	END;
-END; { LIST_DIRECTORY.   }
 {---------------------------------------------------------------------------}
 PROCEDURE GiveCommandLineHelp;
 
@@ -585,13 +548,13 @@ BEGIN
 {	WRITELN(' /d      demonstration; as /f but waits 10s between plots');
 }
 	WRITELN(' /e      display exit codes only');
-	WRITELN(' /s      options for stress map:');
-{	WRITELN(' /sl:<fn>  produce Lotus PIC files of the stress map plot');
+	WRITELN(' /s      options for strain-rate map:');
+{	WRITELN(' /sl:<fn>  produce Lotus PIC files of the strain-rate map plot');
 	WRITELN(' /sg:<fn>  produce HPGL Hewlett-Packard Graphics Language plot');
 	WRITELN('         (<fn> denotes full path & filename):');
 }
-	WRITELN('           /s+     produce a stress map (default)');
-	WRITELN('           /s-     do not produce a stress map at all');
+	WRITELN('           /s+     produce a strain-rate map (default)');
+	WRITELN('           /s-     do not produce a strain-rate map at all');
 	WRITELN(' /t      options for temperature map (as for /s)');
 	WRITELN(' /w      produce a listing to the printer');
 	WRITELN(' /w:<fn> sends the listing to a file instead of the printer');
@@ -992,6 +955,32 @@ BEGIN
 		END;
 
 END;  {LIST_VARIABLES.    }
+{-------------------------------------------------------------------}
+PROCEDURE LIST_REFERENCES;
+VAR
+	reffile	:  text;
+	index		:	refrange;
+
+{ -------- Prints out the material variables as a table -------- }
+BEGIN
+
+	CLEAN_WINDOW;
+	DATE_AND_TIME;
+
+	gotoXY(1,2);
+	textbackground(C_back);
+	write('                                                             ');
+	gotoXY(1,2);
+	writeln(' ',Version,'  REFERENCE DESCRIPTION FOR ',matlname,'      ',
+		Date_string);
+
+{ ------- Print out Reference Text as a page on screen ------- }
+
+	gotoXY(1,4);
+	FOR index := 1 to reflength DO
+		write(ref[index]);
+
+END;  {LIST_REFERENCES.    }
 {-------------------------------------------------------------------}
 
 End.	{	Unit DfmGlbls	}

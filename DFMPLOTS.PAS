@@ -1,11 +1,11 @@
 Unit DfmPlots;
-{ PMS 15-December-1989 06:25 }
+{ PMS 17-January-1990 15:21 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
-   *************   M.F.Ashby and P.M.Sargent        **************
-   *************   April 1988                       **************
+   *************   P.M.Sargent and M.F.Ashby        **************
+   *************   January 1990                     **************
 }
 {$R+}    {Range checking on}
 {$B+}    {Boolean complete evaluation on}
@@ -45,7 +45,9 @@ PROCEDURE IDENTIFY_FIELDS;
 
 PROCEDURE CALC_TEMPERATURE_MAP;
 
+{$IFDEF indent}
 PROCEDURE CALC_Indentation_MAP;
+{$ENDIF}
 
 {===========================================================================}
 
@@ -979,6 +981,7 @@ BEGIN	{Calc_Temperature_Map	}
 
 END;       {CALC_TEMPERATURE_MAP.   }
 {---------------------------------------------------------------------------}
+{$IFDEF indent}
 PROCEDURE 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high: a_real; trajnumber:integer);
 
 VAR
@@ -1433,5 +1436,6 @@ BEGIN	{Calc_Indentation_Map	}
 
 END;       {CALC_INDENTATION_MAP.   }
 { =========================================================================== }
+{$ENDIF}	{ indent }
 
 End.

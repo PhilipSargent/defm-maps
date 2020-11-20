@@ -1,11 +1,11 @@
  Unit DfmModls;
-{ PMS 15-December-1989 09:21 }
+{ PMS 3-January-1990 00:34 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
-   *************   M.F.Ashby and P.M.Sargent        **************
-   *************   December 1989                    **************
+   *************   P.M.Sargent and M.F.Ashby        **************
+   *************   January 1990                     **************
 }
 {$R+}    {Range checking on}
 {$B+}    {Boolean complete evaluation on}
@@ -651,8 +651,11 @@ BEGIN
 		mechID [S_glide] := null;
 
 {	a FIX for the alumina_oxides, YUKK!! to prevent a low pls_drag value
-	being ignored because it is null	}
-{	mechID [pls_drag] := pls_drag;		}
+	being ignored because it is null.  For all other mechanisms, a null
+   result means that it should be ignored.  This is not true for drag
+   mechanisms (but the other drag mechanisms are never null, so it is
+   easier just to reset this one. 	}
+	mechID [pls_drag] := pls_drag;
 	Conjoin_Mechanisms (StrRate, M_drag, Ops_drag, field_drag, Rate_drag);
 	mechID [S_drag] := field_drag;
 	StrRate[S_drag] := Rate_drag;

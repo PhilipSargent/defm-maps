@@ -1,11 +1,11 @@
-Unit Dfmfiles;
-{ PMS 17-January-1989 11:17 }
+Unit dfmfiles;
+{ PMS 2-February-1990 03:14 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
-   *************   M.F.Ashby and P.M.Sargent        **************
-   *************   June 1988                        **************
+   *************   P.M.Sargent and M.F.Ashby        **************
+   *************   January 1990                     **************
 }
 {$R+}    {Range checking on}
 {$B+}    {Boolean complete evaluation on}
@@ -32,12 +32,10 @@ PROCEDURE LIST_MATERIALS;
 { This lists the available list of materials  }
 
 PROCEDURE MAKE_PARAMETER_SET;
-
-{ -- Creates a file on disk containing parameters for a chosen material -- }
-
 PROCEDURE MAKE_VARIABLE_SET;
 
-{ -- Creates a file on disk containing variables for a chosen material -- }
+PROCEDURE MAKE_REFERENCE_SET;
+{ -- Creates a new set of reference info. -- }
 
 PROCEDURE READ_MATL_DATA;
 
@@ -46,6 +44,8 @@ PROCEDURE READ_MATL_DATA;
 PROCEDURE EDIT_PARAMETERS;
 PROCEDURE LIMIT_VARIABLES;
 PROCEDURE EDIT_VARIABLES;
+
+PROCEDURE EDIT_REFERENCES;
 
 PROCEDURE INTERPRET_PARAMETER_SET;
 
@@ -58,6 +58,8 @@ PROCEDURE INTERPRET_VARIABLE_SET;
 PROCEDURE SAVE_MATL_PARAMETERS;
 
 PROCEDURE SAVE_MATL_VARIABLES;
+
+PROCEDURE SAVE_MATL_REFERENCES;
 
 PROCEDURE CHECK_PARAMETERS;
 
@@ -503,6 +505,76 @@ BEGIN
 
 END;	{	SAVE_MATL_VARIABLES	}
 {-------------------------------------------------------------------}
+PROCEDURE SAVE_MATL_REFERENCES;
+VAR
+	file_tmp	:	Text;
+	file_ref	:	Text;
+	file_bak	:	Text;
+	tmpfile	:	String;
+	reffile	:	String;
+	bakfile	:	String;
+	index		:	refrange;
+
+BEGIN
+	gotoXY(1,24); textbackground(C_back); textcolor(C_bright);
+	WRITE('                                                             ');
+	gotoXY(1,24);  WRITE('               SAVING  THE  DATA  TO  DISC');
+	textcolor(C_text);
+
+	tmpfile	:= matlname+'.TMP';
+	reffile	:= matlname+'.REF';
+	bakfile	:= matlname+'.~EF';
+
+{	Now write the new reference out to the temporary file	}
+
+	IF CannotOpen(tmpfile) THEN
+		BEGIN
+			WRITELN('ERROR: Cannot open an Output File');
+			Writeln('Cannot open file "',tmpfile,'"');
+			Finish(4);
+		END;
+
+	Assign (file_tmp, tmpfile);
+	Rewrite (file_tmp);
+
+	FOR index:= 1 TO reflength DO
+		Write(file_tmp,ref[index]);
+	Close (file_tmp);
+
+{	Now, playing safe, we erase any backup file, rename the .REF file
+	as a backup .~EF file}
+
+	IF NOT FileNotThere (bakfile) THEN
+		BEGIN
+			Assign (file_bak, bakfile);
+			Erase (file_bak);
+		END;
+
+{	check the ref file exists, it might not if we are creating a new one	}
+
+	IF NOT FileNotThere (reffile) THEN	
+		BEGIN
+			Assign (file_bak, reffile);
+			Rename (file_bak, bakfile);
+		END;
+
+{	And finally rename the temporary file as the ref file	}
+
+	IF FileNotThere (tmpfile) THEN	
+		BEGIN
+			WRITELN('ERROR: Cannot open an Output File');
+			Writeln('Something very odd, we just created "',tmpfile,
+				'" and now it cannot be found');
+			Finish(4);
+		END
+	ELSE
+		BEGIN
+			Assign (file_tmp, tmpfile);
+			Rename (file_tmp, reffile);
+		END;
+
+END;	{	SAVE_MATL_REFERENCES	}
+{-------------------------------------------------------------------}
 PROCEDURE Prompt_Finish;
 BEGIN
 	gotoXY(1,24);  textbackground(C_back);
@@ -573,6 +645,111 @@ BEGIN
 			parnumber := pn;
 		END;	{	if not n-plc, then no action.	}
 END;
+{-------------------------------------------------------------------}
+PROCEDURE TEXT_EDIT_REFERENCE(linenumber: pagedepth);
+
+CONST
+	GoLeft	=	#200;
+	GoRight	=	#201;
+	GoDown	=	#202;
+	GoUp		=	#203;
+	GoHome	=	#204;
+
+VAR
+	x,y	:	Byte;
+	i,index	:	refrange;
+	ch		:	Char;
+
+BEGIN
+	Textbackground(C_back);
+	gotoXY(1,24);  textcolor(C_bright);
+	write ('                                                             ');
+	gotoXY(1,24);
+	write ('  ENTER  REFERENCE  TEXT  with  "*"  at the END');
+	LowVideo;
+	gotoXY(1,3 + linenumber);
+
+	IF linenumber <= 1 THEN
+		index := 1
+	ELSE
+		index    := 61*(linenumber - 1);
+
+	REPEAT
+		IF index + 1 <= reflength THEN
+			index := index + 1
+		ELSE
+			index := 1;
+		answer:=Readkey;
+		IF (answer=Esc) OR (answer=#3) {ctrl-Break} THEN
+			Finish(0);
+		IF (answer = #0 ) THEN	{ function key, ignore	}
+			BEGIN
+				answer := Readkey;
+
+				CASE answer OF
+					Left	:	answer := GoLeft;
+					Right	:	answer := GoRight;
+					Down	:	answer := GoDown;
+					Up		:	answer := GoUp;
+					Home	:	answer := GoHome;
+				END;	{	Case	}
+			END;
+
+		CASE answer OF
+			Bksp
+					:	BEGIN
+							IF index > 1 THEN
+								ref[index - 1] := ' ';
+							IF index > 2 THEN
+								index := index - 2
+							ELSE
+								index := reflength;
+						END;
+			GoLeft
+					:	BEGIN
+							IF index > 2 THEN
+								index := index - 2
+							ELSE
+								index := reflength;
+						END;
+			GoDown : 	IF index + 60 <= reflength THEN
+					         index := index + 60
+                      ELSE
+                        index := index + 59 - reflength;
+			CR: 			IF index + 60 <= reflength THEN
+								BEGIN
+									FOR i := index TO index + 59 DO
+										ref[i] := ' ';
+						         index := index + 60;
+								END
+                      ELSE
+                        index := index + 59 - reflength;
+			GoRight : ;	{	null, does this anyway	}
+			GoUp	:	IF index > 62 THEN
+							index := (index - 62)
+						ELSE
+							index := (reflength - 61);
+			GoHome:	BEGIN
+							index :=  1 + 61*(index DIV 61);
+						END;
+			#32..#125	:	BEGIN
+									ref[index] := answer;
+									write(ref[index]);
+								END;
+			ELSE		{	recover from an erroneous increment	}
+						IF index > 1 THEN
+							index := index - 1
+		END;	{	Case	}
+
+		linenumber := 1 + (index DIV 61);
+		IF (linenumber > 1) THEN
+			gotoXY((index MOD 61),3 + linenumber)
+		ELSE
+			gotoXY(index ,3 + linenumber);
+
+	UNTIL (answer = '*');
+
+END;	{	TEXT_EDIT_REFERENCES	}
 {-------------------------------------------------------------------}
 PROCEDURE EDIT_IMC_VALUE;
 CONST
@@ -767,6 +944,35 @@ BEGIN
 	textbackground(C_back);  gotoXY(1,2);
 END;	{	EDIT_VARIABLES	}
 {-------------------------------------------------------------------}
+PROCEDURE EDIT_REFERENCES;
+
+BEGIN
+	Prompt_Edit;
+
+	if answer in ['y','Y'] then
+		BEGIN
+			REPEAT
+				Textbackground(C_back);
+				gotoXY(1,24);  textcolor(C_bright);
+				write ('                                                             ');
+				gotoXY(1,24);
+				write ('    LINE  NUMBER  TO  BEGIN  OVERWRITING .... ');
+				linenumber := Read_Int (1,reflines,escape);
+				IF escape THEN
+					Finish(0);
+
+				TEXT_EDIT_REFERENCE(linenumber);
+				LIST_REFERENCES;			{	just in case the display gets worng..}
+				Prompt_Finish;
+			UNTIL answer in ['y','Y'];
+
+			Prompt_Save;
+			IF answer in ['y','Y'] then SAVE_MATL_REFERENCES;
+		END;
+
+	textbackground(C_back);  gotoXY(1,2);
+END;	{	EDIT_REFERENCES	}
+{-------------------------------------------------------------------}
 PROCEDURE MAKE_PARAMETER_SET;
 
 { -- Creates a file on disk containing parameters for a chosen material -- }
@@ -908,6 +1114,45 @@ BEGIN
 
 END; {MAKE_VARIABLE_SET.   }
 {-------------------------------------------------------------------}
+PROCEDURE MAKE_REFERENCE_SET;
+
+{ -- Creates a new set of reference info. -- }
+VAR
+	index	:	refrange;
+BEGIN
+
+	CLEAN_WINDOW;
+	DATE_AND_TIME;
+
+	textbackground(C_back);
+	gotoXY(1,2);
+	write  ('                                                             ');
+	gotoXY(1,2);
+	write(' ',Version,' Creating a new reference for ',matlname,'    ',date_string);
+
+	gotoXY(1,24);
+	write  ('                                                             ');
+	gotoXY(1,24);
+	textcolor(C_bright);
+	write('                     ENTER  REFERENCES ');    textcolor(C_text);
+
+	FOR index:= 1 TO reflength DO
+		ref[index] := ' ';
+	TEXT_EDIT_REFERENCE(1);
+	LIST_REFERENCES;
+
+{ -------- Save the file -------- }
+
+	Prompt_Save;
+	if answer in ['y','Y'] then SAVE_MATL_REFERENCES;
+
+{ ------- List the file for inspection and Editing ------- }
+
+	LIST_REFERENCES;
+	EDIT_REFERENCES;
+
+END; {MAKE_REFERENCE_SET.   }
+{-------------------------------------------------------------------}
 PROCEDURE STASH_DATA_LINE (line: String);
 {	This routine uses a global array, declared in DFMglbls, to store
 	the lines of data.	}
@@ -931,8 +1176,11 @@ PROCEDURE READ_MATL_DATA;
 { -------- Read in the chosen material parameters and variables -------- }
 VAR
 	file_in	:	Text;
+	file_ref	:	Text;
 	line, buf:	String;
 	material	:	String;
+	refname	:	String;
+	index		:	refrange;
 
 BEGIN
 	gotoXY(1,24); textbackground(C_back); textcolor(C_bright);
@@ -955,6 +1203,24 @@ BEGIN
 
 	UNTIL Eof(file_in);
 	Close(file_in);
+
+{ ----- Read reference text -----}
+
+	refname := matlname + '.REF';
+
+	IF FileNotThere (refname) THEN
+		BEGIN
+			FOR index := 1 to reflength DO
+				ref[index] := '.';
+		END
+	ELSE
+		BEGIN
+			Assign(file_ref, refname);    
+			Reset(file_ref);
+			FOR index := 1 to reflength DO
+				Read(file_ref,ref[index]);
+			Close(file_ref);
+		END;
 
 END;  {READ_MATL_DATA.    }
 {-------------------------------------------------------------------}
@@ -1212,17 +1478,22 @@ PROCEDURE INPUT_DATA_TO_PRINTER;
 VAR
 	s	:	STRING;
 	r	:	REAL;
+	index		:	refrange;
+	i, j, line	:	WORD;
 BEGIN
 
 	DATE_AND_TIME;
 
+	writeln(lst,'      ',weekday,' ',Date_string,' ',time_string);
+	writeln(lst);
 	writeln(lst,'      =============================================================');
-	writeln(lst,'         ',Version,'     INPUT  PARAMETERS for  ',matlname,'    ',Date_string);
+	writeln(lst,'      ',Version,'     INPUT  PARAMETERS for  ',matlname);
 	writeln(lst,'      =============================================================');
 	writeln(lst);
 
 	get_imc_string (imc,s);
-	writeln (lst,'    0   Isomechanical Class:              ',s);
+	writeln (lst,
+		'          0  Isomechanical Class                  ',s);
 
 	for parnumber := 1 to numberofparameters do
 		BEGIN
@@ -1233,12 +1504,11 @@ BEGIN
 			writeln (lst,'        ',parnumber:3,'  ', d, u,' =  ', s);
 		END;
 	writeln(lst);
-	writeln(lst,'       =============================================================');
-	writeln(lst,'                                                      Time ',time_string);
+	writeln(lst,'      =============================================================');
 	writeln(lst);  writeln(lst);  writeln(lst);  writeln(lst);
 
 	writeln(lst,'      =============================================================');
-	writeln(lst,'         ',Version,'     INPUT  VARIABLES for  ',matlname,'     ',Date_string);
+	writeln(lst,'      ',Version,'     INPUT  VARIABLES for  ',matlname);
 	writeln(lst,'      =============================================================');
 	writeln(lst);
 	for vblnumber := 1 to numberofvariables do
@@ -1250,9 +1520,28 @@ BEGIN
 			writeln (lst,'        ',vblnumber:3,'  ', d, u,' =  ',s);
 		END;
 	writeln(lst);
-	writeln(lst,'       =============================================================');
-	writeln(lst,'                                                      Time ',time_string);
+	writeln(lst,'      =============================================================');
 	writeln(lst);  writeln(lst);  writeln(lst);  writeln(lst);
+
+{ ------- Print out Reference Text ------- }
+
+	writeln(lst,'      ',Version,'  REFERENCE DESCRIPTION FOR ',matlname);
+	writeln(lst,'      =============================================================');
+	writeln(lst);
+
+	line := 1 + reflength DIV reflines;
+	FOR i := 0 to reflines - 2 DO
+		BEGIN
+			write(lst,'      ');
+			FOR j := 1 TO line DO
+				write(lst,ref[i*line + j]);
+			writeln(lst);
+		END;
+	write(lst,'      ');
+	FOR index := (reflength - line +2) TO reflength DO
+		write(lst,ref[index]);
+	writeln(lst);
+
 
 END; {INPUT_DATA_TO_PRINTER.    }
 {-------------------------------------------------------------------}
@@ -1262,6 +1551,8 @@ VAR
 	lf	:	Text;
 	s	:	STRING;
 	r	:	REAL;
+	index		:	refrange;
+	i, j, line	:	WORD;
 
 BEGIN
 
@@ -1269,13 +1560,16 @@ BEGIN
 	Assign(lf,listfilename);
 	Rewrite(lf);
 
+	writeln(lf,'      ',weekday,' ',Date_string,' ',time_string);
+	writeln(lf);
 	writeln(lf,'      =============================================================');
-	writeln(lf,'         ',Version,'     INPUT  PARAMETERS for  ',matlname,'    ',Date_string);
+	writeln(lf,'      ',Version,'     INPUT  PARAMETERS for  ',matlname);
 	writeln(lf,'      =============================================================');
 	writeln(lf);
 
 	get_imc_string (imc,s);
-	writeln (lf,'          0   Isomechanical Class:              ',s);
+	writeln (lf,
+		'          0  Isomechanical Class                  ',s);
 
 	for parnumber := 1 to numberofparameters do
 		BEGIN
@@ -1286,12 +1580,11 @@ BEGIN
 			writeln (lf,'        ',parnumber:3,'  ', d, u,' =  ', s);
 		END;
 	writeln(lf);
-	writeln(lf,'       =============================================================');
-	writeln(lf,'                                                      Time ',time_string);
+	writeln(lf,'      =============================================================');
 	writeln(lf);  writeln(lf);  writeln(lf);  writeln(lf);
 
 	writeln(lf,'      =============================================================');
-	writeln(lf,'         ',Version,'     INPUT  VARIABLES for  ',matlname,'     ',Date_string);
+	writeln(lf,'      ',Version,'     INPUT  VARIABLES for  ',matlname);
 	writeln(lf,'      =============================================================');
 	writeln(lf);
 	for vblnumber := 1 to numberofvariables do
@@ -1304,9 +1597,27 @@ BEGIN
 		END;
 
 	writeln(lf);
-	writeln(lf,'       =============================================================');
-	writeln(lf,'                                                      Time ',time_string);
+	writeln(lf,'      =============================================================');
 	writeln(lf);  writeln(lf);  writeln(lf);  writeln(lf);
+
+{ ------- Print out Reference Text, complex word-wrap, sorry ------- }
+
+	writeln(lf,'      ',Version,'  REFERENCE DESCRIPTION FOR ',matlname);
+	writeln(lf,'      =============================================================');
+	writeln(lf);
+
+	line := 1 + reflength DIV reflines;
+	FOR i := 0 to reflines - 2 DO
+		BEGIN
+			write(lf,'      ');
+			FOR j := 1 TO line DO
+				write(lf,ref[i*line + j]);
+			writeln(lf);
+		END;
+	write(lf,'      ');
+	FOR index := (reflength - line +2) TO reflength DO
+		write(lf,ref[index]);
+	writeln(lf);
 
 	Close(lf);
 

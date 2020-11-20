@@ -1,11 +1,11 @@
 Unit Dfmmain;
-{ PMS 15-December-1989 02:47 }
+{ PMS 17-January-1990 15:28 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
-   *************   M.F.Ashby and P.M.Sargent        **************
-   *************   January 1989                     **************
+   *************   P.M.Sargent and M.F.Ashby        **************
+   *************   January 1990                     **************
 }
 {$R+}    {Range checking on }
 {$B+}    {Boolean complete evaluation on}
@@ -198,6 +198,7 @@ BEGIN
 	WRITE('      Backing-up and Saving the Data');
 	SAVE_MATL_PARAMETERS;
 	SAVE_MATL_VARIABLES;
+	SAVE_MATL_REFERENCES;
 
 { ----- Add the new name to the list of materials in matl_list ----- }
 	matl_index := matl_index + 1;
@@ -317,6 +318,7 @@ BEGIN
 			matl_ok := FALSE;	{	adding new material, index out of date	}
 			MAKE_PARAMETER_SET;
 			MAKE_VARIABLE_SET;
+			MAKE_REFERENCE_SET;
 		END;
 
 END;	{	GET_FILENAME	}
@@ -611,7 +613,7 @@ BEGIN
 		IF modefast THEN
 			BEGIN
 				INTERPRET_PARAMETER_SET;
-				INTERPRET_VARIABLE_SET;;
+				INTERPRET_VARIABLE_SET;
 				IF (modelistfile) THEN INPUT_DATA_TO_FILE;
 				CHECK_PARAMETERS;	{ which may involve listing	}
 			END
@@ -622,7 +624,9 @@ BEGIN
 						CLEAN_WINDOW;
 
 						INTERPRET_PARAMETER_SET;
-						INTERPRET_VARIABLE_SET;;
+						INTERPRET_VARIABLE_SET;
+						LIST_REFERENCES;
+						EDIT_REFERENCES;
 						gotoXY(1,24); textbackground(C_screen);
 						WRITE('                                                             ');
 					END
@@ -638,6 +642,8 @@ BEGIN
 						LIMIT_VARIABLES;
 						LIST_VARIABLES;
 						EDIT_VARIABLES;
+						LIST_REFERENCES;
+						EDIT_REFERENCES;
 						gotoXY(1,24); textbackground(C_screen);
 						WRITE('                                                             ');
 					END;
@@ -695,7 +701,11 @@ BEGIN
 			{ when using Crt and graphics, turn off Crt's memory-mapped writes }
 			DirectVideo := False;
 
-{			IF modetemp THEN
+{$IFDEF indent}
+{ should not use modetemp, should make a new mode, "modeindt", so that
+	indentation maps could always be run by playing with the commandline
+	arguments. PMS 17-January-1990 15:28 }
+	{		IF modetemp THEN		}
 				BEGIN
 					  CALC_Indentation_MAP;
 
@@ -707,7 +717,8 @@ BEGIN
 						   answer:=Readkey; 	
 						END;
 				END;
-}
+{$ENDIF}	{ indent }
+
 		{	Stay in Graphics mode...	}
 			IF modetemp THEN
 				BEGIN

@@ -1,13 +1,13 @@
 { DFM1.pas }
-{ PMS 15-December-1989 02:17 }
+{ PMS 3-January-1990 00:34 }
 
 Program DFM1(input,output);
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
-   *************   M.F.Ashby and P.M.Sargent        **************
-   *************   December 1989                    **************
+   *************   P.M.Sargent and M.F.Ashby        **************
+   *************   January 1990                     **************
 }
 
 {	Be careful, the source code for these Units does not
