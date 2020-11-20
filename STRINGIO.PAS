@@ -1,14 +1,18 @@
 Unit StringIO;
-{ PMS 25-June-1988 00:03 }
+{ PMS 25-March-1990 00:30 }
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
    *************   P.M.Sargent                      **************
    *************   June 1988                        **************
 }
-{$R-}    {Range checking off}
-{$B+}    {Boolean complete evaluation on}
-{$S+}    {Stack checking on}
+
+{ &&R+}    {Range checking on}
+{ &&B+}		{Boolean complete evaluation on}
+{ &&S+}		{Stack checking on}
+{ &&I+}		{I/O checking on}
+{ &&N+}    {Use numeric coprocessor}
+{ &&E+}		{Include copy of 8087 Emulator - default anyway}
 
 Interface
 Uses
@@ -16,6 +20,7 @@ Uses
 
 	CONST
 	C_Esc	=	#27;		{	Escape key	}
+	C_CtrlC	=	#3;  	{	^C, 'Break' key	}
 	C_blank	=	' ';	{	blank character to show width	}
 
 TYPE
@@ -141,7 +146,7 @@ BEGIN	{	Read_String	}
 		flag := getchr;
 		c := Readkey;
 
-		IF (c = C_Esc) THEN 
+		IF (c = C_CtrlC) THEN 
 			BEGIN
 				escape := TRUE;
 				Exit;
@@ -268,7 +273,7 @@ BEGIN
 	Read_Int := i;
 END;	{	Read_Int	}
 {-------------------------------------------------------------------}
-FUNCTION Read_Real: a_real;
+FUNCTION Read_Real(VAR escape: BOOLEAN): a_real;
 VAR
 	r		:	a_real;
 	s		:	String;

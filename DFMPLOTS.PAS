@@ -1,41 +1,33 @@
 Unit DfmPlots;
-{ PMS 17-January-1990 15:21 }
+{ PMS 26-March-1990 15:06 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
    *************   P.M.Sargent and M.F.Ashby        **************
-   *************   January 1990                     **************
+   *************   February 1990                    **************
 }
-{$R+}    {Range checking on}
-{$B+}    {Boolean complete evaluation on}
-{$S+}    {Stack checking on}
-{$I+}    {I/O checking on}
-{$N+}    {Use numeric coprocessor}
-{$E+}		{Include copy of 8087 Emulator - default anyway}
+{$IFDEF  contour}		{	ensure compiler directives are consistent	}
+{$DEFINE  detail}
+{$ENDIF}
+{$IFDEF  detail}
+{$DEFINE  debug}
+{$ENDIF}
+{.$R+}    {Range checking on}  {      all these options set in command line }
+{.$B+}    {Boolean complete evaluation on}
+{.$S+}    {Stack checking on}
+{.$I+}    {I/O checking on}
+{.$N+}    {Use numeric coprocessor}
+{.$E+}	  {Include copy of 8087 Emulator - default anyway}
 
 Interface
-
-Uses
-	Crt,
-	Dos,
-	Printer,
-	Graph,
-{	Drivers, }{ all the BGI drivers }
-	DfmGlbls,
-	DfmModls;
 
 PROCEDURE Initialize;
 { Initialize graphics and report any errors that may occur }
 
-PROCEDURE CheckDeviceMono;
-{ Checks whether the graphics adapter is mono }
-
-PROCEDURE PLOT_TEMPERATURE_BOX (LgSNfirst, LgSNlast: real);
+PROCEDURE PLOT_STRAIN_RATES_BOX (LgSNfirst, LgSNlast: real);
 
 { ----- Constructs box for temperature DFM-map and labels the axes ----- }
-
-PROCEDURE DRAW_FIELD_BOUNDARY (x,y : Integer);
 
 PROCEDURE IDENTIFY_CONTOURS;
 
@@ -43,7 +35,7 @@ PROCEDURE IDENTIFY_CONTOURS;
 
 PROCEDURE IDENTIFY_FIELDS;
 
-PROCEDURE CALC_TEMPERATURE_MAP;
+PROCEDURE CALC_STRAIN_RATES_MAP;
 
 {$IFDEF indent}
 PROCEDURE CALC_Indentation_MAP;
@@ -53,6 +45,18 @@ PROCEDURE CALC_Indentation_MAP;
 
 Implementation
 
+Uses
+	Crt,
+	Dos,
+	Printer,
+	Graph,
+{	Drivers, }{ all the BGI drivers }
+	StringIO,
+	DfmGlbls,
+	DfmModls;
+
+CONST
+	C_num_cntrs			=	maxcontournumber+1;
 TYPE
 	TP_zone_list	=	^T_zone_list;
 	T_zone_list		=	RECORD
@@ -62,27 +66,30 @@ TYPE
 
 	T_all_contours		= ARRAY [1..maxcontournumber,0..max_steps] OF Integer;
 	T_contour_reals	= ARRAY [0..maxcontournumber] OF a_real;
-	T_stress_fields	= ARRAY [1..max_steps] OF T_mech;
+	T_stress_fields	= ARRAY [1..max_steps] OF E_mech;
+
+	E_n_bndrys		=	1..numberofmechanisms*2;	{	estimate	}
+	T_bndry_item	=	RECORD
+								stress_hi	:	a_real;
+								id_hi			:	E_mech;
+								stress_lo	:	a_real;
+								id_lo			:	E_mech;
+								stress_mn	:	a_real;
+							END;
+	T_bndry_table	=	ARRAY [E_n_bndrys] OF T_bndry_item;
+
+	E_n_stress		=	0..C_num_cntrs;	{	Will need to increase this..	}
+	T_field_stress	=	RECORD
+								stress	:	a_real;
+								id			:	E_mech;
+							END;
+	T_field_ids		=	ARRAY [E_n_stress] OF T_field_stress;
 
 CONST
 	{ The names of the various device drivers supported }
 	DriverNames : array[0..10] of string[8] =
 	('Detect', 'CGA', 'MCGA', 'EGA', 'EGA64', 'EGAMono',
 	'RESERVED', 'HercMono', 'ATT400', 'VGA', 'PC3270');
-
-	{ The five fonts available }
-	Fonts : array[0..4] of string[13] =
-	('DefaultFont', 'TriplexFont', 'SmallFont', 'SansSerifFont', 'GothicFont');
-
-	{ The five predefined line styles supported }
-	LineStyles : array[0..4] of string[9] =
-	('SolidLn', 'DottedLn', 'CenterLn', 'DashedLn', 'UserBitLn');
-
-	{ The twelve predefined fill styles supported }
-	FillStyles : array[0..11] of string[14] =
-	('EmptyFill', 'SolidFill', 'LineFill', 'LtSlashFill', 'SlashFill',
-	'BkSlashFill', 'LtBkSlashFill', 'HatchFill', 'XHatchFill',
-	'InterleaveFill', 'WideDotFill', 'CloseDotFill');
 
 	{ The two text directions available }
 	TextDirect : array[0..1] of string[8] = ('HorizDir', 'VertDir');
@@ -93,9 +100,11 @@ CONST
 	{ The vertical text justifications available }
 	VertJust   : array[0..2] of string[10] = ('BottomText', 'CenterText', 'TopText');
 
+{$IFDEF indent}
 	C_1 = 0.193;	{	1/(3.sqrt(3))	}
 	C_2 = 1;
 	C_3 = 25.504;	{	Vickers indenters	}
+{$ENDIF}
 
 VAR
 	GraphDriver :	INTEGER;  { The Graphics device driver }
@@ -113,23 +122,24 @@ VAR
 	empty_zones	:	TP_zone_list;
 
 	pointcount		:  T_mecharray;
-	sumofI, sumofJ	:  T_mecharray;
+	temp_position, stress_position	:  T_mecharray;
 	contour			:  T_contour_reals;
 	contourmark		:	T_contour_reals;
 	last_temp_fields	:	T_stress_fields;
+
 	LgSNfirst		:	a_real;
 	LgSNlast			:	a_real;
 	LgSNstep			:	a_real;
-	TNstep			:	a_real;
 	Lgt_first, Lgt_last, Lgt_step	:	a_real;
 	sqrt_factor		:	a_real;
+
+	last_Rate	:	a_real;
 	Rate			:	a_real;
 	LgS			:	a_real;
 	LgHN			:	a_real;
 	hint_stress	:	a_real;
 	Stress		:	a_real;
-	last_Rate	:	a_real;
-	xr, yr			:	a_real; 
+	xr, yr			:	a_real;
 	A, A_dot, Load	:	a_real;
 	H, t, dt			:	a_real;
 	shear_mod		:	a_real;
@@ -139,6 +149,13 @@ VAR
 	c		:	Char;
 	s	:	String;
 	f	:	Text;
+
+	x_last, x_now	:	INTEGER;
+	n_actual			:	E_n_stress;
+	field_ids		:	T_field_ids;
+
+	n_bndrys, last_n_bndrys			:	E_n_bndrys;
+	bndry_tabl, last_bndry_tabl	:	T_bndry_table;
 
 {---------------------------------------------------------------------------}
 procedure Abort(Msg : string);
@@ -172,7 +189,7 @@ Function Max(a,b:Real): Real;
 begin
 	IF (a>b) THEN
 		Max := a
-	ELSE 
+	ELSE
 		Max := b;
 end;	{	function Max	}
 {---------------------------------------------------------------------------}
@@ -190,13 +207,7 @@ BEGIN
 			GraphMode := ATT400Hi;
 			InitGraph(GraphDriver, GraphMode, '');  { activate graphics }
 			ErrorCode:=GraphResult;
-			IF ErrorCode <> grOK THEN	{ error? try auto-detection }
-				BEGIN
-					CloseGraph;
-					GraphDriver:=Detect;
-					InitGraph(GraphDriver, GraphMode, '');
-					ErrorCode := GraphResult;               { error? }
-				END;
+			{ Leave the error visible, don't fix with autodetect..}
 		END
 	ELSE	{	NOT mode400	}
 		IF modeCGA THEN
@@ -205,13 +216,8 @@ BEGIN
 				GraphMode := CGAHi;
 				InitGraph(GraphDriver, GraphMode, '');  { activate graphics }
 				ErrorCode:=GraphResult;
-				IF ErrorCode <> grOK THEN	{ error? try auto-detection }
-					BEGIN
-						CloseGraph;
-						GraphDriver:=Detect;
-						InitGraph(GraphDriver, GraphMode, '');
-						ErrorCode := GraphResult;               { error? }
-					END;
+			{	error? try auto-detection }
+			{	Leave the error visible, don't fix with autodetect..}
 			END
 		ELSE	{	neither mode400 nor modeCGA	}
 			BEGIN
@@ -223,9 +229,14 @@ BEGIN
 	IF ErrorCode <> grOk THEN
 		BEGIN
 			CloseGraph;
-			Writeln('Graphics init error: ',
+			Writeln('Graphics initialization error: ',
 				GraphErrorMsg(ErrorCode));
-			Halt(6);
+			IF (ErrorCode = grFileNotFound) THEN
+				BEGIN
+					Writeln('=> Ensure that this file is put in the current directory <=');
+				END;
+			Writeln('This program cannot continue.');
+			Finish(6);
 		END;
 
 	Randomize;                { init random number generator }
@@ -234,8 +245,6 @@ BEGIN
 	MaxY := GetMaxY;
 	HalfX := Round(MaxX);
 	HalfY := Round(MaxY);
-
-{	ReportStatus;	}
 
 	xoffset     := Round(0.125196 * MaxX);
 	yoffset     := Round(0.050251 * MaxY);
@@ -250,22 +259,32 @@ BEGIN
 
 END; { Initialize }
 {---------------------------------------------------------------------------}
-PROCEDURE CheckDeviceMono;
-{	Checks whether the graphics adapter is mono }
+PROCEDURE DETECT_SKIP;
 BEGIN
-	modemono:=False;
-	INITIALIZE;		{	graphics display	}
-	GraphMode := GetGraphMode;
-	IF (GraphDriver = HercMono) OR (GraphDriver = EGAMono) THEN
-			modemono := True;
-	DirectVideo := True;
-	textmode(LastMode);
+{ ----- Detect <Esc> key if pressed  ----- }
+	IF modefast THEN
+		Exit;		{	i.e. quit this procedure	}
 
-END;	{	CheckDeviceMono	}
+	IF Keypressed THEN
+		BEGIN
+			Ch := ReadKey;
+			IF Ch = Esc THEN
+				skip:=TRUE                       { skip }
+			ELSE IF (Ch = #0 ) THEN			{ function key, throw away }
+				Ch := Readkey
+			ELSE IF (Ch = ' ') THEN					{	pause	}
+				BEGIN
+					REPEAT UNTIL Keypressed;
+					Ch := Readkey;
+					IF (Ch = #0 ) THEN			{ function key, throw away }
+						Ch := Readkey
+				END;
+		END;
+END;	{	DETECT_SKIP	}
 {---------------------------------------------------------------------------}
 PROCEDURE ClearTextSpace(x1,y1,x2,y2: REAL);
 VAR
-	xx1,  
+	xx1,
 	xx2		:	Word;
 	yy1,
 	yy2		:	Word;
@@ -379,7 +398,7 @@ BEGIN
 END;
 
 {---------------------------------------------------------------------------}
-PROCEDURE PLOT_TEMPERATURE_BOX (LgSNfirst, LgSNlast: real);
+PROCEDURE PLOT_STRAIN_RATES_BOX (LgSNfirst, LgSNlast: real);
 
 { ----- Constructs box for temperature DFM-map and labels the axes ----- }
 
@@ -424,15 +443,16 @@ BEGIN
 
 	Sfirst	:=	shmod*SNfirst*1.0e3;	{	shmod is at 300 K	}
 	Slast 	:=	shmod*SNlast *1.0e3;	{	shmod is at 300 K	}
-	LgSfirst	:=	Ln(Sfirst)/Ln10;	
+	LgSfirst	:=	Ln(Sfirst)/Ln10;
 	LgSlast 	:=	Ln(Slast)/Ln10;
-	
-	IF (Sfirst <= 1.0e-9) THEN 
+
+	IF (Sfirst <= 1.0e-9) THEN
 		BEGIN
 			OurOutTextXY(xoffset+2,100,'Error, low stress limit too low!');
 			Str(Sfirst:4:1,st);
 			OurOutTextXY(xoffset+2,105,st);
-			Repeat Until Keypressed;
+			IF NOT modefast THEN
+				Repeat Until Keypressed;
 		END;
 	S	:=	1.0e-9;
 	REPEAT
@@ -517,14 +537,16 @@ BEGIN
 	vertical_text(56,32,'NORM SHEARSTRESS');
 	vertical_text(599,32,'STRESS   (MPa)  ');
 
-END;   {PLOT_TEMPERATURE_BOX.    }
+END;   {PLOT_STRAIN_RATES_BOX.    }
 
 {---------------------------------------------------------------------------}
-PROCEDURE PLOT_TEMPERATURE_INFO;
+PROCEDURE PLOT_STRAIN_RATES_INFO;
 
 { ----- Label horizontal and vertical axes of graph window ----- }
 VAR
 	xof,yof,xl,yl	:	REAL;
+	delta_x			:	REAL;
+	delta_y			:	REAL;
 
 BEGIN
 	DATE_AND_TIME;
@@ -533,7 +555,10 @@ BEGIN
 	yof    := 0.050251 * 200;
 	xl     := 0.782473 * 640;
 	yl     := 0.904523 * 200;
-	ClearTextSpace(xof+3*xl/4,yof,xof+xl,yof+yl/4);
+
+	delta_x := 6/xfactor;										{ avoid axes marks }
+	delta_y := 6/yfactor;										{ avoid axes marks }
+	ClearTextSpace(xof+3*xl/4,yof+delta_y,xof+xl-delta_x,yof+yl/4);
 
 	Line(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
 		xoffset+xlength,yoffset+round(ylength/4));
@@ -546,7 +571,7 @@ BEGIN
 	OurOutTextXY(465,48,date_string);
 
 
-END;	{	PLOT_TEMPERATURE_INFO	}
+END;	{	PLOT_STRAIN_RATES_INFO	}
 {---------------------------------------------------------------------------}
 PROCEDURE DRAW_FIELD_BOUNDARY (x,y : Integer);
 
@@ -557,23 +582,30 @@ CONST
 BEGIN
 	{	This is called within the Stress-Loop, within the Temperature-Loop,
 			so the plotting window is already set to the graph axes	}
-	{	Nested IFs too deep for Turbo4 with 8087 chip ! Compiler BUG !! I had to
-		separate the two halves of the IF statement because the OR option
-		failed to work correctly: if the first condition was false it failed
-		to check the second condition.	}
 
-	IF (x < 3*xlength/4) THEN 	     {Leave name-box blank}
-		BEGIN
-			Line(x-s1, y, x+s1,y);
-			Line(x-s1, y+s2, x+s1,y+s2);
-		END;
-	IF (y > ylength/4) THEN 	     {Leave name-box blank}
-		BEGIN
-			Line(x-s1, y, x+s1,y);
-			Line(x-s1, y+s2, x+s1,y+s2);
-		END;
+	Line(x-s1, y, x+s1,y);
+	Line(x-s1, y+s2, x+s1,y+s2);
 
 END;   {DRAW_FIELD_BOUNDARY.   }
+{---------------------------------------------------------------------------}
+PROCEDURE DRAW_FIELD_LINE(i, j: E_n_stress);
+VAR
+	y_last, y_now		:	Integer;
+
+BEGIN
+	{	This is called within the Stress-Loop, within the Temperature-Loop,
+			so the plotting window is already set to the graph axes	}
+
+	WITH bndry_tabl[i] DO
+		y_now := round(ylength*(1 - (stress_mn - LgSNfirst)/(LgSNlast - LgSNfirst)));
+	WITH last_bndry_tabl[j] DO
+		y_last := round(ylength*(1 - (stress_mn - LgSNfirst)/(LgSNlast - LgSNfirst)));
+
+	SetLineStyle(DashedLn,0,ThickWidth);
+	Line(x_last, y_last, x_now, y_now);
+	SetLineStyle(SolidLn,0,NormWidth);
+
+END;   {DRAW_FIELD_LINE   }
 {---------------------------------------------------------------------------}
 PROCEDURE IDENTIFY_CONTOURS;
 
@@ -587,57 +619,65 @@ BEGIN
 		Str(contour[1]:7:0,st)
 	ELSE
 		Str(contour[1]:7,st);
+	convert_number (contour[1], st, -1);
 	OurOutTextXY(96,170,' First = '+st+' /s ');
 	IF ((contour[contournumber] < 99999 ) AND ( contour[contournumber] >= 1 )) THEN
 		Str(contour[contournumber]:7:0,st)
 	ELSE
 		Str(contour[contournumber]:7,st);
+	convert_number (contour[contournumber], st, -1);
 	OurOutTextXY(96,178,' Last  = '+st+' /s ');
 
 END;    {IDENTIFY_CONTOURS.    }
 {---------------------------------------------------------------------------}
 PROCEDURE IDENTIFY_FIELDS;
 
-var
+{	local versions of these..	}
+CONST
+	xoffset	=	0.125196*639;
+	yoffset	=	0.050251*199;
+	xend		=	xoffset + 0.782473*639;
+	yend		=	yoffset + 0.904523*199;
+VAR
 	P1,P2				:	integer;
 	r1,r2				:	a_real;
 	x1,y1,x2,y2		:	a_real;
 	x_shift			:	a_real;
 	y_shift			:	a_real;
 	x0,y0				:	Word;
-	mech				:	T_mech;
-
+	mech				:	E_mech;
 BEGIN
 { This procedure had the implicit assumption that there were 80
 	lines to the screen, even though it was general with respect to
 	the number of graphics pixels on the screen.
 }
-
-
 { ----- Position and print the remaining field labels ----- }
 
 	FOR mech := null TO rel_drag DO
 		IF (pointcount[mech] > (steps*steps/100)) and (pointcount[mech] > 4) THEN
 			BEGIN
-				r1  := ((sumofI[mech]/steps)/pointcount[mech]*64) + 7;
-				r2  := (1 - sumofJ[mech]/(pointcount[mech]*steps))*22 + 2;
+				r1  := ((temp_position[mech]/steps)/pointcount[mech]*64) + 7;
+				r2  := (1 - stress_position[mech]/(pointcount[mech]*steps))*22 + 2;
 
 { ----- Don't check for validity here in character co-ords, but in
 			graphics co-ords after conversion. PMS 4-February-1988 10:50 	}
 				CASE { mechID[mech] } mech OF
-					null:  st:='null';
-					re_cryst	:	st:='RE-CRYST';
-					b_diff:  st:='B-DIFF';
-					v_diff:  st:='V-DIFF';
-					plc_ht:  st:='PL-CRP(HT)';
-					plc_lt:  st:='PL-CRP(LT)';
-					o_glide:  st:='OBSTCLE';
-					pls_drag:  st:='PEIERLS';
-					phn_drag:  st:='PHONON';
-					rel_drag:  st:='PHONON-2';
+					null:  		st:='ELASTIC';
+					re_cryst	:	st:='RECRYST';
+					b_diff:  	st:='DIFF-B';
+					v_diff:  	st:='DIFF-V';
+					plc_ht:  	st:='PL-(HT)';
+					plc_lt:  	st:='PL-(LT)';
+					o_glide:  	st:='OBSTCLE';
+					pls_drag:  	st:='PEIERLS';
+					phn_drag:  	st:='PHONON';
+					rel_drag:  	st:='RLTVSTC';
 					ELSE
 						st:='ERROR';
 				END;	{	Case	}
+{$IFDEF debug}
+				writeln(db,st,' ',temp_position[mech]:5:0,stress_position[mech]:5:0,pointcount[mech]:5:0);
+{$ENDIF}
 
 				x1:=(r1-1)*639/80;
 				y1:=(r2-0.7)*199/25;
@@ -648,13 +688,13 @@ BEGIN
 				IF (x1 < xoffset ) THEN
 					x_shift := xoffset - x1 + 1.6;
 				IF (x2 > xend ) THEN
-					x_shift := xend - x2 - 1.6;
+					x_shift := xend - x2 + 1.6;
 
 				y_shift := 0.0;
 				IF (y1 < yoffset ) THEN
 					y_shift := yoffset - y1 + 4;
 				IF (y2 > yend ) THEN
-					y_shift := yend - y2 - 4;
+					y_shift := yend - y2 + 4;
 
 				x0:=Round(r1*639/80 + x_shift);
 				y0:=Round(r2*199/25 + y_shift);
@@ -664,14 +704,13 @@ BEGIN
 
 END;    {IDENTIFY_FIELDS.    }
 {---------------------------------------------------------------------------}
-PROCEDURE Stress_Loop (temp_step: Word);
-
+PROCEDURE Contours_Loop (temp_step: Word);
 VAR
 	k, field,
-	lastfield		:	T_mech;
+	lastfield 	:	E_mech;
 
-	c, cc			:	Byte;
-	x1, y1		:	Integer;
+	c				:	E_n_stress;
+	x_half, y_half, y_now:	Integer;
 	Rate			:	a_real;
 	LgSN			:	a_real;
 	hint_stress	:	a_real;
@@ -680,21 +719,36 @@ VAR
 	last_mark	:	a_real;
 	mark_step	:	a_real;
 	increment	:	a_real;
-	oldmark		:	T_contour_reals;
-	midmark		:	T_contour_reals;
-	endmark		:	T_contour_reals;
+	min_rate_on_plot	:	a_real;
+	max_rate_on_plot	:	a_real;
 
 BEGIN
 	last_Rate	:=	0.0;
 	last_mark	:=	0.0;
+	stress_step := 1;	{	to stress_stash crashing...	}
 
 	mark_step := LgSNstep/(LgSNlast - LgSNfirst);
 
 	lastfield  := null;
+	n_actual	:= contournumber+1;
 
-	FOR c := 1 TO contournumber DO
-		oldmark[c] := contourmark[c];
-
+	STRAIN_RATES (TN, LgSNfirst, Rate, field, hint_stress);
+	field_ids[0].stress := LgSNfirst;
+	field_ids[0].id     := field;
+	min_rate_on_plot := Rate;
+{$IFDEF detail}
+	Writeln(db);
+{$ENDIF}
+	STRAIN_RATES (TN, LgSNlast, Rate, field, hint_stress);
+	field_ids[n_actual].stress := LgSNlast;
+	field_ids[n_actual].id     := field;
+	max_rate_on_plot := Rate;
+{$IFDEF detail}
+	Writeln(db);
+	Writeln(db);
+{$ENDIF}
+	memory_enable := FALSE;	{	not using memory function, uneeded.	}
+{ ========== S T A R T == T H E == S T R E S S == L O O P ========= }
 	FOR stress_step := steps DOWNTO 1 DO
 		BEGIN
 		{ ----- Calculate strain rates for LgSN > LgSNfirst ----- }
@@ -703,13 +757,15 @@ BEGIN
 			STRAIN_RATES (TN, LgSN, Rate, field, hint_stress);
 
 			mark := (LgSN - LgSNfirst)/(LgSNlast - LgSNfirst);
-
 		{ ----- Identify the appropriate contour ----- }
 {$IFDEF contour}
-			Writeln(db, 'Rate=',Rate:9);	
+			Writeln(db);
 {$ENDIF}
 			FOR c := 1 TO contournumber DO
 				BEGIN
+{$IFDEF contour}
+					Write(db,c:2,' ');
+{$ENDIF}
 					IF (( Rate >= contour[c]/sqrt_factor)
 					AND ( Rate <  contour[c]*sqrt_factor )) THEN
 					{ ---	Now we know that the strain rate is closer
@@ -717,143 +773,428 @@ BEGIN
 						BEGIN
 							contourmark[c] := mark;
 
+							{	We don't want the interpolation for the fields id	}
+							field_ids[c].id     := field;
+							field_ids[c].stress := LgSN;
+
 						{ ---	Now some interpolation to shift the position
 								of the contour in the right direction --- }
 	                  IF (Rate <> 0.0) THEN
    	                  IF (Rate < contour[c]) THEN
-									contourmark[c] := mark + mark_step*
+									contourmark[c] := mark + mark_step*0.3*
 										(contour[c]/Rate)/sqrt_factor
 								ELSE
-									contourmark[c] := mark - mark_step*
+									contourmark[c] := mark - mark_step*0.3*
 										(contour[c]/Rate)/sqrt_factor;
 						{ ---	End of little interpolation section	--- }
 
-	 						midmark[c] := contourmark[c];
+{$IFDEF contour}
+							Writeln(db,'within sqrt range, OK ');
+{$ENDIF}
 						END
 					ELSE
 					{ ---	Now we check if we have skipped a contour --- }
 						BEGIN
+{$IFDEF contour}
+							Write(db,'NOT within sqrt range ');
+{$ENDIF}
 							IF ((last_Rate > contour[c]*sqrt_factor)
 							AND (Rate < contour[c]/sqrt_factor)) THEN
 							{	Descending stress	}
-								IF ((last_Rate <> 0.0)
-     			            AND (Rate <> 0.0)) THEN
-									contourmark[c] := last_mark - mark_step*
-										(Ln(last_Rate) - Ln(contour[c]))/
-										(Ln(last_Rate) - Ln(Rate))
-								ELSE
-									contourmark[c] := last_mark - mark_step*0.5;
+								BEGIN
+								{	We don't want the interpolation for the fields id	}
+									field_ids[c].id     := field;
+									field_ids[c].stress := LgSN;
+									IF ((last_Rate <> 0.0)
+     			            	AND (Rate <> 0.0)) THEN
+										contourmark[c] := last_mark - mark_step*
+											(Ln(last_Rate) - Ln(contour[c]))/
+											(Ln(last_Rate) - Ln(Rate))
+									ELSE
+										contourmark[c] := last_mark - mark_step*0.5;
+{$IFDEF contour}
+									Writeln(db,' but skipped, OK ');
+{$ENDIF}
+								END
+							ELSE	{	unset contours are off the plot	}
+								BEGIN
+{$IFDEF contour}
+									Write(db,' but off the plot.. ');
+{$ENDIF}
+									IF (Rate <= min_rate_on_plot) THEN
+										BEGIN
+											field_ids[c].id     := field_ids[0].id;
+											field_ids[c].stress := field_ids[0].stress;
+{$IFDEF contour}
+											Writeln(db,' under the bottom, OK ');
+{$ENDIF}
+										END
+									ELSE IF (Rate >= max_rate_on_plot) THEN
+										BEGIN
+											field_ids[c].id     :=
+												field_ids[n_actual].id;
+											field_ids[c].stress :=
+												field_ids[n_actual].stress;
+{$IFDEF contour}
+											Writeln(db,' over the top, OK ');
+{$ENDIF}
+										END
+									ELSE
+										BEGIN
+{$IFDEF contour}
+											Writeln(db,' missed this time, OK ');
+{$ENDIF}
+										END;	{	catchall Else block	}
+								END;	{	unset contours off plot	}
+						END;		{	check if we missed a contour	}
 
-							endmark[c] := contourmark[c];
-
-							IF ((last_Rate < contour[c]/sqrt_factor)
-							AND (Rate > contour[c]*sqrt_factor)) THEN
-							{	Ascending stress	}
-								IF ((last_Rate <> 0.0)
-     			            AND (Rate <> 0.0)) THEN
-									contourmark[c] := last_mark + mark_step*
-										(Ln(contour[c]) - Ln(last_Rate))/
-										(Ln(Rate) - Ln(last_Rate))
-								ELSE
-									contourmark[c] := last_mark + mark_step*0.5;
-						END;	
-
-				END;
+				END;	{	For loop c: 1 -> contournumber	}
 
 			last_Rate	:=	Rate;
 			last_mark	:= mark;
 
-		{ ----- Identify changes of mechanism and plot field boundaries ----- }
-
+			{ ----- Identify changes of mechanism ----- }
 			IF (lastfield  <> field) THEN
 				BEGIN
-{					IF ((lastfield <> null)
-					AND (field <> null )) THEN	}
-						BEGIN
-							x1 := round(xlength*(TN - TNfirst)/
-									(TNlast - TNfirst));
-							y1 := round(ylength*(1 - (LgSN - LgSNfirst)/
-									(LgSNlast - LgSNfirst)));
-
-							DRAW_FIELD_BOUNDARY (x1,y1);
-{$IFDEF debug}
-							Write(db,'  x');	
-{$ENDIF}
-						END;
 					lastfield := field;
+{$IFDEF detail}
+					IF (stress_step < steps) THEN
+							Write(db,'  x');
+{$ENDIF}
 				END;
 
-			IF (last_temp_fields[stress_step]  <> field) THEN
-				BEGIN
-{					IF ((last_temp_fields[stress_step] <> null)
-					AND (field <> null )) THEN	}
-						BEGIN
-							x1 := round(xlength*(
-									(TN - TNfirst)/(TNlast - TNfirst) - 0.5/steps) 
-											);
-							y1 := round(ylength*(1 - (LgSN - LgSNfirst)/
-									(LgSNlast - LgSNfirst)));
-
-							DRAW_FIELD_BOUNDARY (x1,y1);
-						END;
-					last_temp_fields[stress_step]:=field;
-				END;
-
-{$IFDEF debug}
-			Writeln(db);	
+{$IFDEF detail}
+			Writeln(db);
 {$ENDIF}
 
-		{ ----- Find centre of gravity of each field for later identification ----- }
+		END;	{	stress_step For loop	}
+{ ========== E N D == T H E == S T R E S S == L O O P ========= }
 
-			FOR k := null TO rel_drag DO
-				BEGIN
-					IF  (field = k)  and  (Rate > LowRate)  THEN BEGIN
-						sumofI[k]      := sumofI[k] + temp_step;	{ temperatures }
-						sumofJ[k]      := sumofJ[k] + stress_step;	{ stresses	}
-						pointcount[k]  := pointcount[k] + 1;
-					END;
-				END;
-		END;	{	stress_step For Loop	}
-
-
-{$IFDEF contour}
+{$IFDEF detail}
 	Writeln(db);
+	Write(db, '                    ',
+		field_ids[n_actual].stress:8:3,' ');
+	WRITE_FIELDNAME(field_ids[n_actual].id);
+	WriteLn(db);
 	FOR c := contournumber DOWNTO 1 DO
-		Writeln(db, (Ln(contour[c])/Ln10):8:1,
-			'  ',oldmark[c]:8:3,
-			'  ',midmark[c]:8:3,
-			'  ',endmark[c]:8:3,
-			'    ',contourmark[c]:8:3);
-
-	FOR stress_step := steps DOWNTO 1 DO
 		BEGIN
-			LgSN := LgSNfirst + LgSNstep*(stress_step - 0.5);
-			mark := (LgSN - LgSNfirst)/(LgSNlast - LgSNfirst);
-			Write(db,mark:8:3,' ');
-			FOR c := 1 TO contournumber DO
-				Write(db, oldmark[c]:8:3,'  ',contourmark[c]:8:3);
+			Write(db, (Ln(contour[c])/Ln10):8:1,
+				'  ',contourmark[c]:8:3,
+				'  ',field_ids[c].stress:8:3,' ');
+			WRITE_FIELDNAME(field_ids[c].id);
+			WriteLn(db);
+		END;
+	Write(db, '                    ',
+		field_ids[0].stress:8:3,' ');
+	WRITE_FIELDNAME(field_ids[0].id);
+{$ENDIF}
+
+END;	{	Contours_Loop	procedure }
+{---------------------------------------------------------------------------}
+PROCEDURE Fields_Loop (temp_step: Word);
+
+CONST
+	C_num_cntrs			=	maxcontournumber+1;
+VAR
+	field,
+	field_now,
+	field_last,
+	next_down_now,
+	next_up_now	:	E_mech;
+	centroid	:	T_mecharray;
+	spread	:	T_mecharray;
+	Rate			:	a_real;
+	LgSN			:	a_real;
+	hint_stress	:	a_real;
+	weight		:	a_real;
+	re_do			:	BOOLEAN;
+	x_half, y_half, y_now:	Integer;
+	c, i, j, item	:	E_n_stress;
+	s		:	Word;	{	stress_step	}
+
+BEGIN
+	{ ----- Find the Field boundaries from the field_ids list  ----- }
+	i := 0;
+	FOR c := 1 to contournumber+1 DO
+		BEGIN
+			IF (field_ids[c].id <> field_ids[c-1].id) THEN
+				BEGIN
+					Inc(i);
+					WITH bndry_tabl[i] DO
+						BEGIN
+							id_lo := field_ids[c-1].id;
+							id_hi := field_ids[c].id;
+							stress_lo := field_ids[c-1].stress;
+							stress_hi := field_ids[c].stress;
+							stress_mn := (stress_hi + stress_lo)/2.0;
+						END;
+				END;
+		END;
+	n_bndrys := i;
+
+	{ ----- Find the Field boundaries more accurately  ----- }
+	{	Note the trouble we go to in order to keep the table sorted,
+		so that we don't have to sort it later.	22-March-1990 }
+	i := 0;
+	REPEAT
+		Inc(i);
+		re_do := FALSE;
+		WITH bndry_tabl[i] DO
+			BEGIN
+				IF ((Abs(stress_hi - stress_lo)/LgSNstep) > 0.5) THEN
+					BEGIN
+						re_do := TRUE;
+						LgSN := stress_mn;
+{$IFDEF detail}
+						Writeln(db);
+{$ENDIF}
+						STRAIN_RATES (TN, LgSN, Rate, field, hint_stress);
+						IF (field =id_hi) THEN
+							stress_hi := LgSN
+						ELSE IF(field =id_lo) THEN
+							stress_lo := LgSN;
+						IF (field <> id_hi)
+						AND (field <> id_lo) THEN
+							BEGIN	{	a new field in the middle ! }
+								Inc(n_bndrys);						{	make array bigger	}
+								FOR item := n_bndrys DOWNTO i+1 DO
+									BEGIN	{	Budge up..	happens infrequently	}
+										bndry_tabl[item].stress_lo := bndry_tabl[item-1].stress_lo;
+										bndry_tabl[item].id_lo 		:= bndry_tabl[item-1].id_lo;
+										bndry_tabl[item].stress_hi := bndry_tabl[item-1].stress_hi;
+										bndry_tabl[item].id_hi 		:= bndry_tabl[item-1].id_hi;
+										bndry_tabl[item].stress_mn := bndry_tabl[item-1].stress_mn;
+									END;
+								{	..and now overwrite i+1	}
+								bndry_tabl[i+1].stress_lo := LgSN;
+								bndry_tabl[i+1].id_lo := field;
+								bndry_tabl[i+1].stress_hi := stress_hi;
+								bndry_tabl[i+1].id_hi := id_hi;
+								bndry_tabl[i+1].stress_mn := (stress_hi + LgSN)/2.0;
+								{	..and overwrite i	}
+								stress_hi := LgSN;
+								id_hi := field;
+							END;
+						stress_mn := (stress_hi + stress_lo)/2.0;
+					END;
+			END;	{	With block	}
+		IF re_do THEN Dec(i);	{	re-do the last one..	}
+	UNTIL ( i >= n_bndrys );	{	INCLUDING the new ones..	}
+
+{$IFDEF detail}
+	IF NOT (TN <= 0) THEN
+		BEGIN
 			Writeln(db);
+			Writeln(db,'x_last=',x_last:4);
+			FOR i := 1 to last_n_bndrys DO
+				WITH last_bndry_tabl[i] DO
+					BEGIN
+						write(db,'Boundary:',i:2,' ');
+						WRITE_FIELDNAME(id_lo);
+						write(db,': ');
+						WRITE_FIELDNAME(id_hi);
+						write(db,' ',stress_lo:8:3);
+						write(db,' ',stress_hi:8:3);
+						write(db,' ',stress_mn:8:3);
+						write(db,' ',(Abs(stress_hi - stress_lo)/LgSNstep):8:3);
+						IF ((Abs(stress_hi - stress_lo)/LgSNstep) > 1.0) THEN
+							BEGIN
+								write(db,' FIX !');
+							END;
+						Writeln(db);
+					END;
 		END;
 {$ENDIF}
-END;	{	Stress_Loop	procedure }
+{$IFDEF debug}
+	Writeln(db);
+	FOR i := 1 to n_bndrys DO
+		WITH bndry_tabl[i] DO
+			BEGIN
+				write(db,'Boundary#',i:2,' ');
+				WRITE_FIELDNAME(id_lo);
+				write(db,': ');
+				WRITE_FIELDNAME(id_hi);
+				write(db,' ',stress_lo:8:3);
+				write(db,' ',stress_hi:8:3);
+				write(db,' ',stress_mn:8:3);
+				write(db,' ',(Abs(stress_hi - stress_lo)/LgSNstep):8:3);
+				IF ((Abs(stress_hi - stress_lo)/LgSNstep) > 1.0) THEN
+					BEGIN
+						write(db,' FIX !');
+					END;
+				Writeln(db);
+			END;
+{$ENDIF}
+	{ ----- Keep track of mean position of field  ----- }
+	FOR field := null TO rel_drag DO
+		BEGIN
+			spread[field]:= 0;
+			centroid[field]:= 0;
+		END;
+
+	WITH bndry_tabl[1] DO
+		BEGIN
+			spread[id_lo]:= stress_mn - LgSNfirst;
+			centroid[id_lo]:= spread[id_lo]/2 + LgSNfirst;
+		END;
+	FOR i := 2 to n_bndrys DO
+		WITH bndry_tabl[i] DO
+			BEGIN
+				spread[id_lo]:= stress_mn - bndry_tabl[i-1].stress_mn;
+				centroid[id_lo]:= spread[id_lo]/2 + bndry_tabl[i-1].stress_mn;
+			END;
+	WITH bndry_tabl[n_bndrys] DO
+		BEGIN
+			spread[id_hi]:= LgSNlast - stress_mn;
+			centroid[id_hi]:= spread[id_lo]/2 + stress_mn;
+		END;
+
+	FOR field := null TO rel_drag DO
+		BEGIN
+			weight := steps * (spread[field]/(LgSNlast-LgSNfirst));
+			temp_position[field]		:= temp_position[field] +
+				temp_step *
+					weight;	{ temperatures }
+			stress_position[field]	:= stress_position[field] +
+				((centroid[field] - LgSNfirst)/(LgSNlast-LgSNfirst)) *
+					weight*steps;	{ stresses	}
+			pointcount[field]			:= pointcount[field] + weight;
+		END;
+
+	x_now := round(xlength*(TN - TNfirst)/	(TNlast - TNfirst));
+
+	{ ----- Draw a thick, dashed line for the field boundary  ----- }
+
+	IF (TN <= 0) THEN
+		x_last := 0
+	ELSE
+		FOR i := 1 TO n_bndrys DO
+			FOR j := 1 TO last_n_bndrys DO
+				WITH bndry_tabl[i] DO
+					BEGIN
+					{	XOR & AND so that even if both same, only draw once	}
+						IF (id_lo = last_bndry_tabl[j].id_lo)
+						XOR (id_hi = last_bndry_tabl[j].id_hi) THEN
+							DRAW_FIELD_LINE(i,j);
+						IF (id_lo = last_bndry_tabl[j].id_lo)
+						AND (id_hi = last_bndry_tabl[j].id_hi) THEN
+							DRAW_FIELD_LINE(i,j);
+					END;
+
+	{ ----- Find and Mark VERTICAL field boundaries on the plot  ----- }
+
+	{	This algorithm is based on matching up two arrays of boundaries
+		each with hi and lo fields and the stress (stress_mn) of the
+		boundary; one for this temp. and one for the previous temp. step.
+		We increment stress and check each time if the field is the same
+		here as it was last temp. If it is not, AND if the previous field
+		is NOT one there is a transition to at a lower stress at the
+		current temp., then we make a mark.  The reason for that refinement
+		is to prevent the vertical algorithm stomping all over some nice
+		smooth but steep curves. 22-March-1990 23:46 PMS	}
+
+	IF NOT (TN <= 0) THEN
+		BEGIN
+			x_half := round((x_last + x_now)/2);
+			i := 1;
+			j := 1;
+			FOR s := 1 TO steps*2 DO	{	2 * finer mesh	}
+				BEGIN
+					LgSN := LgSNfirst + 0.5*LgSNstep*(s - 0.5);
+					y_half := round(ylength*(1 - (LgSN - LgSNfirst)/
+								(LgSNlast - LgSNfirst)));
+{$IFDEF detail}
+					Write(db,s:3,' ',LgSN:8:3,' ');
+					write(db,' ',i:3,j:3,' ');
+{$ENDIF}
+				{	stress starts low, almost certainly below the first boundary	}
+					WHILE (LgSN > bndry_tabl[i].stress_mn) DO
+						Inc(i);
+					IF (i > n_bndrys) THEN	{	popped off the top	}
+						BEGIN
+							i := n_bndrys;
+							field_now := bndry_tabl[i].id_hi;
+							next_down_now := bndry_tabl[i].id_lo;
+							next_up_now := field_now;
+						END
+					ELSE
+						BEGIN
+							field_now := bndry_tabl[i].id_lo;
+							next_up_now := bndry_tabl[i].id_hi;
+							IF (i > 1) THEN
+								next_down_now := bndry_tabl[i-1].id_lo
+							ELSE
+								next_down_now := field_now;
+						END;
+{$IFDEF detail}
+					write(db,' ');
+					WRITE_FIELDNAME(field_now);
+					WRITE_FIELDNAME(next_down_now);
+					write(db,i:3);
+{$ENDIF}
+
+					WHILE (LgSN > last_bndry_tabl[j].stress_mn) DO
+						Inc(j);
+					IF (j > last_n_bndrys) THEN	{	popped off the top	}
+						BEGIN
+							j := last_n_bndrys;
+							field_last := last_bndry_tabl[j].id_hi
+						END
+					ELSE
+						field_last := last_bndry_tabl[j].id_lo;
+{$IFDEF detail}
+					write(db,' ');
+					WRITE_FIELDNAME(field_last);
+					write(db,j:3);
+{$ENDIF}
+
+					IF ( field_now	<> field_last)
+					AND (next_down_now <> field_last)
+					AND (next_up_now <> field_last) THEN
+						{	try to NOT draw on genly sloping boundaries	}
+						BEGIN
+							DRAW_FIELD_BOUNDARY (x_half,y_half);
+{$IFDEF detail}
+							write(db,' **');
+{$ENDIF}
+						END;
+{$IFDEF detail}
+					writeln(db);
+{$ENDIF}
+				END;
+	END;
+	{ ----- Copy the table of boundary points to be used next time  ----- }
+
+	x_last := x_now;
+	last_n_bndrys := n_bndrys;
+	FOR i := 1 to n_bndrys DO
+		WITH bndry_tabl[i] DO
+			BEGIN
+				last_bndry_tabl[i].stress_lo	:= stress_lo;
+				last_bndry_tabl[i].id_lo 		:= id_lo;
+				last_bndry_tabl[i].stress_hi	:= stress_hi;
+				last_bndry_tabl[i].id_hi 		:= id_hi;
+				last_bndry_tabl[i].stress_mn	:= stress_mn;
+			END;	{	With block and For loop	}
+
+END;	{	Fields_Loop	procedure }
 {---------------------------------------------------------------------------}
-PROCEDURE CALC_TEMPERATURE_MAP;
+PROCEDURE CALC_STRAIN_RATES_MAP;
 
 VAR
  	mech,
-	field				:	T_mech;
+	field				:	E_mech;
 
 	x1,x2,y1,y2		:	Integer;
 	i, step			:	Word;
 	c					:	Byte;
 
 	lastTN			:	a_real;
+	TNstep			:	a_real;
 	last_contour	:	T_contour_reals;
-	contourlevels	:	T_all_contours;
+{		contourlevels	:	T_all_contours;		SAVE SPACE for DEBUGGING	}
 
-BEGIN	{Calc_Temperature_Map	}
-
-	DEFINE_UNITS;
+BEGIN	{Calc_STRAIN_RATES_Map	}
 
 	TNstep		:= (TNlast - TNfirst)/steps;   		{Temperature interval}
 
@@ -884,8 +1225,8 @@ BEGIN	{Calc_Temperature_Map	}
 
 	FOR mech := null TO rel_drag DO
 		BEGIN
-			sumofI[mech]      := 0;
-			sumofJ[mech]      := 0;
+			temp_position[mech]      := 0;
+			stress_position[mech]      := 0;
 			pointcount[mech]  := 0;
 		END;
 
@@ -896,9 +1237,9 @@ BEGIN	{Calc_Temperature_Map	}
 
 { ----- Draw the temperature box ----- }
 
-	PLOT_TEMPERATURE_BOX (LgSNfirst, LgSnlast);
+	PLOT_STRAIN_RATES_BOX (LgSNfirst, LgSnlast);
 
-	PLOT_TEMPERATURE_INFO;
+	PLOT_STRAIN_RATES_INFO;
 
 	SetViewPort(xoffset, yoffset, xend, yend, ClipOn);
 
@@ -906,19 +1247,18 @@ BEGIN	{Calc_Temperature_Map	}
 	skip:=FALSE;
 	i:=0;
 	REPEAT
-		TN         := TNfirst + i*TNstep;	
+		TN         := TNfirst + i*TNstep;
 
 { ----- Calculate the diffusion rates at the new Temperature ------- }
 
 		DIFFUSION_RATES;
 
-{ ============== S T A R T == T H E == S T R E S S == L O O P ========= }
-		Stress_Loop (i);	
-{ ============== E N D == T H E == S T R E S S == L O O P ============= }
+		Contours_Loop (i);
+		Fields_Loop (i);
 
 { ----- Draw the contours ----- }
 
-		IF i > 0 THEN	
+		IF i > 0 THEN
 			BEGIN
 				x1 := round(xlength*(TN - TNfirst)/(TNlast - TNfirst));
 				x2 := round(xlength*(lastTN - TNfirst)/(TNlast - TNfirst));
@@ -938,7 +1278,7 @@ BEGIN	{Calc_Temperature_Map	}
 		separate the two halves of the IF statement because the OR option
 		failed to work correctly: if the first condition was false it failed
 		to check the second condition.	}
-						contourlevels [c, i] := x1;
+{						contourlevels [c, i] := x1;		SAVE SPACE	}
 						IF (x1 < 3*xlength/4) THEN
 							Line(x1,y1,x2,y2);
 						IF (y1 > ylength/4) THEN
@@ -954,32 +1294,31 @@ BEGIN	{Calc_Temperature_Map	}
 			BEGIN
 				last_contour[c] := contourmark[c];
 			END;
-
-{ ----- Detect <Esc> key if pressed  ----- }
-		IF Keypressed THEN
-			BEGIN
-				Ch := ReadKey;
-				IF Ch = Esc THEN
-					skip:=TRUE;                           { skip }
-			END;
+{$IFDEF debug}
+		Flush(db);
+{$ENDIF}
+		DETECT_SKIP;
 
 		i:=i+1;
-	UNTIL (i=steps {+1} +2) OR skip;
+	UNTIL (i=steps +1 {+2} ) OR skip;
 {  END;	}
 
 { ============ E N D == T H E == T E M P E R A T U R E == L O O P =========== }
 
 	SetViewPort(0, 0, MaxX, MaxY, ClipOn);
 
-{	Close(db);	}
+{$IFDEF debug}
+	writeln(db);
+	writeln(db,'SRcount =',SRcount);
+{$ENDIF}
 
 	IDENTIFY_FIELDS;
 
 	IDENTIFY_CONTOURS;
 
-	PLOT_TEMPERATURE_INFO;	{again, in case it had been overwritten	}
+	PLOT_STRAIN_RATES_INFO;	{again, in case it had been overwritten	}
 
-END;       {CALC_TEMPERATURE_MAP.   }
+END;       {CALC_STRAIN_RATES_MAP.   }
 {---------------------------------------------------------------------------}
 {$IFDEF indent}
 PROCEDURE 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high: a_real; trajnumber:integer);
@@ -1054,15 +1393,16 @@ BEGIN
 
 	Hfirst	:=	shmod*HNfirst*1.0e3;	{	shmod is at 300 K	}
 	Hlast 	:=	shmod*HNlast *1.0e3;	{	shmod is at 300 K	}
-	LgHfirst	:=	Ln(Hfirst)/Ln10;	
+	LgHfirst	:=	Ln(Hfirst)/Ln10;
 	LgHlast 	:=	Ln(Hlast)/Ln10;
-	
-	IF (Hfirst <= 1.0e-9) THEN 
+
+	IF (Hfirst <= 1.0e-9) THEN
 		BEGIN
 			OurOutTextXY(xoffset+2,100,'Error, low hardness limit too low!');
 			Str(Hfirst:4:1,st);
 			OurOutTextXY(xoffset+2,105,st);
-			Repeat Until Keypressed;
+			IF NOT modefast THEN
+				Repeat Until Keypressed;
 		END;
 	H	:=	1.0e-9;
 	REPEAT
@@ -1099,7 +1439,7 @@ BEGIN
 	Str((Ln(t)/Ln10):4:1,st);
 	IF (t < t_last) THEN
 		OurOutTextXY (75,196,st);
-	
+
 	xmark		:= 0;
 	REPEAT
 		IF (t > t_first) and (t < t_last) THEN
@@ -1143,6 +1483,8 @@ PROCEDURE PLOT_Indentation_INFO;
 { ----- Label horizontal and vertical axes of graph window ----- }
 VAR
 	xof,yof,xl,yl	:	REAL;
+	delta_x			:	REAL;
+	delta_y			:	REAL;
 
 BEGIN
 	DATE_AND_TIME;
@@ -1151,7 +1493,10 @@ BEGIN
 	yof    := 0.050251 * 200;
 	xl     := 0.782473 * 640;
 	yl     := 0.904523 * 200;
-	ClearTextSpace(xof+3*xl/4,yof,xof+xl,yof+yl/4);
+
+	delta_x := 6/xfactor;										{ avoid axes marks }
+	delta_y := 6/yfactor;										{ avoid axes marks }
+	ClearTextSpace(xof+3*xl/4,yof+delta_y,xof+xl-delta_x,yof+yl/4);
 
 	Line(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
 		xoffset+xlength,yoffset+round(ylength/4));
@@ -1169,7 +1514,7 @@ BEGIN
 
 END;	{	PLOT_Indentation_INFO	}
 {---------------------------------------------------------------------------}
-procedure Creep_Calc (VAR 	field	:	T_mech);
+procedure Creep_Calc (VAR 	field	:	E_mech);
 VAR
 	SN		:	a_real;
 
@@ -1205,13 +1550,13 @@ BEGIN
 	Flush(db);
 END;	{	Creep_Calc	}
 {---------------------------------------------------------------------------}
-PROCEDURE Trajectory (LgHNfirst,lgHNlast: a_real);	
+PROCEDURE Trajectory (LgHNfirst,lgHNlast: a_real);
 {	Plots the line for any given temperature TN and load Load	}
 CONST
 	s1  =  2;
 	s2  =  1;
 VAR
-	field1,field2	:	T_mech;
+	field1,field2	:	E_mech;
 	x,y,x1,x2,y1,y2	:	Integer;
 	Lgt				:	a_real;
 
@@ -1224,8 +1569,10 @@ BEGIN
 	y2 := yoffset;
 	field2 := null;
 	skip := FALSE;
+{$IFDEF debug}
 	Writeln(db,'TN= ',TN:5:2,'  t(s)       dt(s)      LgHN',
 		'        A(mm^2)   A_dot(mm^2)');
+{$ENDIF}
 	REPEAT
 		x1 := x2;
 		y1 := y2;
@@ -1235,28 +1582,21 @@ BEGIN
 		x2 := round(xlength*(Lgt - Lgt_first)/(Lgt_last - Lgt_first));
 		y2 := round(ylength*(LgHNlast - LgHN)/(LgHNlast - LgHNfirst));
 
-	CASE field2 OF
-		null		:	Write(db,'null  ');
-		re_cryst	:	Write(db,'re_cryst');
-		b_diff	:	Write(db,'b_diff');
-		v_diff	:	Write(db,'v_diff');
-		plc_ht	:	Write(db,'plc_ht');
-		plc_lt	:	Write(db,'plc_lt');
-		o_glide	:	Write(db,'o_glide');
-		pls_drag	:	Write(db,'pls_drag');
-		phn_drag	:	Write(db,'phn_drag');
-		rel_drag	:	Write(db,'rel_drag');
-		ELSE
-			Write(db,'+ error +');
-	END;	{	Case	}
+{$IFDEF debug}
+		WRITE_FIELDNAME (field2);
+{$ENDIF}
 
 	{ ----- Draw the contours ----- }
 		IF (Lgt <= Lgt_first) THEN
+{$IFDEF debug}
 			Writeln(db)
+{$ENDIF}
 		ELSE
 			BEGIN
 				Line(x1,y1,x2,y2);
+{$IFDEF debug}
 				Writeln(db,' *');
+{$ENDIF}
 				IF (field1 <> field2) THEN
 					BEGIN
 						x := round((x1+x2)/2);
@@ -1265,13 +1605,7 @@ BEGIN
 						Line(x-s1, y+s2, x+s1,y+s2);
 					END;
 			END;
-	{ ----- Detect <Esc> key if pressed  ----- }
-		IF Keypressed THEN
-			BEGIN
-				Ch := ReadKey;
-				IF Ch = Esc THEN
-					skip:=TRUE;                           { skip }
-			END;
+		DETECT_SKIP;
 	UNTIL (Lgt > Lgt_last) OR skip;
 
 END;	{	Trajectory	}
@@ -1280,7 +1614,7 @@ PROCEDURE CALC_INDENTATION_MAP;
 
 VAR
  	mech,
-	field				:	T_mech;
+	field				:	E_mech;
 
 	count				:	Integer;
 	i, step			:	Word;
@@ -1301,25 +1635,22 @@ VAR
 
 BEGIN	{Calc_Indentation_Map	}
 
-	DEFINE_UNITS;
-
-	
-	LgHNfirst	:= -5;
+	LgHNfirst	:= -7;
 	LgHNlast		:= -1;
 
 	Load := 0.1;	{	MN	}
 	t_first := 0.005;
 	t_last := 5e7;
 
-	Lgt_first	:=	Ln(t_first)/Ln10;	
+	Lgt_first	:=	Ln(t_first)/Ln10;
 	Lgt_last 	:=	Ln(t_last)/Ln10;
-	Lgt_step		:= (Lgt_last - Lgt_first)/steps;			
+	Lgt_step		:= (Lgt_last - Lgt_first)/steps;
 
 	stress_step := steps div 2;	{	needed by StressFunction	}
 
-	trajnumber := 25;
+	trajnumber := 35;
 	TNtraj_low := 0.15;
-	TNtraj_high := 0.5;
+	TNtraj_high := 0.95;
 	TNtraj_step		:= (TNtraj_high - TNtraj_low)/trajnumber;   		{Temperature interval}
 
 	quit := FALSE;
@@ -1349,14 +1680,14 @@ BEGIN	{Calc_Indentation_Map	}
 	prev_eps := 0;
 	epsilon := 0;
 	home_in := 1.05;
-	Writeln(db,' Stress Begin count   Rate      LgSN     epsilon');	
+	Writeln(db,' Stress Begin count   Rate      LgSN     epsilon');
 	REPEAT
 		count:= count + 1;
 		STRAIN_RATES (TN, LgSN, Rate, field, hint_stress);
 		prev_eps := epsilon;
 		epsilon := Rate/BaseRate;
-		Writeln(db,' Stress Begin ',count:4,' ',Rate:8,' ', 
-			LgSN:8:3,' ',epsilon:9);	
+		Writeln(db,' Stress Begin ',count:4,' ',Rate:8,' ',
+			LgSN:8:3,' ',epsilon:9);
 		IF (Rate > BaseRate) THEN
 			LgSN := LgSN*home_in	{	since LgSN is always -ve	}
 		ELSE
@@ -1366,13 +1697,8 @@ BEGIN	{Calc_Indentation_Map	}
 			home_in := 1+ 0.5*(home_in-1);
 		Flush(db);
 
-{ ----- Detect <Esc> key if pressed  ----- }
-		IF Keypressed THEN
-			BEGIN
-				Ch := ReadKey;
-				IF Ch = Esc THEN
-					skip:=TRUE;                           { skip }
-			END;
+{ ----- Detect <CtrlC> key if pressed  ----- }
+		DETECT_SKIP;
 	UNTIL (( epsilon < 1.1) AND ( epsilon > 0.9)) OR skip;
 	Writeln(db,'Finished TN=0.5 getting Rate = 1e-4 ',Rate:8);
 
@@ -1380,8 +1706,8 @@ BEGIN	{Calc_Indentation_Map	}
 
 	FOR mech := null TO rel_drag DO
 		BEGIN
-			sumofI[mech]      := 0;
-			sumofJ[mech]      := 0;
+			temp_position[mech]      := 0;
+			stress_position[mech]      := 0;
 			pointcount[mech]  := 0;
 		END;
 
@@ -1397,7 +1723,7 @@ BEGIN	{Calc_Indentation_Map	}
 
 {	Plot the 300K trajectory first	}
 	SetLineStyle(DottedLn,0,NormWidth);
-	Trajectory (LgHNfirst,lgHNlast);	
+	Trajectory (LgHNfirst,lgHNlast);
 	SetLineStyle(SolidLn,0,NormWidth);
 
 { ========== S T A R T == T H E == T E M P E R A T U R E == L O O P ========= }
@@ -1411,17 +1737,12 @@ BEGIN	{Calc_Indentation_Map	}
 		DIFFUSION_RATES;
 
 { ----- Calculate and Plot the Hardness/time trajectory ------- }
-		Trajectory (LgHNfirst,lgHNlast);	
+		Trajectory (LgHNfirst,lgHNlast);
 
-{ ----- Detect <Esc> key if pressed  ----- }
-		IF Keypressed THEN
-			BEGIN
-				Ch := ReadKey;
-				IF Ch = Esc THEN
-					skip:=TRUE;                           { skip }
-			END;
+{ ----- Detect <CtrlC> key if pressed  ----- }
+		DETECT_SKIP;
 
-		TN := TN + TNtraj_step;	
+		TN := TN + TNtraj_step;
 		i:=i+1;
 	UNTIL (i=trajnumber+1) OR skip;
 
@@ -1437,5 +1758,8 @@ BEGIN	{Calc_Indentation_Map	}
 END;       {CALC_INDENTATION_MAP.   }
 { =========================================================================== }
 {$ENDIF}	{ indent }
-
+{---------------------------------------------------------------------------}
+{ Unit Initialization }
+BEGIN
+	SRcount := 0;
 End.

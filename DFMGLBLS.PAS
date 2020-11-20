@@ -1,46 +1,54 @@
 { Dfmglbls.pas	}
-{ PMS 2-February-1990 03:10 }
+{ PMS 26-March-1990 18:06 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
    *************   P.M.Sargent and M.F.Ashby        **************
-   *************   January 1990                     **************
+   *************   February 1990                    **************
 }
-{$R+}    {Range checking on}
-{$B+}	{Boolean complete evaluation on}
-{$S+}	{Stack checking on}
-{$I+}	{I/O checking on}
-{$N+}    {Use numeric coprocessor}
-{$E+}		{Include copy of 8087 Emulator - default anyway}
+{$IFDEF  contour}		{	ensure compiler directives are consistent	}
+{$DEFINE  detail}
+{$ENDIF}
+{$IFDEF  detail}
+{$DEFINE  debug}
+{$ENDIF}
+{.$R+}	{Range checking on}
+{.$B+}	{Boolean complete evaluation on}
+{.$S+}	{Stack checking on}
+{.$I+}	{I/O checking on}
+{.$N+}	{Use numeric coprocessor}
+{.$E+}	{Include copy of 8087 Emulator - default anyway}
 
 Unit Dfmglbls;
 
 Interface
-
 Uses
-	Crt,
-	Dos,
-	Printer,
-	StringIO,
-	Graph;
+	Crt;
 
 CONST
-	copyright = '(C) Copyright 1988 M.F.Ashby & P.M.Sargent';
+	copyright = '(C) Copyright 1988,1990 M.F.Ashby & P.M.Sargent';
+	VersionDate			= '25 March 1990';
+	Version				= 'DFM290';
+	Release				= '0.81';
+	DF						= -32768;		{	Default.. for floats, longint, int	}
+
 	avogadro				= 6.022045e23;
 	boltz					= 1.380662e-23;
 	R						= 8.314408694;
 	pi						= 3.141592654;
 	Ln10					= 2.302585093;
-	numberofparameters	= 18;
-	numberofvariables		= 9;
+	numberofparameters	= 23;
+	numberofvariables		= 14;
+	numberofmechanisms	= 10;		{	keep consistent with E_mech	}
 	parfilename			=	'matlpars.dat';
+	reffilename			=	'matlrefs.dat';
 
 	matl_name_length	=	9;
 	parm_name_length	=	6;
 	desclength			= 28;
 	unitlength			= 10;
-	reflength			= 1158;	{	61 * 19   - 1 }
+	ref_buflength	 	= 1158;	{	61 * reflines   - 1 }
 	reflines				= 19;
 
 	pathlength			= 30;
@@ -54,6 +62,7 @@ CONST
 
 	Gamcrit		 		= 0.9;
 
+	CtrlC					= #3;
 	Esc					= #27;
 	TLC					= #218;
 	TRC					= #191;
@@ -61,64 +70,62 @@ CONST
 	BRC					= #217;
 	MLC					= #195;
 	MRC					= #180;
+	Horiz					= #196;
+	Vert					= #179;
+	Under					= #205;
 
 	CR						=	#13;
 	LF						=	#10;
 	Bksp					=	#8;
 
 {	Codes for function keys After #0 read	}
+	PageUp				=	#73;
+	PageDn				=	#81;
 	Left					=	#75;
 	Right					=	#77;
 	Down					=	#80;
 	Up						=	#72;
 	Home					=	#71;
+	EndCh					=	#79;
+	Ins					=	#82;
+	Del					=	#83;
+	AltQ					=	#16;
+	AltW					=	#17;
 
 	C_text				= yellow;
 	C_screen				= blue;
 	C_back				= black;
 	C_bright				= white;
+	C_subdued			= LightGray;
 	C_warn				= red;
 
-	Horiz					= #196;
-	Vert					= #179;
-
-	VersionDate			= '22nd December 1989';
-{$IFOPT N-}
-	Version				= 'DFM1s ';
-	SpeedValue			= 3.28e-4;
-	max_real				= 1.0e37;
-	min_real				= 1.0e-37;
-	max_mult				= 1.0e12;
-{$ELSE}
-	Version				= 'DFM1  ';
-	SpeedValue			= 2.0e-4;
 	max_real				= 1.0e308;
 	min_real				= 1.0e-324;
 	max_mult				= 1.0e100;
-{$ENDIF}
-	
+
 TYPE
 	a_real				=	double;
-	T_dominance			=	(max_op, min_op);
-	T_overall			=	(add_op, dom_op, mean_op);
+	E_dominance			=	(max_op, min_op);
+	E_overall			=	(add_op, dom_op, mean_op);
 	T_ops					=	RECORD
-									dom : T_dominance;
-									all : T_overall;
+									dom : E_dominance;
+									all : E_overall;
 								END;
-	T_mech				=	(null, S_diff, S_plc, S_glide, S_drag, re_cryst,
+	E_mech				=	(null, S_diff, S_plc, S_glide, S_drag, re_cryst,
 									b_diff, v_diff, plc_ht, plc_lt, o_glide,
 									pls_drag, phn_drag, rel_drag);
-	T_mech_range		=	null..rel_drag;
-	T_mecharray			=	ARRAY [T_mech_range] OF a_real;
-	T_mechID				=	ARRAY [T_mech_range] OF T_mech;
-	T_validity			=	ARRAY [T_mech_range] OF BOOLEAN;
-	T_mechset			=	SET OF T_mech;
+	R_mech_range		=	null..rel_drag;
+	T_mecharray			=	ARRAY [R_mech_range] OF a_real;
+	T_mechID				=	ARRAY [R_mech_range] OF E_mech;
+	T_validity			=	ARRAY [R_mech_range] OF BOOLEAN;
+	T_mechset			=	SET OF E_mech;
 	T_imc_classes		= (imc_error,
 								fcc,
 								hcp,
 								bcc_alkali,
 								bcc_trans,
 								bcc_rare_earth,
+								bcc_rotator,
 								tetrag,
 								trig,
 								fcc_orderd,
@@ -135,25 +142,78 @@ TYPE
 								ice,
 								unknown);
 
-	T_matl_name			=	String[matl_name_length];
+	T_matl_name			= String[matl_name_length];
 	T_id_string			= String[parm_name_length];
 	T_descstring		= String[desclength];
 	T_unitstring		= String[unitlength];
 
 	filestring			= string[pathlength];
-	parrange				= 0..numberofparameters;
-	vblrange				= 1..numberofvariables;
-	refrange				= 1..reflength;
+	R_pars				= 0..numberofparameters;
+	R_vbls				= 1..numberofvariables;
+	R_refs				= 1..ref_buflength;
 	pagedepth			= 1..reflines;
 
 	lblstring			=	array[1..lbllength] of char;
 	chararray			= array[1..12] of char;
 	datastring			= string[datalabellength];
-	timer_string		= string[11];
-	pararray				= array[parrange] of a_real;
-	vblarray				= array[vblrange] of a_real;
-	refarray				= array[refrange] of char;
+	timer_string		= string[12];
+	pararray				= array[R_pars] of a_real;
+	vblarray				= array[R_vbls] of a_real;
+	refarray				= array[R_refs] of char;
 
+CONST	{	Typed constant, i.e. variables with a default	}
+	xoffset			:  integer = DF;
+	xlength			:  integer = DF;
+	yoffset			:  integer = DF;
+	ylength			:  integer = DF;
+	pointnumber		:  integer = DF;
+	contournumber	:  integer = DF;
+	Tcntr_number	:  integer = DF;
+	steps				:  integer = DF;
+	linenumber		:  integer = DF;
+	numberofpoints :  integer = DF;
+
+	tmelt				:  a_real = DF;
+	tobst				:  a_real = DF;
+	shmod				:  a_real = DF;
+	shtmp				:  a_real = DF;
+	tprls				:  a_real = DF;
+	delFl				:  a_real = DF;
+	delFo				:  a_real = DF;
+	atvol				:  a_real = DF;
+	dovol				:  a_real = DF;
+	dlbdy				:	a_real = DF;
+	qvolm				:  a_real = DF;
+	qbdry				:  a_real = DF;
+	acdoc				:  a_real = DF;
+	qcore				:  a_real = DF;
+	n_crp				:  a_real = DF;
+	S_crp				:  a_real = DF;
+	q_crp				:  a_real = DF;
+	burgv				:  a_real = DF;
+
+	Gsize				:  a_real = DF;
+	SNlast			:  a_real = DF;
+	SNfirst			:  a_real = DF;
+	TN					:	a_real = DF;
+	TNfirst			:  a_real = DF;
+	TNlast			:  a_real = DF;
+	cntrfirst		:  a_real = DF;
+	cntrfactor		:  a_real = DF;
+	RNbottom			:  a_real = DF;
+	RNtop				:  a_real = DF;
+	Tcntr_high		:  a_real = DF;
+	Tcntr_diff		:  a_real = DF;
+
+	LowRate			:	a_real = DF;
+	LgSN				:	a_real = DF;
+
+{	P					:  a_real = DF;	}
+	P_force2			:  a_real = DF;
+	S_force2			:  a_real = DF;
+	SNeff				:  a_real = DF;
+	SN_T				:  a_real = DF;
+	SN_crp			:  a_real = DF;
 VAR
 	imc				:	T_imc_classes;
 	mechID			:	T_mechID;
@@ -162,21 +222,13 @@ VAR
 	stash_index		:	0..stash_max;
 
 	matl_list		:	ARRAY [1..list_max] OF T_matl_name;
-	matl_index		:	0..list_max;
+	matl_index 		:	0..list_max;
 	matl_ok			:	BOOLEAN;	{	Status of material name list	}
 
 	stress_step		:	Word;
 	memory_enable	:	BOOLEAN;
-
-	xoffset			:  integer;
-	xlength			:  integer;
-	yoffset			:  integer;
-	ylength			:  integer;
-	pointnumber		:  integer;
-	contournumber	:  integer;
-	steps				:  integer;
-	linenumber		:  integer;
-	numberofpoints  :  integer;
+	SpeedValue		:	REAL;
+	SRcount			:	Word;
 
 	OldExitProc		:  Pointer;  { Saves exit procedure address }
 	modenamed		:  BOOLEAN;
@@ -186,8 +238,8 @@ VAR
 	modephpg			:  BOOLEAN;
 	modetpic			:  BOOLEAN;
 	modethpg			:  BOOLEAN;
-	modestrs			:  BOOLEAN;
 	modetemp			:  BOOLEAN;
+	modestrate		:  BOOLEAN;
 	modelist			:  BOOLEAN;
 	modelistfile	:  BOOLEAN;
 	modeconcern		:  BOOLEAN;
@@ -195,55 +247,17 @@ VAR
 	modeCGA			:	BOOLEAN;
 	modemono			:  BOOLEAN;
 
-	tmelt				:  a_real;
-	tobst				:  a_real;
-	shmod				:  a_real;
-	shtmp				:  a_real;
-	tprls				:  a_real;
-	delFl				:  a_real;
-	delFo				:  a_real;
-	atvol				:  a_real;
-	dovol				:  a_real;
-	dlbdy				:	a_real;
-	qvolm				:  a_real;
-	qbdry				:  a_real;
-	acdoc				:  a_real;
-	qcore				:  a_real;
-	n_crp				:  a_real;
-	S_crp				:  a_real;
-	q_crp				:  a_real;
-	burgv				:  a_real;
-
-	Gsize				:  a_real;
-	SNlast			:  a_real;
-	SNfirst			:  a_real;
-	TNfirst			:  a_real;
-	TNlast			:  a_real;
-	cntrfirst		:  a_real;
-	cntrfactor		:  a_real;
-	LowRate			:	a_real;
-
-	TN					:	a_real;
-	LgSN				:	a_real;
-
-	L1, L2, L3		:  a_real;
-	P					:  a_real;
-	DI					:  a_real;
-	P_force2			:  a_real;
-	S_force2			:  a_real;
-	SNeff				:  a_real;
-	SN_T				:  a_real;
-	SN_crp			:  a_real;
-
 	choice			:  char;
-	hrdcopy			:  char;
 	answer			:  char;
 
 	d					:  T_descstring;
 	u					:  T_unitstring;
 	id					:	T_id_string;
+	par				:  pararray;
 	vbl				:  vblarray;
 	ref				:  refarray;
+	parnumber		:  R_pars;
+	vblnumber		:  R_vbls;
 	matlname			:  filestring;
 	listfilename	:  filestring;
 	ppicfilename	:  filestring;
@@ -251,17 +265,15 @@ VAR
 	time_string		:  timer_string;
 	date_string		:  timer_string;
 	weekday			:	timer_string;
-	par				:  pararray;
-	vblnumber		:  vblrange;
 	datalabel		:  datastring;
 	datafilename	:  filestring;
 	phpgfilename	:  filestring;
 	thpgfilename	:  filestring;
-	parnumber		:  parrange;
-
+{$IFDEF debug}
 	db					:	TEXT;		{	debug file	}
+{$ENDIF}
 
-PROCEDURE MyExitProc;		
+PROCEDURE MyExitProc;
 { Provides a procedure which intercepts the system exit for unplanned exit	}
 
 PROCEDURE Finish(h: Byte);
@@ -275,8 +287,10 @@ PROCEDURE DATE_AND_TIME;
 
 PROCEDURE CLEAN_WINDOW;
 
+PROCEDURE UnderLine (n: Byte);
+
 PROCEDURE SCAN_DATA_FILE (scribble: BOOLEAN);
-{	This scane the data file for the list of materials is contains.
+{	This scans the data file for the list of materials is contains.
 	It is run whenever it can be slipped in without the user noticing	}
 
 PROCEDURE GiveCommandLineHelp;
@@ -304,28 +318,30 @@ PROCEDURE LABELS_FOR_VARIABLES;
 
 PROCEDURE get_imc_string(imc: T_imc_classes; var s: String);
 
-PROCEDURE LIST_PARAMETERS;
-
-{ -------- Prints out the material parameters as a table -------- }
-
-PROCEDURE LIST_VARIABLES;
-
-{ -------- Prints out the material variables as a table -------- }
-
-PROCEDURE LIST_REFERENCES;
-
-{ -------- Prints out the material reference -------- }
 
 {===========================================================================}
 
 Implementation
 
-{$F+}
+Uses
+	Dos,
+	Printer,
+	StringIO,
+	Graph;
+
 {---------------------------------------------------------------------------}
+{$IFOPT F+}
 PROCEDURE Finish(h: Byte);
+{$ELSE}
+{$F+}
+PROCEDURE Finish(h: Byte);
+{$F-}
+{$ENDIF}
 {	This should only be called when the system is in text mode, and
 	never when it is in graphics mode since it does not close down
 	the graphics properly.	}
+{	The checking on $F+ is so that if it is set by compiler directive,
+	we do not then switch it off after this procedure by accident.}
 BEGIN
 	ExitProc := OldExitProc; { Restore exit PROCEDURE address }
 {$IFDEF debug}
@@ -334,7 +350,21 @@ BEGIN
 	Halt(h);
 END;	{	Finish	}
 {---------------------------------------------------------------------------}
+{$IFOPT F+}
 PROCEDURE MyExitProc;
+{$ELSE}
+{$F+}
+PROCEDURE MyExitProc;
+{$F-}
+{$ENDIF}
+TYPE
+	T_PtrRec	=	RECORD	{	length-compatible with Pointer type	}
+	  					ofs,seg: Word
+			  		END;
+VAR
+	ad	:	T_PtrRec;
+{	The checking on $F+ is so that if it is set by compiler directive,
+	we do not then switch it off after this procedure by accident.}
 BEGIN
 	ExitProc := OldExitProc; { Restore exit PROCEDURE address }
 	CloseGraph;              { Shut down the graphics system }
@@ -342,12 +372,21 @@ BEGIN
 	textmode(LastMode);
 	Textbackground(black);
 	Textcolor(white);
+	IF (ErrorAddr <> NIL) THEN 	{	run-time error	}
+		BEGIN
+			ad := T_PtrRec(ErrorAddr);
+			Writeln('Run-time error : ',ExitCode:4);
+			Writeln('   at (decimal): ',ad.seg:5,':',ad.ofs:5);	{DECIMAL!}
+{$IFDEF  debug}
+			Writeln(db,'Run-time error : ',ExitCode:4);
+			Writeln(db,'   at (decimal): ',ad.seg:5,':',ad.ofs:5);	{DECIMAL!}
+{$ENDIF}
+		END;
 {$IFDEF  debug}
 	Close (db);
 {$ENDIF}
 
 END; { MyExitProc }
-{$F-}
 {-------------------------------------------------------------------}
 FUNCTION FileNotThere(name: String): BOOLEAN;
 	{	See Turbo 4.0 Manual pp464-465	}
@@ -389,7 +428,7 @@ BEGIN
 
 	{Convert time and date integer values into strings, and write them}
 
-	Str(hour,hour_st); Str(min,min_st); Str(sec,sec_st); 
+	Str(hour,hour_st); Str(min,min_st); Str(sec,sec_st);
 	IF hour < 10 THEN
 		hour_st := '0'+hour_st;
 	IF min < 10 THEN
@@ -412,11 +451,24 @@ BEGIN
 		ELSE
 			weekday := 'Turdsday';
 	END;	{	Case	}
-{$IFDEF USA}
-	date_string := month_st+'/'+day_st+'/'+year_st;
-{$ELSE}
-	date_string := day_st+'/'+month_st+'/'+year_st;
-{$ENDIF}
+
+	CASE month OF
+		1:	month_st := 'Jan.';
+		2:	month_st := 'Feb.';
+		3:	month_st := 'Mar.';
+		4:	month_st := 'Apr.';
+		5:	month_st := 'May ';
+		6:	month_st := 'Jun.';
+		7:	month_st := 'Jul.';
+		8:	month_st := 'Aug.';
+		9:	month_st := 'Sep.';
+		10:month_st := 'Oct.';
+		11:month_st := 'Nov.';
+		12:month_st := 'Dec.';
+		ELSE
+			month_st := 'Jog.';
+	END;	{	Case	}
+	date_string := day_st+' '+month_st+' '+year_st;
 
 END;   {DATE_AND_TIME.    }
 
@@ -436,7 +488,7 @@ BEGIN
 END;	{	WRITE_REAL	}
 {-------------------------------------------------------------------}
 PROCEDURE SCAN_DATA_FILE (scribble: BOOLEAN);
-{	This scane the data file for the list of materials is contains.
+{	This scans the data file for the list of materials is contains.
 	It is run whenever it can be slipped in without the user
 	noticing	}
 VAR
@@ -446,30 +498,46 @@ VAR
 	found		:	BOOLEAN;
 	i			:	Word;
 BEGIN
-	Assign(file_in, parfilename);
-	Reset(file_in);
-	matl_index :=0;
-	REPEAT
-		READLN(file_in, buf);
-		line := buf;
-		material := get_next_token(line);
-		UpperCase(material);
+	IF scribble THEN
+		{	restrict Window so scrolling etc. works	}
+		Window(10,5,70,22);
 
-		found := FALSE;
-		FOR i := 1 TO matl_index DO
-			IF (material = matl_list[i]) THEN
-				found := TRUE;
+	IF FileNotThere (parfilename) THEN
+		BEGIN
+			matl_index :=1;
+			matl_list[1] := 'DEFAULT';
+			IF scribble THEN
+				Write(matl_list[1]:20);
+		END
+	ELSE
+		BEGIN
+			Assign(file_in, parfilename);
+			Reset(file_in);
+			matl_index :=0;
+			REPEAT
+				READLN(file_in, buf);
+				line := buf;
+				material := get_next_token(line);
+				UpperCase(material);
 
-		IF NOT found THEN
-			BEGIN
-				matl_index := matl_index + 1;
-				matl_list[matl_index] := material;
-				IF scribble THEN
-					Write(material:20);
-			END;
-	UNTIL Eof(file_in);
-	Close(file_in);
+				found := FALSE;
+				FOR i := 1 TO matl_index DO
+					IF (material = matl_list[i]) THEN
+						found := TRUE;
+
+				IF NOT found THEN
+					BEGIN
+						matl_index := matl_index + 1;
+						matl_list[matl_index] := material;
+						IF scribble THEN
+							Write(material:20);
+					END;
+			UNTIL Eof(file_in);
+			Close(file_in);
+		END;
 	matl_ok := TRUE;
+	IF scribble THEN
+		Window(10,1,70,25);
 END;	{	SCAN_DATA_FILE	}
 {-------------------------------------------------------------------}
 PROCEDURE CLEAN_WINDOW;
@@ -479,15 +547,16 @@ VAR
 BEGIN
 	window(1,1,80,25);     textbackground(C_screen);    clrscr;
 	window(10,4,70,22);    textbackground(C_back);    clrscr;
-	
+
 	window(10,1,70,25);
 	textbackground(C_back);
+	textcolor(C_text);
 	gotoXY(1,2);
 	write  ('                                                             ');
 	gotoXY(1,24);
 	write  ('                                                             ');
 
-	IF modemono THEN
+{	IF modemono THEN	}
 		BEGIN
 			textbackground(C_screen);
 			window(1,1,80,25);
@@ -529,7 +598,6 @@ BEGIN
 		END;
 
 	window(10,1,70,25);
-	textcolor(C_text);
 	textbackground(C_back);
 
 END;     {CLEAN_WINDOW.    }
@@ -538,12 +606,12 @@ END;     {CLEAN_WINDOW.    }
 PROCEDURE GiveCommandLineHelp;
 
 BEGIN
-	WRITELN(' usage:  ',version,' <path><dataname> <options>');
-{	WRITELN(' e.g.    ',version,' \source\copper /f /w:\op\copper.lst /s- /tl:cut.pic');
+	WRITELN(' usage:  ',version,' <dataname> <options>');
+{	WRITELN(' e.g.    ',version,' copper /f /w:\op\copper.lst /s- /tl:cut.pic');
 }
-	WRITELN(' e.g.    ',version,' \source\copper /f /w:\op\copper.lst /s-');
+	WRITELN(' e.g.    ',version,' copper /f /w:\op\copper.lst /s-');
 	WRITELN;
-	WRITELN(' /h      help and information only');
+	WRITELN(' /h /?   help and information only');
 	WRITELN(' /f      fast option, no interaction with user');
 {	WRITELN(' /d      demonstration; as /f but waits 10s between plots');
 }
@@ -553,20 +621,29 @@ BEGIN
 	WRITELN(' /sg:<fn>  produce HPGL Hewlett-Packard Graphics Language plot');
 	WRITELN('         (<fn> denotes full path & filename):');
 }
-	WRITELN('           /s+     produce a strain-rate map (default)');
-	WRITELN('           /s-     do not produce a strain-rate map at all');
+	WRITELN('           /s+  produce, /s- don''t produce, a strain-rate map');
 	WRITELN(' /t      options for temperature map (as for /s)');
-	WRITELN(' /w      produce a listing to the printer');
-	WRITELN(' /w:<fn> sends the listing to a file instead of the printer');
-	WRITELN('         (<fn> denotes full path & filename)');	
-	WRITELN(' /o  /c  produces an Olivetti or CGA plot');
-	WRITELN;
-{	WRITELN(' In case of conflict between options,');
+	WRITELN(' /l:<p>  write a listing to the printer');
+	WRITELN('         (<p> is O, E or L, for Ordinary, Epson or Laser)');
+	WRITELN(' /w:<fn> write a listing to a file, <fn> is a full filename');
+	WRITELN(' /o      attempts an Olivetti (AT&T, Compaq) 640x400 plot');
+	WRITELN(' /c      produces a CGA 640x200 plot - easy screen printing');
+{	WRITELN;
+	WRITELN(' In case of conflict between options,');
 	WRITELN(' e.g. "/s- /sg:cuplot.hpg",');
 	WRITELN(' the default is for action rather than inaction,');
 	WRITELN('  so /s- would be ignored.');
 }
 END;	{	GiveCommandLineHelp	}
+{-------------------------------------------------------------------}
+PROCEDURE UnderLine (n:Byte);
+
+VAR
+	i	:	Byte;
+BEGIN
+	FOR i := 1 TO n DO
+		Write(Under);
+END;	{	UnderLine	}
 {-------------------------------------------------------------------}
 PROCEDURE HELP_1;
 
@@ -579,14 +656,15 @@ BEGIN
 	DATE_AND_TIME;
 
 	CLEAN_WINDOW;
-	LowVideo;
+	textcolor(C_subdued);
 
 	gotoXY(1,2);
 	writeln('                    HELP  SCREEN  1:1                        ');
 	gotoXY(1,6);
+	write  ('       '); UnderLine(45); writeln('        ');
 	writeln('       M E C H A N I S M    M A P S :     ',version,'       ');
-	writeln('               P. M. Sargent,   ',date_string,'             ');
-	writeln('       =============================================        ');
+	writeln('               P. M. Sargent,   ',date_string);
+	write  ('       '); UnderLine(45); writeln('        ');
 	writeln;
 	writeln('      This program computes Deformation Mechanism maps from ');
 	writeln('  the simplified equations given in ref. [1].               ');
@@ -599,54 +677,57 @@ BEGIN
 	writeln('                                                            ');
 	writeln('  [1] H.J.Frost & M.F.Ashby, "Deformation Mechanism Maps",  ');
 	writeln('      Pergamon Press, Oxford, UK. (1983).                   ');
-	gotoXY(1,24);  textcolor(C_bright);
 
+	gotoXY(1,24);  textcolor(C_text);
+	write  ('                WAIT...                                      ');
 	SCAN_DATA_FILE (FALSE);
-
+	gotoXY(1,24);  textcolor(C_bright);
 	write  ('                PRESS ANY KEY TO CONTINUE                    ');
-	NormVideo;
+	textcolor(C_text);
+
 	repeat until keypressed;
 	Ch:=ReadKey;
-	If Ch=Esc THEN Finish(0);
+	If Ch=CtrlC THEN Finish(0);
 	textcolor(C_text);
 
 	CLEAN_WINDOW;
-	LowVideo;
+	textcolor(C_subdued);
 
 	gotoXY(1,2);
 	writeln('                    HELP  SCREEN  1:2                        ');
 	gotoXY(1,5);
-	write('                PARAMETER AND VARIABLES FILES                ');
-	write('                =============================                ');
+	write('                PARAMETER AND VARIABLES                      ');
+	write('                ');
+		UnderLine(23); 						  writeln('                     ');
 	writeln('                                                            ');
 	writeln('  You start by creating a Data Set for the chosen material, ');
 	writeln('  or by Reading an existing Data Set from disc.             ');
 	writeln('  The data are automatically checked and suspicious values  ');
 	writeln('  are flagged.                                              ');
-	writeln('  The first parameter on the second page is the number of   ');
+	writeln('  The first variable on the last data page is the number of ');
 	writeln('  program steps.  Choose  15  for a quick look,  100  for   ');
 	writeln('  a really accurate map (it may take some time).            ');
 	writeln('                                                            ');
 	gotoXY(1,24);   textcolor(C_bright);
 	write  ('                PRESS ANY KEY TO CONTINUE                    ');
-	NormVideo;
+	textcolor(C_text);
 	repeat until keypressed;
 	Ch:=ReadKey;
-	If Ch=Esc THEN Finish(0);
+	If Ch=CtrlC THEN Finish(0);
 	textcolor(C_text);
 
 	CLEAN_WINDOW;
-	LowVideo;
+	textcolor(C_subdued);
 
 	gotoXY(1,2);
 	writeln('                    HELP  SCREEN  1:3                        ');
 	gotoXY(1,5);
 	write('                PRINTING PLOTS ON A PRINTER                  ');
-	write('                ===========================                  ');
+	write('                '); UnderLine(27); writeln('                 ');
 	writeln('                                                            ');
-	writeln('     Remember: run GRAPHICS  BEFORE running ',Version,' if  ');
-	writeln('  you want to dump the plot to a dot-matrix or laser        ');
-	writeln('  printer.  Do this by running the program GRAPHICS.COM     ');
+	writeln('     Remember: run GRAPHICS before running ',Version,' if   ');
+	writeln('  you want to dump the plot to a dot-matrix printer.        ');
+	writeln('     Do this by running the program GRAPHICS.COM            ');
 	writeln('  supplied with the MS-DOS operating system which came with ');
 	writeln('  your computer, or try the copy on this disc.              ');
 	writeln('                                                            ');
@@ -655,49 +736,19 @@ BEGIN
 	writeln('  on the screen.  This key may require the SHIFT key to be  ');
 	writeln('  pressed to be effective.                                  ');
 	writeln('                                                            ');
-	writeln('     Users of PS/2 and machines with EGA graphics adapters  ');
-	writeln('  may need to run the program with the /c option to get     ');
-	writeln('  the lower resolution graphics: e.g. type "',Version,' /c" to ');
-	writeln('  run the mapping program.                                  ');
+	writeln('     Many users who do not regularly do graphical screen-   ');
+	writeln('  dumps will need to find out how to configure their        ');
+	writeln('  computer systems in order to do it.                       ');
+	writeln('     The documentation supplied discusses it in detail.     ');
 	gotoXY(1,24);   textcolor(C_bright);
 	write  ('                PRESS ANY KEY TO CONTINUE                    ');
-	NormVideo;
-	repeat until keypressed;
-	Ch:=ReadKey;
-	If Ch=Esc THEN Finish(0);
 	textcolor(C_text);
-
-	CLEAN_WINDOW;
-	LowVideo;
-
-	gotoXY(1,2);
-	writeln('                    HELP  SCREEN  1:4                        ');
-	gotoXY(1,5);
-	write('                PRINTING PLOTS ON A PRINTER (Cont.)          ');
-	write('                ===================================          ');
-	writeln('                                                            ');
-	writeln('     If you have an Olivetti or AT&T computer then you can  ');
-	writeln('  get higher resolution plots on the screen by using the /o ');
-	writeln('  option when you run the program, e.g. "',Version,' /o" .  ');
-	writeln('  (This may also work with some Compaq computers.)          ');
-	writeln('                                                            ');
-	writeln('     If you want to do screen dumps of these plots your     ');
-	writeln('  will need to read your MS-DOS documentation of the        ');
-	writeln('  GRAPHICS command very carefully.                          ');
-	writeln('                                                            ');
-	writeln('     If you have a HERCULES graphics adapter then the       ');
-	writeln('  appropriate screen dump program is HGC.COM, instead of    ');
-	writeln('  graphics.com.                                             ');
-	gotoXY(1,24);   textcolor(C_bright);
-	write  ('                PRESS ANY KEY TO CONTINUE                    ');
-	NormVideo;
 	repeat until keypressed;
 	Ch:=ReadKey;
-	If Ch=Esc THEN Finish(0);
+	If Ch=CtrlC THEN Finish(0);
 	textcolor(C_text);
 
 END;   { HELP_1.   }
-
 {-------------------------------------------------------------------}
 PROCEDURE HELP_2;
 VAR
@@ -705,13 +756,13 @@ VAR
 BEGIN
 
 	CLEAN_WINDOW;
-	LowVideo;
+	textcolor(C_subdued);
 
 	gotoXY(1,2);
 	writeln('                     HELP  SCREEN  2                         ');
 	gotoXY(1,5);
 	write('               CREATING AND READING DATA SETS                ');
-	write('               ==============================                ');
+	write('               '); UnderLine(30);    writeln('               ');
 	write('                                                             ');
 	write('     To be legal, a material name must have one through nine ');
 	write('  characters (either letters of the alphabet or numbers      ');
@@ -730,10 +781,10 @@ BEGIN
 
 	gotoXY(1,24);  textcolor(C_bright);
 	write  ('                PRESS ANY KEY TO CONTINUE                    ');
-	NormVideo;
+	textcolor(C_text);
 	repeat until keypressed;
 	Ch:=ReadKey;
-	If Ch=Esc THEN Finish(0);
+	If Ch=CtrlC THEN Finish(0);
 	textcolor(C_text);
 	textbackground(C_screen);  gotoXY(1,24);
 	write('                                                             ');
@@ -747,46 +798,47 @@ VAR
 BEGIN
 
 	CLEAN_WINDOW;
-	LowVideo;
+	textcolor(C_subdued);
 
 	gotoXY(1,2);
 	writeln('                     HELP  SCREEN  3                         ');
 	gotoXY(1,5);
 	write('                    Command Line Options                     ');
-	write('                    ====================                     ');
+	write('                    ');
+		UnderLine(20);                      writeln('                    ');
 	write('                                                             ');
 
 	GiveCommandLineHelp;
 
 	gotoXY(1,24);  textcolor(C_bright);
 	write  ('                PRESS ANY KEY TO CONTINUE                    ');
-	NormVideo;
+	textcolor(C_text);
 	repeat until keypressed;
 	Ch:=ReadKey;
-	If Ch=Esc THEN Finish(0);
+	If Ch=CtrlC THEN Finish(0);
 	textcolor(C_text);
 	textbackground(C_screen);  gotoXY(1,24);
 	write('                                                             ');
 
 END;    {HELP_3. }
+
 {-------------------------------------------------------------------}
 PROCEDURE INTRODUCTION;
 
 BEGIN
 
 	CLEAN_WINDOW;     DATE_AND_TIME;
-	
+
 
 	gotoXY(1,2);
-	writeln('          ',version,'                        ',
-		date_string,'            ');
+	writeln('          ',version,'                        ',date_string);
 	gotoXY(1,6);
-	writeln('       ==============================================       ');
+	write  ('       '); UnderLine(46);                    writeln('      ');
 	writeln('       M E C H A N I S M    M A P S :     ',version,'       ');
 	writeln('               P. M. Sargent,  Cambridge University         ');
-	writeln('       ==============================================       ');
+	write  ('       '); UnderLine(46);                    writeln('      ');
 	writeln;  writeln;
-	LowVideo;
+	textcolor(C_subdued);
 	writeln('   This program calculates and plots Deformation Mechanism  ');
 	writeln('   Maps.  Details of the equations and of the models on     ');
 	writeln('   which they are based are given in:                       ');
@@ -800,12 +852,16 @@ BEGIN
 
 	gotoXY(1,24);   textcolor(C_bright);
 	write  ('                PRESS ANY KEY TO CONTINUE                    ');
-	NormVideo;
+	textcolor(C_text);
 
 	answer:=Readkey;  gotoXY(1,22);
 	textcolor(C_text);
 	if answer in ['h','H'] then HELP_1;
-	if answer = Esc then Finish(0);
+	if answer = CtrlC THEN	{	cannot use Finish(0), debug file not open }
+		BEGIN
+			ExitProc := OldExitProc;
+			Halt(0);
+		END;
 
 END;   {INTRODUCTION.     }
 
@@ -836,6 +892,11 @@ BEGIN
 	16 : BEGIN id:='plcErg';d:='Activ. energy for P-L creep ';  u:='kJ/mol    'END;
 	17 : BEGIN id:='Burgr';	d:='Burgers vector              ';  u:='m         'END;
 	18 : BEGIN id:='Omega';	d:='Atomic Volume               ';  u:='m^3       'END;
+	19 : BEGIN id:='Phnon';	d:='Phonon Drag Coefficient     ';  u:='          'END;
+	20 : BEGIN id:='Eltrn';	d:='Electron Drag Coefficient   ';  u:='          'END;
+	21 : BEGIN id:='BrkDn';	d:='Power-Law Breakdown Stress  ';  u:='          'END;
+	22 : BEGIN id:='DffCt';	d:='Diffusion Cut-off Stress    ';  u:='          'END;
+	23 : BEGIN id:='PhsCh';	d:='Phase Change Temperature    ';  u:='K         'END;
 	END;
 
 END;  {LABELS_FOR_PARAMETERS;    }
@@ -847,17 +908,24 @@ PROCEDURE LABELS_FOR_VARIABLES;
 
 BEGIN
 
-	case vblnumber of
+	CASE vblnumber OF
 	1	: BEGIN id:='DfmStN'; d:='Number of Program Steps     ';  u:='          'END;
-	2	: BEGIN id:='DfmGsz'; d:='Grain size                  ';  u:='m         'END;
+	2	: BEGIN id:='DfmGsz'; d:='Grain size                  ';  u:=' microns  'END;
 	3	: BEGIN id:='DfmSy-'; d:='Lower limit, S/SY axis      ';  u:='          'END;
 	4  : BEGIN id:='DfmSy+'; d:='Upper limit, S/SY axis      ';  u:='          'END;
 	5  : BEGIN id:='DfmT-';  d:='Lower limit, T/TM axis      ';  u:='          'END;
 	6  : BEGIN id:='DfmT+';  d:='Upper limit, T/TM axis      ';  u:='          'END;
-	7  : BEGIN id:='DfmCn1'; d:='First strain-rate contour   ';  u:='1/s       'END;
+	7  : BEGIN id:='DfmCn1'; d:='First strain-rate contour   ';  u:=' 1/s      'END;
 	8  : BEGIN id:='DfmCn*'; d:='Multiplier: strain rates    ';  u:='          'END;
 	9  : BEGIN id:='DfmCnN'; d:='Number strain-rate contours ';  u:='          'END;
-	END;
+	10 : BEGIN id:='DfmR- '; d:='Lower limit, StrainRate axis';  u:=' 1/s      'END;
+	11 : BEGIN id:='DfmR+ '; d:='Upper limit, StrainRate axis';  u:=' 1/s      'END;
+	12 : BEGIN id:='DfmTn1'; d:='Highest temperature contour ';  u:=' K        'END;
+	13 : BEGIN id:='DfmTnD'; d:='Temperature between contours';  u:=' K        'END;
+	14 : BEGIN id:='DfmTnN'; d:='Number temparature contours ';  u:='          'END;
+	ELSE
+		BEGIN id:='ERROR '; d:='This is unrecognised.       ';  u:='          'END;
+	END;	{	Case	}
 END;  {LABELS_FOR_VARIABLES;     }
 {-------------------------------------------------------------------}
 PROCEDURE get_imc_string(imc: T_imc_classes; var s: String);
@@ -871,6 +939,7 @@ BEGIN
 		bcc_alkali       : s:='bcc_alkali      ';
 		bcc_trans        : s:='bcc_trans       ';
 		bcc_rare_earth   : s:='bcc_rare_earth  ';
+		bcc_rotator		  : s:='bcc_rotator     ';
 		hcp              : s:='hcp             ';
 		tetrag           : s:='tetrag          ';
 		trig             : s:='trig            ';
@@ -895,92 +964,44 @@ BEGIN
 	END; { of CASE }
 END;      {end of get_imc_string procedure}
 {-------------------------------------------------------------------}
-PROCEDURE LIST_PARAMETERS;
-
-{ -------- Prints out the material parameters as a table -------- }
-VAR
-	s	:	String;
+{ Unit Initialization }
 BEGIN
+	Writeln(Version,' v',Release,' ',VersionDate);
+	Writeln('       ',copyright);
 
-	CLEAN_WINDOW;
-	DATE_AND_TIME;
+	WriteLn(MemAvail:8,' bytes (total) available, above this program');
+	WriteLn(MaxAvail/1024:5:0,'    K     (largest contiguous block) available');
 
-	gotoXY(1,2);
-	textbackground(C_back);
-	write('                                                             ');
-	gotoXY(1,2);
-	writeln(' ',Version,'       INPUT PARAMETERS FOR   ',matlname,'     ',
-		Date_string);
+	{ ----- Open DEBUG file	----- }
+{$IFDEF  debug}
+		IF CannotOpen('debug.txt') THEN
+			BEGIN
+				Writeln(' *** Cannot Open Debug File ***');
+				Halt(4);
+			END
+		ELSE
+			BEGIN
+				Assign(db,'debug.txt');
+				Rewrite(db);
+			END;
+{$ENDIF}
 
-	get_imc_string (imc,s);
-	gotoXY(1,4);
-	write ('    0   Isomechanical Class:');
-	GotoXY(43,4);
-	Writeln(s);
-
-	for parnumber := 1 to numberofparameters do BEGIN
-
-	LABELS_FOR_PARAMETERS;
-
-	write ('  ',parnumber:3,'   ', d, u,' =');
-	WRITE_REAL (par[parnumber]);
-	writeln;
-	END;
-
-END;  {LIST_PARAMETERS.     }
-
-{-------------------------------------------------------------------}
-PROCEDURE LIST_VARIABLES;
-
-{ -------- Prints out the material variables as a table -------- }
-BEGIN
-
-	CLEAN_WINDOW;
-	DATE_AND_TIME;
-
-	gotoXY(1,2);
-	textbackground(C_back);
-	write('                                                             ');
-	gotoXY(1,2);
-	writeln(' ',Version,'      INPUT VARIABLES FOR   ',matlname,'      ',
-		Date_string);
-
-	gotoXY(1,5);
-	FOR vblnumber := 1 to numberofvariables DO
+	{ ----- Check for DATA files	----- }
+	IF FileNotThere (parfilename) THEN
 		BEGIN
-			LABELS_FOR_VARIABLES;
-			write ('  ',vblnumber:3,'   ', d, u,' =');
-			WRITE_REAL(vbl[vblnumber]);
-			writeln;
+			WriteLn('***  DATA FILE matlpars.dat CANNOT BE FOUND !  ***');
 		END;
+	IF FileNotThere (reffilename) THEN
+		BEGIN
+			WriteLn('***  DATA FILE matlrefs.dat CANNOT BE FOUND !  ***');
+		END;
+	IF FileNotThere (reffilename)
+	OR FileNotThere (parfilename)	THEN
+		Halt(4);
 
-END;  {LIST_VARIABLES.    }
-{-------------------------------------------------------------------}
-PROCEDURE LIST_REFERENCES;
-VAR
-	reffile	:  text;
-	index		:	refrange;
+	FOR	parnumber := 0 to numberofparameters DO
+		par[parnumber] := DF;
 
-{ -------- Prints out the material variables as a table -------- }
-BEGIN
-
-	CLEAN_WINDOW;
-	DATE_AND_TIME;
-
-	gotoXY(1,2);
-	textbackground(C_back);
-	write('                                                             ');
-	gotoXY(1,2);
-	writeln(' ',Version,'  REFERENCE DESCRIPTION FOR ',matlname,'      ',
-		Date_string);
-
-{ ------- Print out Reference Text as a page on screen ------- }
-
-	gotoXY(1,4);
-	FOR index := 1 to reflength DO
-		write(ref[index]);
-
-END;  {LIST_REFERENCES.    }
-{-------------------------------------------------------------------}
-
+	FOR	vblnumber := 1 to numberofvariables DO
+		vbl[vblnumber] := DF;
 End.	{	Unit DfmGlbls	}

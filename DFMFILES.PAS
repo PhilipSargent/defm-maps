@@ -1,5 +1,5 @@
 Unit dfmfiles;
-{ PMS 2-February-1990 03:14 }
+{ PMS 26-March-1990 18:11 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -7,20 +7,22 @@ Unit dfmfiles;
    *************   P.M.Sargent and M.F.Ashby        **************
    *************   January 1990                     **************
 }
-{$R+}    {Range checking on}
-{$B+}    {Boolean complete evaluation on}
-{$S+}    {Stack checking on}
-{$I+}    {I/O checking on}
-{$N+}    {Use numeric coprocessor}
-{$E+}		{Include copy of 8087 Emulator - default anyway}
+{$IFDEF  contour}		{	ensure compiler directives are consistent	}
+{$DEFINE  detail}
+{$ENDIF}
+{$IFDEF  detail}
+{$DEFINE  debug}
+{$ENDIF}
+{.$R+}    {Range checking on}
+{.$B+}    {Boolean complete evaluation on}
+{.$S+}    {Stack checking on}
+{.$I+}    {I/O checking on}
+{.$N+}    {Use numeric coprocessor}
+{.$E+}		{Include copy of 8087 Emulator - default anyway}
 
 Interface
 
 Uses
-	Crt,
-	Dos,
-	Printer,
-	stringIO,
 	DfmGlbls;
 
 FUNCTION ALREADY_EXISTS (name: T_matl_name): BOOLEAN;
@@ -36,6 +38,8 @@ PROCEDURE MAKE_VARIABLE_SET;
 
 PROCEDURE MAKE_REFERENCE_SET;
 { -- Creates a new set of reference info. -- }
+
+PROCEDURE CHECK_MATLNAME;
 
 PROCEDURE READ_MATL_DATA;
 
@@ -61,30 +65,54 @@ PROCEDURE SAVE_MATL_VARIABLES;
 
 PROCEDURE SAVE_MATL_REFERENCES;
 
-PROCEDURE CHECK_PARAMETERS;
+PROCEDURE CHECK_PARAMETERS (Screen: BOOLEAN);
 
 { -------- Checks input data against limits -------- }
 
 PROCEDURE INPUT_DATA_TO_PRINTER;
+PROCEDURE OPEN_PRINTER (hrdcopy: CHAR);
+PROCEDURE CLOSE_PRINTER (hrdcopy: CHAR);
 
 PROCEDURE INPUT_DATA_TO_FILE;
 
+{$IFDEF debug}
+PROCEDURE DUD_TEMP_TO_DEBUG (dud_steps: INTEGER; dud_TN, dud_K: a_real);
+{$ENDIF}
+
+PROCEDURE DUD_TEMP_TO_PRINTER (dud_steps: INTEGER; dud_TN, dud_K: a_real);
+PROCEDURE DUD_TEMP_TO_FILE (dud_steps: INTEGER; dud_TN, dud_K: a_real);
 {===================================================================}
 
 Implementation
 
+Uses
+	Crt,
+	Dos,
+	Printer,
+	stringIO;
+
+CONST
+	last_page1_parameter = 16;
+TYPE
+	T_page	=	(First, Second);
+
 VAR
-	escape	:	BOOLEAN;
+	escape		:	BOOLEAN;
+	reflength	:	R_refs;
+	file_in	:	Text;
+	file_out	:	Text;
+	tempfile	:	String;
+	bakfile	:	String;
 
 {-------------------------------------------------------------------}
-PROCEDURE SET_PARAMETERS (n: parrange; VAR L,m,h: a_real);
+PROCEDURE SET_PARAMETERS (n: R_pars; VAR L,m,h: a_real);
 VAR
 	Q, guess	:	a_real;
 	s	:	String;
 	{----------------------------------------------------------------}
 FUNCTION dDbdry: a_real;
-BEGIN	
-	{	If the atomic vloume is unset, then set it (recursive call)	}
+BEGIN
+	{	If the atomic volume is unset, then set it (recursive call)	}
 	IF ( par[18] <= 0 ) THEN
 		SET_PARAMETERS (18, L, par[18], h);
 
@@ -116,10 +144,15 @@ BEGIN	{	SET_PARAMETERS	}
 	16 : BEGIN	L := 0.6*par[9];	m := par[9];		h := 2*par[9]	END;
 	17 : BEGIN	L := 2.0e-10;		m := 3.5e-10;		h := 10.0e-10	END;
 	18 : BEGIN	L := 1.0E-29;		m := 1.8E-29;		h := 5.0E-29	END;
+	19 : BEGIN	L := 6.0E-11;		m := 6.0E-10;		h := 6.0E-9 	END;
+	20 : BEGIN	L := 2.0E-9; 		m := 2.0E-8; 		h := 2.0E-7 	END;
+	21 : BEGIN	L := 2.0E-4; 		m := 1.0E-3; 		h := 1.0E-1 	END;
+	22 : BEGIN	L := 0.1;	 		m := 0.3; 			h := 0.9 		END;
+	23 : BEGIN	L := 0;		 		m := par[1];		h := par[1] 	END;
 	END;	{	Case	}
 
 	Q := R*par[1]/1000;
-	
+
  	CASE imc OF
 		fcc:					BEGIN
 	CASE n of
@@ -133,7 +166,16 @@ BEGIN	{	SET_PARAMETERS	}
 								END;
 		bcc_alkali:			BEGIN
 	CASE n of
+	1 : BEGIN	L := 302;			m := 370;			h := 452		END;
+	2 : BEGIN	L := 0.28;       	m := 0.33;			h := 0.41 	END;
+	3 : BEGIN	L := par[1]/521;	m := par[1]/309;	h := par[1]/122		END;
+	6 : BEGIN	L := 0.01;       	m := 0.06;			h := 0.1 	END;
+	7 : BEGIN	L := 0.2;       	m := 0.4;			h := 0.5 	END;
 	9 : BEGIN	L := 13*Q;       	m := 15*Q;			h := 17*Q 	END;
+	14 : BEGIN	L := 3;       		m := 5;				h := 7 	END;
+	16 : BEGIN	L := 13*Q;       	m := 15*Q;			h := 17*Q 	END;
+	17 : BEGIN	L := 3.04e-10;		m := 4.0e-10;		h := 5.32e-10	END;
+	18 : BEGIN	L := 2.16E-29;		m := 7.2E-29;		h := 1.16E-28	END;
 	END;	{	Case	}
 								END;
 		bcc_trans:			BEGIN
@@ -146,11 +188,20 @@ BEGIN	{	SET_PARAMETERS	}
 	9 : BEGIN	L := 7*Q;       	m := 9*Q;			h := 11*Q 	END;
 	END;	{	Case	}
 								END;
+		bcc_rotator:		BEGIN
+	CASE n of
+	1 : BEGIN	L := 100;			m := 320;			h := 500		END;
+	3 : BEGIN	L := par[1]/100;	m := par[1]/30;	h := par[1]/10		END;
+	9 : BEGIN Q := R*par[1]/1000;
+					L := 13*Q;        m := 15*Q;			h := 17*Q 	END;
+	18 : BEGIN	L := 1.0E-27;		m := 1.8E-27;		h := 5.0E-27	END;
+	END;	{	Case	}
+								END;
 		tetrag:				BEGIN
 								END;
 		trig:					BEGIN
 								END;
-		diamond_elements, sphalerites, wurtzites:			
+		diamond_elements, sphalerites, wurtzites:
 								BEGIN
 	CASE n of
 	1 : BEGIN	L := 500;			m := 3000;			h := 6000	END;
@@ -165,16 +216,19 @@ BEGIN	{	SET_PARAMETERS	}
 								END;
 		alkali_halides:	BEGIN
 	CASE n of
+	1 : BEGIN	L := 200;			m := 750;			h := 1400	END;
 	9 : BEGIN	L := 21*Q;       	m := 23*Q;			h := 25*Q 	END;
 	END;	{	Case	}
 								END;
 		metal_carbides:	BEGIN
 	CASE n of
+	1 : BEGIN	L := 1000;			m := 3400;			h := 6000	END;
 	9 : BEGIN	L := 21*Q;       	m := 24*Q;			h := 27*Q 	END;
 	END;	{	Case	}
 								END;
 		magnesia_oxides, thoria_oxides, alumina_oxides, rutile_oxides: BEGIN
 	CASE n of
+	1 : BEGIN	L := 900;			m := 2000;			h := 4000	END;
 	9 : BEGIN	L := 21*Q;       	m := 23*Q;			h := 25*Q 	END;
 	END;	{	Case	}
 								END;
@@ -194,11 +248,11 @@ BEGIN	{	SET_PARAMETERS	}
 	END; 	{	Case	}
 END;	{	SET_PARAMETERS	}
 {-------------------------------------------------------------------}
-PROCEDURE SET_VARIABLES (n: vblrange;	VAR L,m,h: a_real);
+PROCEDURE SET_VARIABLES (n: R_vbls;	VAR L,m,h: a_real);
 BEGIN
 	CASE n OF
 		1 	: BEGIN L := 10;		m := 40;		h := max_steps-1	 		END;
-		2	: BEGIN L := 1.0E-8;	m := 1.0e-4;h := 1.0E-2;	END;
+		2	: BEGIN L := 1.0E-2;	m := 1.0e+2;h := 1.0E+4;	END;
 		3	: BEGIN L := 1.0e-14;m := 1.0e-6;h := 0.01		END;
 		4 	: BEGIN L := 0.0001; m := 0.01;	h := 1			END;
 		5 	: BEGIN L := 0.0;	  	m := 0.0;	h := 0.9			END;
@@ -206,6 +260,11 @@ BEGIN
 		7 	: BEGIN L := 1.0e-16;m := 1.0e-7;h := 1.0e3		END;
 		8 	: BEGIN L := 1.01;	m := 10;		h := 1.0e4		END;
 		9 	: BEGIN L := 1;		m := 10;		h := maxcontournumber	END;
+		10	: BEGIN L := 1e-14;	m := 1e-9;		h := 1.0e4		END;
+		11	: BEGIN L := 1e-6;	m := 1e-4;		h := 1.0e4		END;
+		12	: BEGIN L := 1;		m := par[1];	h := par[1]		END;
+		13	: BEGIN L := 1;		m := 100;		h := par[1]		END;
+		14	: BEGIN L := 1;		m := 10;			h := maxcontournumber	END;
 		ELSE	{	several unset variables	}
 				BEGIN L := 0.0;	  m := 0.0;		h := 0.0	 END;
 	END;	{	Case	}
@@ -217,11 +276,12 @@ BEGIN
 
 	IF (vbl[1] <  2)					THEN vbl[1]  := 2;
 	IF (vbl[1] >  max_steps-1)		THEN vbl[1]  := max_steps-1;
-	IF (vbl[2]  <  1.0E-10)			THEN vbl[2]	:= 1.0E-10;
-	IF (vbl[2]  >  1.0E-2)			THEN vbl[2]	:= 1.0E-2;
-	IF (vbl[3]  >  0.9*vbl[4])		THEN vbl[2]	:= 0.9*vbl[4];
+	IF (vbl[2]  <  1.0E-4)			THEN vbl[2]	:= 1.0E-4;
+	IF (vbl[2]  >  1.0E+4)			THEN vbl[2]	:= 1.0E+4;
+	IF (vbl[3]  >  0.9*vbl[4])		THEN vbl[3]	:= 0.9*vbl[4];
 	IF (vbl[5] >  vbl[6]-0.1)		THEN vbl[5]  := vbl[6]-0.1;
-	IF (vbl[9] >  10)					THEN vbl[9]  := 10;
+	IF (vbl[9] >  maxcontournumber)	THEN vbl[9]  := maxcontournumber;
+	IF (vbl[14] >  maxcontournumber)	THEN vbl[14]  := maxcontournumber;
 
 END;	{	LIMIT_VARIABLES	}
 {-------------------------------------------------------------------}
@@ -318,12 +378,69 @@ BEGIN
 	IF (len < n ) THEN
 		FOR i := len+1 TO n DO
 			s := s + ' ';
-END;
+END;	{	Pad	}
+{-------------------------------------------------------------------}
+PROCEDURE BEGIN_FILE_SAVE (main_datafile:String);
+BEGIN
+	gotoXY(1,24); textbackground(C_back); textcolor(C_bright);
+	WRITE('                                                             ');
+	gotoXY(1,24);  WRITE('               SAVING  THE  DATA  TO  DISC');
+	textcolor(C_text);
+
+{	Set the temporary main_datafile by replacing the extension by .TMP	}
+	tempfile	:= main_datafile;
+	delete(tempfile,pos('.',tempfile),4);
+	bakfile	:= tempfile+'.BAK';
+	tempfile := tempfile+'.TMP';
+
+	IF CannotOpen(tempfile) THEN
+		BEGIN
+			WRITELN('ERROR: Cannot open an Output File');
+			Writeln('Cannot open file "',tempfile,'"');
+			Finish(4);
+		END;
+
+	Assign (file_in,main_datafile);
+	Reset (file_in);
+	Assign (file_out, tempfile);
+	Rewrite (file_out);
+END;	{	BEGIN_FILE_SAVE	}
+{-------------------------------------------------------------------}
+PROCEDURE END_FILE_SAVE  (main_datafile:String);
+BEGIN
+{	Now, playing safe, we erase any backup file, rename the .DAT file
+	as a backup .BAK file, and rename the .TMP file as the .DAT file	}
+
+	IF NOT FileNotThere (bakfile) THEN
+		BEGIN
+			Assign (file_out, bakfile);
+			Erase (file_out);
+		END;
+
+	IF NOT FileNotThere (main_datafile) THEN
+		BEGIN
+			Assign (file_out, main_datafile);
+			Rename (file_out, bakfile);
+		END;
+
+{	And finally rename the temporary file as the ref file	}
+
+	IF FileNotThere (tempfile) THEN
+		BEGIN
+			WRITELN('ERROR: Cannot open an Input File');
+			Writeln('Something very odd, we just created "',tempfile,
+				'" and now it cannot be found');
+			Finish(4);
+		END
+	ELSE
+		BEGIN
+			Assign (file_out, tempfile);
+			Rename (file_out, main_datafile);
+		END;
+END;	{	END_FILE_SAVE	}
 {-------------------------------------------------------------------}
 PROCEDURE SAVE_MATL_PARAMETERS;
 VAR
-	file_in	:	Text;
-	file_out	:	Text;
 	tempfile	:	String;
 	bakfile	:	String;
 	line, buf:	String;
@@ -333,26 +450,12 @@ VAR
 	parid		:	String;
 	number	:	Integer;
 BEGIN
-	gotoXY(1,24); textbackground(C_back); textcolor(C_bright);
-	WRITE('                                                             ');
-	gotoXY(1,24);  WRITE('               SAVING  THE  DATA  TO  DISC');
-	textcolor(C_text);
-
-{	Set the temporary filename by replacing the extension by .TMP	}
-	tempfile	:= parfilename;
-	delete(tempfile,pos('.',tempfile),4);
-	bakfile	:= tempfile+'.BAK';
-	tempfile := tempfile+'.TMP';
+	BEGIN_FILE_SAVE(parfilename);
 
 {	What we do here is to copy ALL the data which is either for
 	materials not currently under consideration, OR for parameters
 	which may be in the datafile but which this program does not
 	concern itself.	We copy it to the temporary file.	}
-
-	Assign (file_in,parfilename);
-	Reset (file_in);
-	Assign (file_out, tempfile);
-	Rewrite (file_out);
 
 	REPEAT
 		READLN(file_in, buf);
@@ -395,27 +498,12 @@ BEGIN
 		END;
 	Close (file_out);
 
-{	Now, playing safe, we erase any backup file, rename the .DAT file
-	as a backup .BAK file, and rename the .TMP file as the .DAT file	}
-
-	IF NOT FileNotThere (bakfile) THEN
-		BEGIN
-			Assign (file_out, bakfile);
-			Erase (file_out);
-		END;
-
-	Assign (file_out, parfilename);
-	Rename (file_out, bakfile);
-
-	Assign (file_out, tempfile);
-	Rename (file_out, parfilename);
+	END_FILE_SAVE(parfilename);
 
 END;	{	SAVE_MATL_PARAMETERS	}
 {-------------------------------------------------------------------}
 PROCEDURE SAVE_MATL_VARIABLES;
 VAR
-	file_in	:	Text;
-	file_out	:	Text;
 	tempfile	:	String;
 	bakfile	:	String;
 	line, buf:	String;
@@ -426,26 +514,12 @@ VAR
 	number	:	Integer;
 	L, m, h	:	a_real;
 BEGIN
-	gotoXY(1,24); textbackground(C_back); textcolor(C_bright);
-	WRITE('                                                             ');
-	gotoXY(1,24);  WRITE('               SAVING  THE  DATA  TO  DISC');
-	textcolor(C_text);
-
-{	Set the temporary filename by replacing the extension by .TMP	}
-	tempfile	:= parfilename;
-	delete(tempfile,pos('.',tempfile),4);
-	bakfile	:= tempfile+'.BAK';
-	tempfile := tempfile+'.TMP';
+	BEGIN_FILE_SAVE(parfilename);
 
 {	What we do here is to copy ALL the data which is either for
 	materials not currently under consideration, OR for variables
 	which may be in the datafile but which this program does not
 	concern itself.	We copy it to the temporary file.	}
-
-	Assign (file_in,parfilename);
-	Reset (file_in);
-	Assign (file_out, tempfile);
-	Rewrite (file_out);
 
 	REPEAT
 		READLN(file_in, buf);
@@ -488,90 +562,58 @@ BEGIN
 		END;
 	Close (file_out);
 
-{	Now, playing safe, we erase any backup file, rename the .DAT file
-	as a backup .BAK file, and rename the .TMP file as the .DAT file	}
-
-	IF NOT FileNotThere (bakfile) THEN
-		BEGIN
-			Assign (file_out, bakfile);
-			Erase (file_out);
-		END;
-
-	Assign (file_out, parfilename);
-	Rename (file_out, bakfile);
-
-	Assign (file_out, tempfile);
-	Rename (file_out, parfilename);
+	END_FILE_SAVE(parfilename);
 
 END;	{	SAVE_MATL_VARIABLES	}
 {-------------------------------------------------------------------}
 PROCEDURE SAVE_MATL_REFERENCES;
 VAR
-	file_tmp	:	Text;
-	file_ref	:	Text;
-	file_bak	:	Text;
-	tmpfile	:	String;
-	reffile	:	String;
-	bakfile	:	String;
-	index		:	refrange;
-
+	line, buf:	String;
+	material	:	String;
+	index		:	R_refs;
 BEGIN
-	gotoXY(1,24); textbackground(C_back); textcolor(C_bright);
-	WRITE('                                                             ');
-	gotoXY(1,24);  WRITE('               SAVING  THE  DATA  TO  DISC');
-	textcolor(C_text);
+	BEGIN_FILE_SAVE(reffilename);
 
-	tmpfile	:= matlname+'.TMP';
-	reffile	:= matlname+'.REF';
-	bakfile	:= matlname+'.~EF';
+{	What we do here is to copy ALL the text which is either for
+	materials not currently under consideration,
+	We copy it to the temporary file.	}
 
-{	Now write the new reference out to the temporary file	}
+	REPEAT
+		READLN(file_in, buf);
+		line := Copy(buf,2,matl_name_length);
+		material := get_next_token(line);
+      UpperCase(material);
+		IF NOT ((buf[1] = Esc) AND (material = matlname)) THEN
+		{	No, it's not one of ours, so we copy it.	}
+			WRITELN(file_out, buf);
+	UNTIL Eof(file_in) OR ((buf[1] = Esc) AND (material = matlname));
 
-	IF CannotOpen(tmpfile) THEN
-		BEGIN
-			WRITELN('ERROR: Cannot open an Output File');
-			Writeln('Cannot open file "',tmpfile,'"');
-			Finish(4);
+	IF NOT Eof(file_in) THEN
+		BEGIN		{	skip the old ref., and copy rest of input file to output	}
+			REPEAT
+				READLN(file_in, buf);
+			UNTIL Eof(file_in) OR (buf[1] = Esc);
+		{	Shouldn't see Eof, only if error condition...	}
+			IF Eof(file_in) THEN
+				Finish(4)
+			ELSE	{	Copy the rest of the file to output	}
+				REPEAT
+					READLN(file_in, buf);
+					WRITELN(file_out, buf);
+				UNTIL Eof(file_in);
 		END;
+	Close(file_in);
 
-	Assign (file_tmp, tmpfile);
-	Rewrite (file_tmp);
+{ -----	Whether the ref. was in the old file or not, we append it	}
+	Writeln(file_out,Esc,matlname);
+	FOR index := 1 TO reflength DO
+		write(file_out,ref[index]);
+	Writeln(file_out);
+	Writeln(file_out,Esc);
 
-	FOR index:= 1 TO reflength DO
-		Write(file_tmp,ref[index]);
-	Close (file_tmp);
+	Close (file_out);
 
-{	Now, playing safe, we erase any backup file, rename the .REF file
-	as a backup .~EF file}
-
-	IF NOT FileNotThere (bakfile) THEN
-		BEGIN
-			Assign (file_bak, bakfile);
-			Erase (file_bak);
-		END;
-
-{	check the ref file exists, it might not if we are creating a new one	}
-
-	IF NOT FileNotThere (reffile) THEN	
-		BEGIN
-			Assign (file_bak, reffile);
-			Rename (file_bak, bakfile);
-		END;
-
-{	And finally rename the temporary file as the ref file	}
-
-	IF FileNotThere (tmpfile) THEN	
-		BEGIN
-			WRITELN('ERROR: Cannot open an Output File');
-			Writeln('Something very odd, we just created "',tmpfile,
-				'" and now it cannot be found');
-			Finish(4);
-		END
-	ELSE
-		BEGIN
-			Assign (file_tmp, tmpfile);
-			Rename (file_tmp, reffile);
-		END;
+	END_FILE_SAVE(reffilename);
 
 END;	{	SAVE_MATL_REFERENCES	}
 {-------------------------------------------------------------------}
@@ -582,8 +624,8 @@ BEGIN
 	REPEAT   gotoXY(1,24);
 		write  ('              FINISHED  EDITING ?   (Y/N) ');
 		answer:=Readkey;
-	UNTIL answer in ['y','Y','n','N',Esc];
-	IF answer=Esc THEN Finish(0);
+	UNTIL answer in ['y','Y','n','N',CtrlC];
+	IF answer=CtrlC THEN Finish(0);
 	textcolor(C_text);
 END;	{	Prompt_Finish	}
 {-------------------------------------------------------------------}
@@ -593,10 +635,10 @@ BEGIN
 	gotoXY(1,24);  textbackground(C_back);
 	write('                                                             ');
 	REPEAT     gotoXY(1,24);   textcolor(C_bright);
-		write ('                 SAVE  THE  FILE ?    (Y/N) ');
+		write ('                 SAVE  THE  DATA ?    (Y/N) ');
 		answer:=Readkey;   gotoXY(1,24);
-	UNTIL answer in ['y','Y','n','N',Esc];
-	IF answer=Esc THEN Finish(0);
+	UNTIL answer in ['y','Y','n','N',CtrlC];
+	IF answer=CtrlC THEN Finish(0);
 	textcolor(C_text);
 
 END;	{	Prompt_Save	}
@@ -608,10 +650,11 @@ BEGIN
 	write('                                                             ');
 	REPEAT
 		gotoXY(1,24);  textcolor(C_bright);
-		write('               EDIT  THE  FILE ?    (Y/N) ');
+		write('               EDIT  THE  DATA ?    (Y/N) ');
 		answer:=Readkey;
-	UNTIL answer in ['y','Y','n','N',Esc];
-	IF answer=Esc THEN Finish(0);
+	UNTIL answer IN
+		['y','Y','n','N', PageUp, PageDn, Up, Down, Left, Right, CtrlC];
+	IF answer=CtrlC THEN Finish(0);
 	textcolor(C_text);
 
 END;	{	Prompt_Edit	}
@@ -620,7 +663,7 @@ PROCEDURE POWER_LAW_CHECK (new_n: a_real);
 {	This has to try to keep the power-law index and the
 	reference stress in synch.	}
 VAR
-	p, pn	:	parrange;
+	p, pn	:	R_pars;
 	old_n	:	a_real;
 BEGIN
 	{	parnumber is already set up	}
@@ -629,7 +672,7 @@ BEGIN
 	IF ( id = 'n-plc' ) THEN	{	change ref. stress	}
 		BEGIN
 			old_n	:= par [parnumber];
-			p := 0; 
+			p := 0;
 			REPEAT
 				p := p + 1;
 				parnumber := p;
@@ -637,11 +680,11 @@ BEGIN
 			UNTIL (id = 'Srsplc') ;
 			par[p] := exp( (old_n/new_n) * ln (par[p]) );
 
-			textcolor(C_bright);	LowVideo;
-			gotoXY(49,4 + p);
+			textcolor(C_subdued);
+			gotoXY(49,5 + p);
 			WRITE_REAL (par[p]);
 
-			NormVideo;
+			textcolor(C_text);
 			parnumber := pn;
 		END;	{	if not n-plc, then no action.	}
 END;
@@ -654,10 +697,12 @@ CONST
 	GoDown	=	#202;
 	GoUp		=	#203;
 	GoHome	=	#204;
+	DoIns		=	#205;
+	DoDel		=	#206;
 
 VAR
 	x,y	:	Byte;
-	i,index	:	refrange;
+	i,index	:	R_refs;
 	ch		:	Char;
 
 BEGIN
@@ -665,24 +710,26 @@ BEGIN
 	gotoXY(1,24);  textcolor(C_bright);
 	write ('                                                             ');
 	gotoXY(1,24);
-	write ('  ENTER  REFERENCE  TEXT  with  "*"  at the END');
-	LowVideo;
-	gotoXY(1,3 + linenumber);
+	write ('  Use the cursor keys,     Finish with "Alt-W".    ');
+	textcolor(C_text);
+	{	restrict Window so scrolling etc. works	}
+	window(10,4,70,22);
 
+	gotoXY(1,linenumber);
 	IF linenumber <= 1 THEN
 		index := 1
 	ELSE
-		index    := 61*(linenumber - 1);
+		index    :=  61*(linenumber - 1);
 
 	REPEAT
-		IF index + 1 <= reflength THEN
+		IF index + 1 <= ref_buflength THEN
 			index := index + 1
 		ELSE
 			index := 1;
 		answer:=Readkey;
-		IF (answer=Esc) OR (answer=#3) {ctrl-Break} THEN
+		IF (answer=CtrlC) {ctrl-C, ctrl-Break is disabled} THEN
 			Finish(0);
-		IF (answer = #0 ) THEN	{ function key, ignore	}
+		IF (answer = #0 ) THEN	{ function key }
 			BEGIN
 				answer := Readkey;
 
@@ -692,6 +739,8 @@ BEGIN
 					Down	:	answer := GoDown;
 					Up		:	answer := GoUp;
 					Home	:	answer := GoHome;
+					Ins	:	answer := DoIns;
+					Del	:	answer := DoDel;
 				END;	{	Case	}
 			END;
 
@@ -703,34 +752,50 @@ BEGIN
 							IF index > 2 THEN
 								index := index - 2
 							ELSE
-								index := reflength;
+								index := ref_buflength;
 						END;
 			GoLeft
 					:	BEGIN
 							IF index > 2 THEN
 								index := index - 2
 							ELSE
-								index := reflength;
+								index := ref_buflength;
 						END;
-			GoDown : 	IF index + 60 <= reflength THEN
+			GoDown : 	IF index + 60 <= ref_buflength THEN
 					         index := index + 60
                       ELSE
-                        index := index + 59 - reflength;
-			CR: 			IF index + 60 <= reflength THEN
+                        index := index + 59 - ref_buflength;
+			CR: 			IF index + 60 <= ref_buflength THEN
 								BEGIN
 									FOR i := index TO index + 59 DO
 										ref[i] := ' ';
 						         index := index + 60;
 								END
                       ELSE
-                        index := index + 59 - reflength;
+                        index := index + 59 - ref_buflength;
 			GoRight : ;	{	null, does this anyway	}
 			GoUp	:	IF index > 62 THEN
 							index := (index - 62)
 						ELSE
-							index := (reflength - 61);
+							index := (ref_buflength - 61);
 			GoHome:	BEGIN
 							index :=  1 + 61*(index DIV 61);
+						END;
+			DoIns:	BEGIN
+							index :=  1 + 61*(index DIV 61);
+							FOR i := ref_buflength DOWNTO index + 61 DO
+								ref[i] := ref[i-61];
+							FOR i := index TO index+61 DO
+								ref[i] := ' ';
+							InsLine;
+						END;
+			DoDel:	BEGIN
+							index :=  1 + 61*(index DIV 61);
+							FOR i := index TO ref_buflength - 61 DO
+								ref[i] := ref[i+61];
+							FOR i := ref_buflength DOWNTO ref_buflength - 61 DO
+								ref[i] := ' ';
+							DelLine;
 						END;
 			#32..#125	:	BEGIN
 									ref[index] := answer;
@@ -743,11 +808,19 @@ BEGIN
 
 		linenumber := 1 + (index DIV 61);
 		IF (linenumber > 1) THEN
-			gotoXY((index MOD 61),3 + linenumber)
+			gotoXY(1+(index MOD 61),linenumber)
 		ELSE
-			gotoXY(index ,3 + linenumber);
+			gotoXY(1+index ,linenumber);
 
-	UNTIL (answer = '*');
+	UNTIL (answer = AltW);
+	window(10,1,70,25);
+
+	index := ref_buflength;
+	WHILE (ref[index] IN [' ', CR, LF]) AND (index > 1) DO
+		BEGIN
+			Dec(index);
+			reflength := index;
+		END;
 
 END;	{	TEXT_EDIT_REFERENCES	}
 {-------------------------------------------------------------------}
@@ -755,27 +828,28 @@ PROCEDURE EDIT_IMC_VALUE;
 CONST
 	Return	=	#13;
 	Tab		=	#9;
+	ShiftTab	=	#15;
 VAR
 	s			:	String;
 BEGIN
 	textcolor(C_bright); textbackground(C_back);
-	gotoXY(1,24);  
+	gotoXY(1,24);
 	write('       PRESS TAB KEY TO CHANGE CLASS, RETURN TO FINISH ');
 
 	get_imc_string (imc,s);
 	textcolor(C_back); textbackground(C_bright);
-	GotoXY(43,4);
+	GotoXY(43,5);
 	Write(s);
-	GotoXY(43,4);
+	GotoXY(43,5);
 	REPEAT
 		REPEAT
 			REPEAT UNTIL KeyPressed;
 			answer:=Readkey;
-			IF (answer=Esc) OR (answer=#3) {ctrl-Break} THEN
+			IF (answer=CtrlC) {ctrl-Break} THEN
 				Finish(0);
 			IF (answer = #0 ) THEN	{ function key, ignore	}
 				answer := Readkey;
-		UNTIL answer in [Tab, Return];
+		UNTIL answer in [Tab, ShiftTab, Return];
 		IF (answer=Tab) THEN
 			BEGIN
 				IF (imc=unknown) THEN
@@ -783,13 +857,24 @@ BEGIN
 				ELSE
 					imc := succ(imc);
 				get_imc_string (imc,s);
-				GotoXY(43,4);
+				GotoXY(43,5);
 				Write(s);
-				GotoXY(43,4);
+				GotoXY(43,5);
+			END
+		ELSE IF (answer=ShiftTab) THEN
+			BEGIN
+				IF (imc=fcc) THEN
+					imc := unknown
+				ELSE
+					imc := pred(imc);
+				get_imc_string (imc,s);
+				GotoXY(43,5);
+				Write(s);
+				GotoXY(43,5);
 			END;
 	UNTIL (answer =Return);
 	textcolor(C_bright); textbackground(C_back);
-	GotoXY(43,4);
+	GotoXY(43,5);
 	Write(s);
 
 { ----- Now set par[0] for storage in the disc file ----- }
@@ -800,6 +885,7 @@ BEGIN
 		bcc_alkali:			par[0] := 13;
 		bcc_trans:			par[0] := 14;
 		bcc_rare_earth:	par[0] := 15;
+		bcc_rotator:		par[0] := 52;
 		tetrag:				par[0] := 16;
 		trig:					par[0] := 17;
 		diamond_elements:	par[0] := 41;
@@ -812,70 +898,219 @@ BEGIN
 	END; 	{	Case	}
 END;	{	EDIT_IMC_VALUE	}
 {-------------------------------------------------------------------}
+PROCEDURE LIST_PARAMETERS(Page: T_page);
+
+{ -------- Prints out the material parameters as a table -------- }
+VAR
+	s	:	String;
+	P_first, P_last, saved_parnumber	:	R_pars;
+BEGIN
+
+	CLEAN_WINDOW;
+	DATE_AND_TIME;
+   saved_parnumber := parnumber;
+
+	gotoXY(1,2);
+	textbackground(C_back);
+	write('                                                             ');
+	gotoXY(1,2);
+	writeln(' ',Version,'      INPUT PARAMETERS FOR   ',matlname,'   ',
+		Date_string);
+
+	IF (Page = First) THEN
+		BEGIN
+			textbackground(C_screen);
+			GotoXY(48,23);	Write('PgDn for more');
+			textbackground(C_back);
+
+			gotoXY(1,5);
+			get_imc_string (imc,s);
+			write ('    0   Isomechanical Class:');
+			GotoXY(43,5);
+			Writeln(s);
+
+			P_first := 1;
+			P_last  := last_page1_parameter;
+		END;
+
+	IF (Page = Second) THEN
+		BEGIN
+			textbackground(C_screen);
+			GotoXY(48,23);	Write('PgUp for more');
+			textbackground(C_back);
+			P_first := last_page1_parameter + 1;
+			P_last  := numberofparameters;
+			GotoXY(1,5);
+		END;
+
+	FOR parnumber := P_first to P_last DO
+		BEGIN
+			LABELS_FOR_PARAMETERS;
+
+			write ('  ',parnumber:3,'   ', d, u,' =');
+			WRITE_REAL (par[parnumber]);
+			writeln;
+		END;
+   parnumber := saved_parnumber;
+
+END;  {LIST_PARAMETERS.     }
+
+{-------------------------------------------------------------------}
+PROCEDURE LIST_VARIABLES;
+
+{ -------- Prints out the material variables as a table -------- }
+BEGIN
+
+	CLEAN_WINDOW;
+	DATE_AND_TIME;
+
+	gotoXY(1,2);
+	textbackground(C_back);
+	write('                                                             ');
+	gotoXY(1,2);
+	writeln(' ',Version,'      INPUT VARIABLES FOR   ',matlname,'    ',
+		Date_string);
+
+	gotoXY(1,5);
+	FOR vblnumber := 1 to numberofvariables DO
+		BEGIN
+			LABELS_FOR_VARIABLES;
+			write ('  ',vblnumber:3,'   ', d, u,' =');
+			WRITE_REAL(vbl[vblnumber]);
+			writeln;
+		END;
+
+END;  {LIST_VARIABLES.    }
+{-------------------------------------------------------------------}
+PROCEDURE LIST_REFERENCES;
+VAR
+	reffile	:  text;
+	index		:	R_refs;
+
+{ -------- Prints out the material variables as a table -------- }
+BEGIN
+
+	CLEAN_WINDOW;
+	DATE_AND_TIME;
+
+	gotoXY(1,2);
+	textbackground(C_back);
+	write('                                                             ');
+	gotoXY(1,2);
+	writeln(' ',Version,'  REFERENCE DESCRIPTION FOR ',matlname);
+
+{ ------- Print out Reference Text as a page on screen ------- }
+
+	textcolor(C_subdued);
+	gotoXY(1,4);
+	FOR index := 1 to reflength DO
+		write(ref[index]);
+
+END;  {LIST_REFERENCES.    }
+{-------------------------------------------------------------------}
 PROCEDURE EDIT_PARAMETERS;
 VAR
+	L1, L2, L3		:	a_real;
 	new_value	:	a_real;
-BEGIN
-	Prompt_Edit;
+	line_number	:	1..25;
+	Page			:	T_page;
+	untouched	:	BOOLEAN;
+	{----------------------------------------------------------------}
+	PROCEDURE Do_A_Parameter;
+	VAR
+	i	:	Word;
+	BEGIN
+		Textbackground(C_back);
+		gotoXY(1,24);  textcolor(C_bright);
+		write ('                                                             ');
+		gotoXY(1,24);
+		write  ('              LINE  NUMBER  FOR  EDITING  ....');
+		parnumber := Read_Int (0,numberofparameters,escape);
+		IF escape THEN
+			Finish(0);
+		IF (parnumber <= last_page1_parameter) AND (Page = Second) THEN
+			BEGIN
+				Page := First;
+				LIST_PARAMETERS(Page);
+			END;
+		IF (parnumber > last_page1_parameter) AND (Page = First) THEN
+			BEGIN
+				Page := Second;
+				LIST_PARAMETERS(Page);
+			END;
 
-	if answer in ['y','Y'] then
-		BEGIN
-			REPEAT
-				Textbackground(C_back);
-				gotoXY(1,24);  textcolor(C_bright);
-				write ('                                                             ');
+      CASE Page OF
+			First		:	line_number := parnumber + 5;
+			Second	:	line_number := parnumber - last_page1_parameter + 4;
+      END; {    Case }
+
+		IF (parnumber = 0) THEN	{	edit IMC field	}
+			EDIT_IMC_VALUE
+		ELSE
+			BEGIN
+ 				Textbackground(C_back);
+				textcolor(C_text);
+
+				LABELS_FOR_PARAMETERS;
+
+				textcolor(C_subdued);
+				gotoXY(1,line_number);
+				write ('  ',parnumber:3,'   ', d, u,' =');
+
+				WRITE_REAL (par[parnumber] );
+				writeln;
+
+				textcolor(C_text);
+ 				Textbackground(C_back);
 				gotoXY(1,24);
-				write  ('              LINE  NUMBER  FOR  EDITING  ....');
-				parnumber := Read_Int (0,numberofparameters,escape);
+				write ('  ', parnumber:3,'  ', d, u, '  =  ');
+				textcolor(C_warn);
+				new_value := Read_Real(escape);
 				IF escape THEN
 					Finish(0);
 
-				IF (parnumber = 0) THEN	{	edit IMC field	}
-					EDIT_IMC_VALUE
-				ELSE
-					BEGIN
-		 				Textbackground(C_back);
-						textcolor(C_text);
+				IF new_value = 0.0 then
+			 		SET_PARAMETERS (parnumber, L1, new_value, L3);
 
-						LABELS_FOR_PARAMETERS;
+				textcolor(C_bright);
+				gotoXY(1,line_number);
+				write ('  ',parnumber:3,'   ', d, u,' =');
+				textcolor(C_subdued);
 
-						textcolor(C_bright);
-						LowVideo;
-						gotoXY(1,4 + parnumber);
-						write ('  ',parnumber:3,'   ', d, u,' =');
+				WRITE_REAL (new_value );
+				writeln;
+				textcolor(C_text);
 
-						WRITE_REAL (par[parnumber] );
-						writeln;
-						NormVideo;
+				POWER_LAW_CHECK (new_value);
+				par[parnumber] := new_value;
+			END;
+	END;
+	{----------------------------------------------------------------}
+BEGIN	{	EDIT_PARAMETERS	}
+	untouched := TRUE;
+	Page	:= First;
+	LIST_PARAMETERS(Page);
+	REPEAT
+		Prompt_Edit;
+		IF (Page = Second) AND (answer in [PageUp, Up, Left]) THEN
+			BEGIN
+				Page := First;
+				LIST_PARAMETERS(Page);
+			END
+		ELSE IF (Page = First) AND (answer in [PageDn, Down, Right]) THEN
+			BEGIN
+				Page := Second;
+				LIST_PARAMETERS(Page);
+			END;
+		IF answer in ['y','Y'] THEN
+			BEGIN
+				Do_A_Parameter;
+				untouched := FALSE;
+			END;
+	UNTIL answer in ['n','N'];
 
-		 				Textbackground(C_back);
-						gotoXY(1,24);  
-						write ('  ', parnumber:3,'  ', d, u, '  =  ');
-						textcolor(C_warn);
-						new_value := Read_Real(escape);
-						IF escape THEN
-							Finish(0);
-
-						IF new_value = 0.0 then
-					 		SET_PARAMETERS (parnumber, L1, new_value, L3);
-
-						Textbackground(C_back);
-						textcolor(C_bright);
-						gotoXY(1,4 + parnumber);
-						write ('  ',parnumber:3,'   ', d, u,' =');
-						LowVideo;
-
-						WRITE_REAL (new_value );
-						writeln;
-						NormVideo;
-
-						POWER_LAW_CHECK (new_value);
-						par[parnumber] := new_value;
-					END;
-
-				Prompt_Finish;
-			UNTIL answer in ['y','Y'];
-
+	IF NOT untouched THEN
+		BEGIN
 			Prompt_Save;
 			IF answer in ['y','Y'] then SAVE_MATL_PARAMETERS;
 		END;
@@ -884,8 +1119,10 @@ BEGIN
 END;	{	EDIT_Parameters	}
 {-------------------------------------------------------------------}
 PROCEDURE EDIT_VARIABLES;
-
+VAR
+	L1, L2, L3		:	a_real;
 BEGIN
+	LIST_VARIABLES;
 	Prompt_Edit;
 
 	if answer in ['y','Y'] then
@@ -906,16 +1143,16 @@ BEGIN
 				LABELS_FOR_VARIABLES;
 
 				textcolor(C_bright);
-				LowVideo;
+				textcolor(C_subdued);
 				gotoXY(1,4 + vblnumber);
 				write ('  ',vblnumber:3,'   ', d, u,' =');
 
 				WRITE_REAL (vbl[vblnumber] );
 				writeln;
-				NormVideo;
+				textcolor(C_text);
 
  				Textbackground(C_back);
-				gotoXY(1,24);  
+				gotoXY(1,24);
 				write ('  ', vblnumber:3,'  ', d, u, '  =  ');
 				textcolor(C_warn);
 				vbl[vblnumber] := Read_Real(escape);
@@ -929,10 +1166,10 @@ BEGIN
 				textcolor(C_bright);
 				gotoXY(1,4 + vblnumber);
 				write ('  ',vblnumber:3,'   ', d, u,' =');
-				LowVideo;
+				textcolor(C_subdued);
 				WRITE_REAL (vbl[vblnumber] );
 				writeln;
-				NormVideo;
+				textcolor(C_text);
 
 				Prompt_Finish;
 			UNTIL answer in ['y','Y'];
@@ -947,21 +1184,13 @@ END;	{	EDIT_VARIABLES	}
 PROCEDURE EDIT_REFERENCES;
 
 BEGIN
+	LIST_REFERENCES;
 	Prompt_Edit;
 
 	if answer in ['y','Y'] then
 		BEGIN
 			REPEAT
-				Textbackground(C_back);
-				gotoXY(1,24);  textcolor(C_bright);
-				write ('                                                             ');
-				gotoXY(1,24);
-				write ('    LINE  NUMBER  TO  BEGIN  OVERWRITING .... ');
-				linenumber := Read_Int (1,reflines,escape);
-				IF escape THEN
-					Finish(0);
-
-				TEXT_EDIT_REFERENCE(linenumber);
+				TEXT_EDIT_REFERENCE(1);
 				LIST_REFERENCES;			{	just in case the display gets worng..}
 				Prompt_Finish;
 			UNTIL answer in ['y','Y'];
@@ -978,7 +1207,34 @@ PROCEDURE MAKE_PARAMETER_SET;
 { -- Creates a file on disk containing parameters for a chosen material -- }
 VAR
 	s	:	String;
-BEGIN
+   Line_number  : R_pars;
+	L1, L2, L3		:	a_real;
+	{----------------------------------------------------------------}
+	PROCEDURE Parameter_Entry;
+	BEGIN
+		gotoXY (47,Line_number);
+		TextBackground(C_bright);
+		write('            ');
+
+		gotoXY (47,Line_number);
+		Textcolor(C_warn);
+		par[parnumber] := Read_Real(escape);
+		IF escape THEN
+			Finish(0);
+
+		gotoXY (47,Line_number);
+		TextBackground(C_back);
+		write('            ');
+
+		IF par[parnumber] = 0.0 then
+	 		SET_PARAMETERS (parnumber, L1, par[parnumber], L3);
+
+		gotoXY (47,Line_number);
+		Textcolor(C_bright);
+		WRITE_REAL (par[parnumber] );
+	END;
+	{----------------------------------------------------------------}
+BEGIN	{	MAKE_PARAMETER_SET	}
 
 	CLEAN_WINDOW;
 	DATE_AND_TIME;
@@ -987,16 +1243,16 @@ BEGIN
 	gotoXY(1,2);
 	write  ('                                                             ');
 	gotoXY(1,2);
-	write(' ',Version,'    Creating a new file for   ',matlname,'    ',date_string);
+	write(' ',Version,'    Creating a new file for   ',matlname,'  ',date_string);
 
 	imc := unknown;
 	get_imc_string (imc,s);
-	gotoXY(1,4);
+	gotoXY(1,5);
 	write ('    0   Isomechanical Class:');
-	GotoXY(43,4);
+	GotoXY(43,5);
 	Writeln(s);
 
-	for parnumber := 1 to numberofparameters do BEGIN
+	for parnumber := 1 to last_page1_parameter do BEGIN
 		LABELS_FOR_PARAMETERS;
 		writeln ('  ',parnumber:3,'   ',d,u,'....');
 	END;
@@ -1009,47 +1265,40 @@ BEGIN
 	textcolor(C_bright);
 	write('                     ENTER  PARAMETERS ');    textcolor(C_text);
 
-	for parnumber := 1 to numberofparameters do
+	textcolor(C_text);
+	for parnumber := 1 to last_page1_parameter do
+      BEGIN
+         Line_number := parnumber + 5;
+         Parameter_Entry;
+      END;
+
+	Window(10,5,70,22);
+	ClrScr;
+	for parnumber := last_page1_parameter + 1 TO numberofparameters DO
 		BEGIN
-			gotoXY (47,4+parnumber);
-			TextBackground(C_bright);
-			write('            ');
-
-			gotoXY (47,4+parnumber);
-			Textcolor(C_warn);
-			par[parnumber] := Read_Real(escape);
-			IF escape THEN
-				Finish(0);
-
-			gotoXY (47,4+parnumber);
-			TextBackground(C_back);
-			write('            ');
-
-			IF par[parnumber] = 0.0 then
-		 		SET_PARAMETERS (parnumber, L1, par[parnumber], L3);
-
-			gotoXY (47,4+parnumber);
-			Textcolor(C_bright);
-			WRITE_REAL (par[parnumber] );
+			LABELS_FOR_PARAMETERS;
+			writeln ('  ',parnumber:3,'   ',d,u,'....');
 		END;
+	window(10,1,70,25);
+	for parnumber := last_page1_parameter + 1 TO numberofparameters do
+      BEGIN
+         Line_number := parnumber - last_page1_parameter + 4;
+         Parameter_Entry;
+      END;
 
 {	The estimate for the ref.stress is v.poor since it is based on the
 	glide flow stress. It should be calculated such that it gives a
 	strain rate of 1e-6 at Tm/2 when stress=ref.stress (par[15]).	}
 
-	LIST_PARAMETERS;
-
-{ -------- Save the file -------- }
-
+{ ------- List the file for inspection and Editing, & Saving ------- }
 	Prompt_Save;
-	if answer in ['y','Y'] then SAVE_MATL_PARAMETERS;
-
-{ ------- List the file for inspection and Editing ------- }
-	EDIT_PARAMETERS;
+	IF answer in ['y','Y'] then SAVE_MATL_PARAMETERS;
 
 END; {MAKE_PARAMETER_SET.    }
 {-------------------------------------------------------------------}
 PROCEDURE MAKE_VARIABLE_SET;
+VAR
+	L1, L2, L3		:	a_real;
 
 { -- Creates a file on disk containing variables for a chosen material -- }
 
@@ -1062,7 +1311,7 @@ BEGIN
 	gotoXY(1,2);
 	write  ('                                                             ');
 	gotoXY(1,2);
-	write(' ',Version,'    Creating a new file for   ',matlname,'    ',date_string);
+	write(' ',Version,'    Creating a new file for   ',matlname,'  ',date_string);
 
 	gotoXY(1,5);
 	for vblnumber := 1 to numberofvariables do BEGIN
@@ -1101,16 +1350,8 @@ BEGIN
 		END;
 
 	LIMIT_VARIABLES;
-	LIST_VARIABLES;
-
-{ -------- Save the file -------- }
-
 	Prompt_Save;
-	if answer in ['y','Y'] then SAVE_MATL_VARIABLES;
-
-{ ------- List the file for inspection and Editing ------- }
-
-	EDIT_VARIABLES;
+	IF answer in ['y','Y'] then SAVE_MATL_VARIABLES;
 
 END; {MAKE_VARIABLE_SET.   }
 {-------------------------------------------------------------------}
@@ -1118,7 +1359,7 @@ PROCEDURE MAKE_REFERENCE_SET;
 
 { -- Creates a new set of reference info. -- }
 VAR
-	index	:	refrange;
+	index	:	R_refs;
 BEGIN
 
 	CLEAN_WINDOW;
@@ -1128,7 +1369,7 @@ BEGIN
 	gotoXY(1,2);
 	write  ('                                                             ');
 	gotoXY(1,2);
-	write(' ',Version,' Creating a new reference for ',matlname,'    ',date_string);
+	write(' ',Version,' Creating a new reference for ',matlname,'  ',date_string);
 
 	gotoXY(1,24);
 	write  ('                                                             ');
@@ -1136,20 +1377,14 @@ BEGIN
 	textcolor(C_bright);
 	write('                     ENTER  REFERENCES ');    textcolor(C_text);
 
-	FOR index:= 1 TO reflength DO
+	FOR index:= 1 TO ref_buflength DO
 		ref[index] := ' ';
+	reflength := 1;
 	TEXT_EDIT_REFERENCE(1);
-	LIST_REFERENCES;
 
-{ -------- Save the file -------- }
-
+{ ------- DON'T List the file for inspection and Editing, & Saving ------- }
 	Prompt_Save;
-	if answer in ['y','Y'] then SAVE_MATL_REFERENCES;
-
-{ ------- List the file for inspection and Editing ------- }
-
-	LIST_REFERENCES;
-	EDIT_REFERENCES;
+	IF answer in ['y','Y'] then SAVE_MATL_REFERENCES;
 
 END; {MAKE_REFERENCE_SET.   }
 {-------------------------------------------------------------------}
@@ -1171,6 +1406,20 @@ BEGIN
 		END;
 END;	{	STASH_DATA_LINE	}
 {-------------------------------------------------------------------}
+PROCEDURE CHECK_MATLNAME;
+VAR
+	i	:	Word;
+	found	:	BOOLEAN;
+BEGIN
+	found := FALSE;
+	SCAN_DATA_FILE(FALSE);
+	FOR i := 1 TO matl_index DO
+		IF (matlname = matl_list[i]) THEN
+			found := TRUE;
+	IF NOT found THEN
+		modenamed := FALSE;
+END;	{	CHECK_MATLNAME	}
+{-------------------------------------------------------------------}
 PROCEDURE READ_MATL_DATA;
 
 { -------- Read in the chosen material parameters and variables -------- }
@@ -1180,7 +1429,8 @@ VAR
 	line, buf:	String;
 	material	:	String;
 	refname	:	String;
-	index		:	refrange;
+	i,index		:	R_refs;
+	len		:	Word;
 
 BEGIN
 	gotoXY(1,24); textbackground(C_back); textcolor(C_bright);
@@ -1188,44 +1438,94 @@ BEGIN
 	gotoXY(1,24);  WRITE('                   READING  THE  DATA         ');
 	textcolor(C_text);
 
-	Assign(file_in, parfilename);
-	Reset(file_in);
-
-{	Read through the data file looking for lines relevant to this material	}
-	REPEAT
-		READLN(file_in, buf);
-		line := buf;
-		material := get_next_token(line);
-		IF (material = matlname) THEN
-
-		{	OK, found one. Now don't bother to look at it, just stash it.	}
-			STASH_DATA_LINE (line);
-
-	UNTIL Eof(file_in);
-	Close(file_in);
-
-{ ----- Read reference text -----}
-
-	refname := matlname + '.REF';
-
-	IF FileNotThere (refname) THEN
+	IF FileNotThere (parfilename) THEN
 		BEGIN
-			FOR index := 1 to reflength DO
-				ref[index] := '.';
+			gotoXY(1,24); textbackground(C_back); textcolor(C_warn);
+			WRITE('                                                             ');
+			gotoXY(1,24);  WRITE('      NO DATA FILE FOUND !! (matlpars.dat)    ');
+			REPEAT UNTIL KeyPressed;
+			answer:=Readkey;
+			textcolor(C_text);
 		END
 	ELSE
 		BEGIN
-			Assign(file_ref, refname);    
+			Assign(file_in, parfilename);
+			Reset(file_in);
+
+		{	Read through the data file looking for lines relevant to this material	}
+			REPEAT
+				READLN(file_in, buf);
+				line := buf;
+				material := get_next_token(line);
+				IF (material = matlname) THEN
+
+				{	OK, found one. Now don't bother to look at it, just stash it.	}
+					STASH_DATA_LINE (line);
+
+			UNTIL Eof(file_in);
+			Close(file_in);
+		END;
+
+{ ----- Read reference text -----}
+
+	FOR index := 1 to ref_buflength DO
+		ref[index] := ' ';
+	IF FileNotThere (reffilename) THEN
+		BEGIN
+			gotoXY(1,24); textbackground(C_back); textcolor(C_warn);
+			WRITE('                                                             ');
+			gotoXY(1,24);  WRITE('      NO DATA FILE FOUND !! (matlrefs.dat)    ');
+			textcolor(C_text);
+			REPEAT UNTIL KeyPressed;
+			answer:=Readkey;
+		END
+	ELSE
+		BEGIN
+			Assign(file_ref, reffilename);
 			Reset(file_ref);
-			FOR index := 1 to reflength DO
-				Read(file_ref,ref[index]);
+			REPEAT
+				READLN(file_ref, buf);
+				line := Copy(buf,2,matl_name_length);
+				material := get_next_token(line);
+            UpperCase(material);
+			UNTIL Eof(file_ref) OR ((buf[1] = Esc) AND (material = matlname));
+			IF Eof(file_ref) THEN
+				BEGIN
+					FillChar(ref,SizeOf(ref),' ');
+				END
+			ELSE
+				BEGIN
+               buf:=' ';
+					index := 1;
+					WHILE NOT ((Eof(file_ref))
+					OR (buf[1] = Esc)
+					OR (index >= ref_buflength-2)) DO
+						BEGIN
+							READLN(file_ref, buf);
+							len :=Length(buf);
+							IF (index + len > ref_buflength) THEN
+								len := ref_buflength - index -1;
+                     IF (len > 0) AND (buf[1] <> Esc) THEN
+								BEGIN
+                     		FOR i := 1 TO len DO
+             	           	BEGIN
+											ref[index] := buf[i];
+											Inc(index);
+										END;
+								END;
+							ref[index] := CR;
+							ref[index+1] := LF;
+							index := index +2;
+						END;
+				END;
+			reflength := index-1;
 			Close(file_ref);
 		END;
 
 END;  {READ_MATL_DATA.    }
 {-------------------------------------------------------------------}
 PROCEDURE INTERPRET_PARAMETER_SET;
-{	The reason for separating the reading of the data from the file, 
+{	The reason for separating the reading of the data from the file,
 	and the allocation of each parameter or variable to its proper place,
 	is that the file reading is very quick compared to the time
 	required for interpretation.	}
@@ -1236,12 +1536,15 @@ VAR
 	code		:	Integer;
 	number	:	Integer;
 	L,m,h,r	:	a_real;
-	check		:	ARRAY [parrange] OF BOOLEAN;
+	check		:	ARRAY [R_pars] OF BOOLEAN;
 	i			:	1..stash_max;
 BEGIN
 	FOR parnumber := 0 TO numberofparameters DO
 		check[parnumber] := FALSE;
-
+{	This assumes the stash is not empty, i.e. that there was at least one
+	material parameter or variable in it	}
+	IF (stash_index < 1) THEN
+		Finish(7);
 	FOR i := 1 TO stash_index DO
 			BEGIN
 		{	Read a line, check if it is a parameter we know about..	}
@@ -1286,7 +1589,8 @@ BEGIN
 		42:					imc := sphalerites;
 		43..45:				imc := wurtzites;
 		46..49:				imc := alkali_halides;
-		51..59:				imc := ice;
+		51,53..59:			imc := ice;
+		52:					imc := bcc_rotator;
 	ELSE
 				imc := unknown;
 	END; 	{	Case	}
@@ -1303,14 +1607,13 @@ BEGIN
 
 	IF NOT modefast THEN
 		BEGIN
-			LIST_PARAMETERS;
 			EDIT_PARAMETERS;
 		END;
 
 END;  {INTERPRET_PARAMETER_SET.    }
 {-------------------------------------------------------------------}
 PROCEDURE INTERPRET_VARIABLE_SET;
-{	The reason for separating the reading of the data from the file, 
+{	The reason for separating the reading of the data from the file,
 	and the allocation of each parameter or variable to its proper place,
 	is that the file reading is very quick compared to the time
 	required for interpretation.	}
@@ -1321,7 +1624,7 @@ VAR
 	code		:	Integer;
 	number	:	Integer;
 	L,m,h,r	:	a_real;
-	check		:	ARRAY [vblrange] OF BOOLEAN;
+	check		:	ARRAY [R_vbls] OF BOOLEAN;
 	i			:	1..stash_max;
 BEGIN
 	FOR vblnumber := 1 TO numberofvariables DO
@@ -1362,32 +1665,44 @@ BEGIN
 	IF NOT modefast THEN
 		BEGIN
 			LIMIT_VARIABLES;
-			LIST_VARIABLES;
 			EDIT_VARIABLES;
 		END;
 
 END;  {INTERPRET_VARIABLE_SET.    }
 {-------------------------------------------------------------------}
-PROCEDURE CHECK_PARAMETERS;
+PROCEDURE CHECK_PARAMETERS (Screen: BOOLEAN);
 
 { -------- Checks input data against limits -------- }
 VAR
 	lf	:	Text;
 	s, s_lo, s_hi	:	STRING;
 	r, r_lo, r_hi	:	REAL;
+	response			:	CHAR;
+	L1, L2, L3		:	a_real;
 
 BEGIN
 
-	CLEAN_WINDOW;
+	IF Screen THEN
+		BEGIN
+			CLEAN_WINDOW;
 
-	textbackground(C_back);
-	gotoXY(1,2);
-	write  ('                                                             ');
-	gotoXY(1,2);
-	write(' ',Version,'     CHECK  ON  INPUT DATA  FOR   ');
-	textcolor(C_bright);
-	write(matlname);
-	gotoXY(1,5);
+			textbackground(C_back);
+			gotoXY(1,2);
+			write  ('                                                             ');
+			gotoXY(1,2);
+			write(' ',Version,'     CHECK  ON  INPUT DATA  FOR   ');
+			textcolor(C_bright);
+			write(matlname);
+
+			gotoXY(1,24);
+			write ('                                                             ');
+			gotoXY(1,24);
+			write ('                PRESS SPACE BAR TO CONTINUE                  ');
+
+			Window(10,5,70,22);
+			gotoXY(1,1);
+		END;	{	Screen block	}
+
 	for parnumber := 0 to numberofparameters do
 		BEGIN
 			LABELS_FOR_PARAMETERS;
@@ -1401,27 +1716,39 @@ BEGIN
 
 			if (par[parnumber] < L1) or (par[parnumber] > L3) then BEGIN
 				modeconcern:=TRUE;
-				writeln ('    ',d,'  outside expected range      ');
-				writeln('       ',d,'=  ',s,'  ',u);
-				writeln('       Anticipated  Range          =',s_lo,'  ',u);
-				writeln('                                 to ',s_hi,'  ',u);
-				IF modelist AND NOT modelistfile then
+				IF Screen THEN
 					BEGIN
-						writeln(lst,'       PARAMETER',parnumber:3,' OUTSIDE EXPECTED RANGE.');
-						writeln(lst,'       ',d,'=  ',s,'  ',u);
-						writeln(lst,'       Anticipated  Range          =',s_lo,' to ',s_hi,'  ',u);
-						writeln(lst);
-					END;
-				IF modelistfile THEN
+						writeln ('    ',d,'  outside expected range');
+						writeln('       ',d,'=  ',s,'  ',u);
+						writeln('       Anticipated  Range          =',s_lo,'  ',u);
+						writeln('                                 to ',s_hi,'  ',u);
+						writeln;
+						IF (NOT modefast) THEN
+							BEGIN
+								REPEAT UNTIL KeyPressed;
+								response:=Readkey;
+							END;
+					END
+				ELSE	{	NOT Screen	}
 					BEGIN
-						Assign(lf,listfilename);
-						Append(lf);
-						writeln(lf,'       PARAMETER',parnumber:3,' OUTSIDE EXPECTED RANGE.');
-						writeln(lf,'       ',d,'=  ',s,'  ',u);
-						writeln(lf,'       Anticipated  Range          =',s_lo,' to ',s_hi,'  ',u);
-						writeln(lf);
-						Close(lf);
-					END;
+						IF modelist THEN
+							BEGIN
+								writeln(lst,'       PARAMETER',parnumber:3,' OUTSIDE EXPECTED RANGE.');
+								writeln(lst,'       ',d,'=  ',s,'  ',u);
+								writeln(lst,'       Anticipated  Range          =',s_lo,' to ',s_hi,'  ',u);
+								writeln(lst);
+							END;
+						IF modelistfile THEN
+							BEGIN
+								Assign(lf,listfilename);
+								Append(lf);
+								writeln(lf,'       PARAMETER',parnumber:3,' OUTSIDE EXPECTED RANGE.');
+								writeln(lf,'       ',d,'=  ',s,'  ',u);
+								writeln(lf,'       Anticipated  Range          =',s_lo,' to ',s_hi,'  ',u);
+								writeln(lf);
+								Close(lf);
+							END;
+					END;	{	NOT Screen block	}
 			END;
 		END;
 
@@ -1441,49 +1768,83 @@ BEGIN
 
 			if (vbl[vblnumber] < L1) or (vbl[vblnumber] > L3) then
 				BEGIN
-					writeln ('   ',d,'  outside expected range     ');
-					writeln('       ',d,'=  ',s,'  ',u);
-					writeln('       Anticipated  Range          =  ',s_lo,'  ',u);
-					writeln('                                 to ',s_hi,'  ',u);
-					IF modelist AND NOT modelistfile then
+					IF Screen THEN
 						BEGIN
-							writeln(lst,'       VARIABLE ',vblnumber:3,' OUTSIDE EXPECTED RANGE.');
-							writeln(lst,'       ',d,'=  ',s,'  ',u);
-							writeln(lst,'       Anticipated  Range          =  ',s_lo,' to ',s_hi,'  ',u);
-							writeln(lst);
-						END;
-					IF modelistfile THEN
+							writeln ('   ',d,'  outside expected range     ');
+							writeln('       ',d,'=  ',s,'  ',u);
+							writeln('       Anticipated  Range          =  ',s_lo,'  ',u);
+							writeln('                                 to ',s_hi,'  ',u);
+							IF (NOT modefast) THEN
+								BEGIN
+									REPEAT UNTIL KeyPressed;
+									response:=Readkey;
+								END;
+						END
+					ELSE	{	NOT Screen	}
 						BEGIN
-							Assign(lf,listfilename);
-							Append(lf);
-							writeln(lf,'       VARIABLE ',vblnumber:3,' OUTSIDE EXPECTED RANGE.');
-							writeln(lf,'       ',d,'=  ',s,'  ',u);
-							writeln(lf,'       Anticipated  Range          =  ',s_lo,' to ',s_hi,'  ',u);
-							writeln(lf);
-							Close(lf);
-						END;
-				END;
+							IF modelist THEN
+								BEGIN
+									writeln(lst,'       VARIABLE ',vblnumber:3,' OUTSIDE EXPECTED RANGE.');
+									writeln(lst,'       ',d,'=  ',s,'  ',u);
+									writeln(lst,'       Anticipated  Range          =  ',s_lo,' to ',s_hi,'  ',u);
+									writeln(lst);
+								END;
+							IF modelistfile THEN
+								BEGIN
+									Assign(lf,listfilename);
+									Append(lf);
+									writeln(lf,'       VARIABLE ',vblnumber:3,' OUTSIDE EXPECTED RANGE.');
+									writeln(lf,'       ',d,'=  ',s,'  ',u);
+									writeln(lf,'       Anticipated  Range          =  ',s_lo,' to ',s_hi,'  ',u);
+									writeln(lf);
+									Close(lf);
+								END;
+						END;	{	end NOT Screen block	}
+				END;	{	out of range block	}
 		END;	{	for vblnumber := 1 to numberofvariables do	}
 
 
-	textcolor(C_text);  writeln;
-	write ('     ------------  DATA  CHECK  COMPLETE  ------------');
-	writeln;
+	IF Screen THEN
+		BEGIN
+			textcolor(C_text);  writeln;
+			write ('     ------------  DATA  CHECK  COMPLETE  ------------');
+			writeln;
+
+			Window(10,1,70,25);
+		END;	{	Screen block	}
 
 END;  {CHECK_PARAMETERS.     }
 
+{-------------------------------------------------------------------}
+PROCEDURE OPEN_PRINTER (hrdcopy: CHAR);
+
+BEGIN
+	IF (hrdcopy in ['e','E']) THEN		{	reduced print Epson	}
+		BEGIN
+			write(lst,Esc,'@');		{	reset	}
+	   	write(lst,#15); 			{ condensed printing }
+			write(lst,Esc,'0');		{	1/8" lines	}
+			write(lst,Esc,'C',#86);	{	86 lines per page	}
+		END
+	ELSE IF (hrdcopy in ['l','L']) THEN		{	reduced print HP laser	}
+		BEGIN
+			write(lst,Esc,'E');		{	reset	}
+			write(lst,Esc,'&k2S');	{	condensed	}
+			WRITE(Lst,Esc,'&18D'); 	{	1/8" lines	}
+		END;
+END;
 {-------------------------------------------------------------------}
 PROCEDURE INPUT_DATA_TO_PRINTER;
 
 VAR
 	s	:	STRING;
 	r	:	REAL;
-	index		:	refrange;
+	index		:	R_refs;
 	i, j, line	:	WORD;
 BEGIN
-
 	DATE_AND_TIME;
-
+	Writeln(lst,'      ',Version,' v',Release,' (',VersionDate,')');
+	Writeln(lst,'      ',copyright);
 	writeln(lst,'      ',weekday,' ',Date_string,' ',time_string);
 	writeln(lst);
 	writeln(lst,'      =============================================================');
@@ -1529,7 +1890,7 @@ BEGIN
 	writeln(lst,'      =============================================================');
 	writeln(lst);
 
-	line := 1 + reflength DIV reflines;
+	line := 1 + ref_buflength DIV reflines;
 	FOR i := 0 to reflines - 2 DO
 		BEGIN
 			write(lst,'      ');
@@ -1538,12 +1899,26 @@ BEGIN
 			writeln(lst);
 		END;
 	write(lst,'      ');
-	FOR index := (reflength - line +2) TO reflength DO
+	FOR index := (ref_buflength - line +2) TO ref_buflength DO
 		write(lst,ref[index]);
 	writeln(lst);
 
+END; {OPEN_INPUT_DATA_TO_PRINTER.    }
+{-------------------------------------------------------------------}
+PROCEDURE CLOSE_PRINTER (hrdcopy: CHAR);
+BEGIN
+	write(lst,#12);		{	page throw	}
 
-END; {INPUT_DATA_TO_PRINTER.    }
+	IF (hrdcopy in ['e','E']) THEN		{	reduced print Epson	}
+		BEGIN
+			write(lst,Esc,'@');		{	reset	}
+		END
+	ELSE IF (hrdcopy in ['l','L']) THEN		{	reduced print HP laser	}
+		BEGIN
+			write(lst,Esc,'E');		{	reset	}
+		END;
+
+END; {CLOSE_INPUT_DATA_TO_PRINTER.    }
 {-------------------------------------------------------------------}
 PROCEDURE INPUT_DATA_TO_FILE;
 
@@ -1551,7 +1926,7 @@ VAR
 	lf	:	Text;
 	s	:	STRING;
 	r	:	REAL;
-	index		:	refrange;
+	index		:	R_refs;
 	i, j, line	:	WORD;
 
 BEGIN
@@ -1560,6 +1935,8 @@ BEGIN
 	Assign(lf,listfilename);
 	Rewrite(lf);
 
+	Writeln(lf,'      ',Version,' v',Release,' (',VersionDate,')');
+	Writeln(lf,'      ',copyright);
 	writeln(lf,'      ',weekday,' ',Date_string,' ',time_string);
 	writeln(lf);
 	writeln(lf,'      =============================================================');
@@ -1606,7 +1983,7 @@ BEGIN
 	writeln(lf,'      =============================================================');
 	writeln(lf);
 
-	line := 1 + reflength DIV reflines;
+	line := 1 + ref_buflength DIV reflines;
 	FOR i := 0 to reflines - 2 DO
 		BEGIN
 			write(lf,'      ');
@@ -1615,7 +1992,7 @@ BEGIN
 			writeln(lf);
 		END;
 	write(lf,'      ');
-	FOR index := (reflength - line +2) TO reflength DO
+	FOR index := (ref_buflength - line +2) TO ref_buflength DO
 		write(lf,ref[index]);
 	writeln(lf);
 
@@ -1623,4 +2000,57 @@ BEGIN
 
 END; {INPUT_DATA_TO_FILE.    }
 
+{---------------------------------------------------------------------------}
+{$IFDEF debug}
+PROCEDURE DUD_TEMP_TO_DEBUG (dud_steps: INTEGER;
+									dud_TN, dud_K: a_real);
+BEGIN
+	writeln(db);
+	writeln(db,' ========================================');
+	writeln(db,' LOW TEMPERATURE CUTTOFF for  ',matlname);
+	writeln(db);
+	writeln(db,' Due to floating-point inaccuracies,',
+				'the diffusion rates');
+	writeln(db,' can only be calculated properly above ',
+				dud_TN:6:3,' Tm');
+	writeln(db,' i.e., above ',
+				dud_K:6:0,' degrees K.');
+	writeln(db,' Number of bad temperature steps is: ',dud_steps);
+END;	{	DUD_TEMP_TO_DEBUG	}
+{$ENDIF}
+{---------------------------------------------------------------------------}
+PROCEDURE DUD_TEMP_TO_PRINTER (dud_steps: INTEGER;
+									dud_TN, dud_K: a_real);
+BEGIN
+	writeln(lst);
+	writeln(lst,'   ========================================');
+	writeln(lst,'   LOW TEMPERATURE CUTTOFF for  ',matlname);
+	writeln(lst,'   ========================================');
+	writeln(lst);
+	writeln(lst,'   Due to floating-point inaccuracies,',
+				'the diffusion rates');
+	writeln(lst,'   can only be calculated properly above ',
+				dud_TN:6:3,' Tm');
+	writeln(lst,'   i.e., above ',
+				dud_K:6:0,' degrees K.');
+END;	{	DUD_TEMP_TO_PRINTER	}
+{---------------------------------------------------------------------------}
+PROCEDURE DUD_TEMP_TO_FILE (dud_steps: INTEGER;
+									dud_TN, dud_K: a_real);
+VAR
+	lf	:	Text;
+
+BEGIN
+	Assign(lf,listfilename);
+	Append(lf);
+	writeln(lf,'   Due to floating-point inaccuracies,',
+				'the diffusion rates');
+	writeln(lf,'   can only be calculated properly above ',
+				dud_TN:6:3,' Tm');
+	writeln(lf,'   i.e., above ',
+				dud_K:6:0,' degrees K.');
+	writeln(lf);
+	Close(lf);
+END;	{	DUD_TEMP_TO_FILE	}
+{-------------------------------------------------------------------}
 End.	{	Unit Dfmfiles	}

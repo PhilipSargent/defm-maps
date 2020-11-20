@@ -1,28 +1,31 @@
  Unit DfmModls;
-{ PMS 3-January-1990 00:34 }
+{ PMS 25-March-1990 00:41 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
    *************   P.M.Sargent and M.F.Ashby        **************
-   *************   January 1990                     **************
+   *************   February 1990                    **************
 }
-{$R+}    {Range checking on}
-{$B+}    {Boolean complete evaluation on}
-{$S+}    {Stack checking on}
-{$I+}    {I/O checking on}
-{$N+}    {Use numeric coprocessor if present}
-{$E+}		{Include copy of 8087 Emulator - default anyway}
+{$IFDEF  contour}		{	ensure compiler directives are consistent	}
+{$DEFINE  detail}
+{$ENDIF}
+{$IFDEF  detail}
+{$DEFINE  debug}
+{$ENDIF}
+{.$R+}    {Range checking on}
+{.$B+}    {Boolean complete evaluation on}
+{.$S+}    {Stack checking on}
+{.$I+}    {I/O checking on}
+{.$N+}    {Use numeric coprocessor if present}
+{.$E+}	 {Include copy of 8087 Emulator - default anyway}
 
 Interface
 
 Uses
-	Crt,
-	Dos,
-	Printer,
 	DfmGlbls;
 
-PROCEDURE DEFINE_UNITS;
+PROCEDURE DEFINE_UNITS (VAR dud_steps: INTEGER; VAR dud_TN, dud_K: a_real);
 
 PROCEDURE DIFFUSION_RATES;
 
@@ -30,16 +33,24 @@ PROCEDURE DIFFUSION_RATES;
 
 PROCEDURE STRAIN_RATES (TN, LgSN: a_real;
 								VAR Rate: a_real;
-								VAR field: T_mech;
+								VAR field: E_mech;
 								VAR hint_stress : a_real);
 { ----- Calculate the strain rates due to each mechanism ----- }
+{$IFDEF  debug}
+PROCEDURE WRITE_FIELDNAME (field: E_mech);
+{$ENDIF}
 
 {===========================================================================}
 
 Implementation
 
+Uses
+	Dos,
+	Printer;
+
 CONST
 	HighRate	=	1.0e30;
+	StrainRateLimit = 1.0e6;		{	maximum expected in a real material }
 VAR
 	stress_stash:	ARRAY [1..max_steps, 1..2] OF a_real;
 	kT			:	a_real;
@@ -56,6 +67,11 @@ VAR
 	dmeltcore		:  a_real;
 	dmelt_crp		:  a_real;
 	shear_mod		:	a_real;
+	phonon			:	a_real;
+	electron			:	a_real;
+	beta_breakdown	:	a_real;
+	arzt_cuttoff	:	a_real;
+	phase_change	:	a_real;
 
 	value1				:  a_real;
 	value2				:  a_real;
@@ -67,6 +83,8 @@ VAR
 	ref_factor		:	a_real;
 	ref_stress		:	a_real;
 	glide_thresh	:	a_real;
+	visco_mobility	:	a_real;
+	beta_ref			:	a_real;
 	a_prime			:	a_real;
 	dorn 				:  a_real;
 	dornLT1			:	a_real;
@@ -76,6 +94,7 @@ VAR
 	exp_limit		:	a_real;
 	low_exp_limit	:	a_real;
 	high_exp_limit	:	a_real;
+	Low_Temp_limit	:	a_real;
 
 	M_diffusion		:	T_mechset;
 	M_plc				:  T_mechset;
@@ -129,40 +148,46 @@ BEGIN
 		END;
 END;	{	multiply	}
 {---------------------------------------------------------------------------}
-PROCEDURE DEFINE_UNITS;
+PROCEDURE DEFINE_UNITS (VAR dud_steps: INTEGER; VAR dud_TN, dud_K: a_real);
 
 VAR
-	mech	:	T_mech;
+	lf		:	Text;
+	mech	:	E_mech;
 	qN		:	ARRAY [1..4] OF a_real;
 	i		:	Byte;
+	TNstep:	a_real;
 BEGIN
-
 
 { ----- Assign program names to the parameters ----- }
 
-	tmelt		:=par[1];			
+	tmelt		:=par[1];
 	shtmp		:=par[2];
-	shmod		:=par[3];			
-	tprls		:=par[4];			
+	shmod		:=par[3];
+	tprls		:=par[4];
 	tobst		:=par[5];
 	delFl		:=par[6];
-	delFo		:=par[7];			
+	delFo		:=par[7];
 	dovol		:=par[8];
-	qvolm		:=par[9];			
+	qvolm		:=par[9];
 	dlbdy		:=par[10];
-	qbdry		:=par[11];			
+	qbdry		:=par[11];
 	acdoc		:=par[12];
-	qcore		:=par[13];			
+	qcore		:=par[13];
 	n_crp		:=par[14];
-	S_crp		:=par[15];			
+	S_crp		:=par[15];
 	q_crp		:=par[16];
 	burgv		:=par[17];
-	atvol		:=par[18];			
+	atvol		:=par[18];
+	phonon			:= par[19];
+	electron			:= par[20];
+	beta_breakdown	:= par[21];
+	arzt_cuttoff	:= par[22];
+	phase_change	:= par[23];
 
 { ----- Assign program names to the plotting variables ----- }
 
 	steps			:=  round(vbl[1]);
-	Gsize			:=  vbl[2];
+	Gsize			:=  vbl[2]/1e6;	{	microns to metres	}
 	SNfirst		:=  vbl[3];
 	SNlast		:=  vbl[4];
 	TNfirst		:=  vbl[5];
@@ -170,6 +195,11 @@ BEGIN
 	cntrfirst 	:=  vbl[7];
 	cntrfactor	:=  vbl[8];
 	contournumber :=  round(vbl[9]);
+	RNtop			:=  vbl[10];
+	RNbottom		:=  vbl[11];
+	Tcntr_high	:=  vbl[12];
+	Tcntr_diff	:=  vbl[13];
+	Tcntr_number	:=  round(vbl[14]);
 
 { ----- Compute normalised diffusion rates ----- }
 
@@ -191,6 +221,10 @@ BEGIN
 	by dividing the ref. stress by the shear modulus at half the
 	melting point.	}
 	ref_const	:= S_crp/(1.0e3*shmod*(1 - shtmp*0.5));
+
+{	beta normalised terms of ref_stress instead of in terms of shear_modulus }
+	beta_ref		:= beta_breakdown/ref_const;
+
 {$IFDEF debug}
 	writeln(db,' Normalised Ref.Stress : ',ref_const:7);
 	writeln(db,' Inverted (Brown & Ashby) : ',(1/ref_const):7:3);
@@ -201,10 +235,10 @@ BEGIN
 	with different interaction behavior between the mechanisms. There is
 	presumably a continuum of interacting behaviour, but here we take the
 	first approximation that mechanisms are either additive or alternative
-	(sum or max).  Physical reasoning states whether it is the maximum or
+	(sum or max).  Physical reasoning decides whether it is the maximum or
 	the minimum strain rate that dominates, e.g. dislocation "drag"
-	mechanisms are upper-bounds & therefore the minimum is the correct
-	result.
+	mechanisms are upper-bounds & therefore taking the minimum is the correct
+	procedure.
 
 	The mechanisms are grouped into diffusive, power-law, glide and
 	drag groups.  (The default sets are for bcc metals.) Power-law creep
@@ -215,9 +249,9 @@ BEGIN
 	The dominance and results of mixing groups of mechanisms is set to
 	be the same for ALL crystalline materials.  The variations in
 	behaviour between the isomechanical classes are handled by assigning
-	different sets of mechanisms to these invarient groups.
+	different sets of mechanisms to these four invariant groups.
 
-	15-December-1989 07:21 
+	15-December-1989 07:21
 	PMS
 }
 	{ ----- Set up default sets for use with mechanism conjunction ----- }
@@ -266,6 +300,9 @@ BEGIN
 	FOR mech := null TO rel_drag DO
 		mechID[mech] := mech;
 
+{ ----- Calculate the temperature step, used below	----- }
+	TNstep		:= (TNlast - TNfirst)/steps;
+
 { ----- Calculate the maximum to be used to set exp_fix later ----- }
 	qN[1] := qvolmN;
 	qN[2] := qbdryN;
@@ -276,9 +313,31 @@ BEGIN
 	FOR i := 1 TO 4 DO
 		IF ( q_maxN < qN[i] ) THEN q_maxN := qN[i];
 
-{ ----- Default exp_fix, make bigger and smaller depending on Temp. ----- }
-	fix		:=	25.0;
+{	Proper fix depends on the maximum activation energy q_maxN and
+	the smallest temperature, ie. the first temperature step:
+	The value of exp_fix is adjusted so that, as much as possible,
+	the exponentials are properly calculated at both high temperature
+	and low-temperature extremes. HOWEVER, there is usually still a low-temp
+	cuttoff below which larger activation energies don't work.
+}
+	fix := q_maxN/TNstep;
+	dud_steps := 0;
+	WHILE (fix > exp_limit) DO
+		BEGIN
+			Inc(dud_steps);
+			fix := q_maxN/(TNstep*(dud_steps+1));
+		END;
+
 	exp_fix	:= exp(-fix);
+	Low_Temp_Limit := TNstep * dud_steps;
+
+	{	use different variable for VAR - called from another Unit	}
+	dud_TN := Low_Temp_Limit;
+	dud_K  := Low_Temp_Limit*Tmelt;
+
+{$IFDEF debug}
+	writeln(db,' Exponential fix number is: ',fix:10:4);
+{$ENDIF}
 
 	memory_enable	:= FALSE;
 
@@ -305,9 +364,7 @@ BEGIN
 	occur, which will cut-off a mechanism below a critical temperature.
 	Therefore all arguments have fix added to them, and the results are
 	multiplied by exp(-fix), which is the value of the constant exp_fix.
-	The value of exp_fix is adjusted so that the exponentials are 
-	properly calculated at both high temperature and low-temperature
-	extremes.
+
 }
 
 	IF ( TN <= 0.0 ) THEN
@@ -324,6 +381,7 @@ BEGIN
 			dornLT1		:= exp_fix;
 			dornLT2		:= exp_fix;
 			obst_energy	:=	exp_fix;
+			visco_mobility	:=	exp_fix;
 		END
 	ELSE
 		BEGIN
@@ -341,10 +399,17 @@ BEGIN
 			ELSE
 				diffusion4      := exp_fix * exp(fix-q_crpN*(1/TN - 2));
 
-{ ----- Shear modulus at 0K then at current temperature ----- }
-			shear_mod	:= shmod* (1 + shtmp*300/tmelt)*(1 - shtmp*TN);
 			kT				:= boltz*TN*tmelt;
 			T				:= TN*tmelt;
+
+{ ----- Safety check in case a large value of shtmp makes the modulus go -ve }
+{ ----- Shear modulus at 0K then at current temperature ----- }
+			IF (TN > phase_change/Tmelt) THEN
+				shear_mod	:= shmod* (1 + shtmp*300/tmelt)*(1 - shtmp*phase_change/Tmelt)
+			ELSE IF (TN < 0.999/shtmp) THEN
+				shear_mod	:= shmod* (1 + shtmp*300/tmelt)*(1 - shtmp*TN)
+			ELSE
+				shear_mod	:= shmod* (1 + shtmp*300/tmelt)*(1 - 0.999);
 
 { ----- Evaluate diff. coefficient, normalised by R, at T;  units: /s ----- }
 			c1				:= 42*atvol/kT;
@@ -352,6 +417,8 @@ BEGIN
 
 			value1			:=    c1*dmeltvolm*diffusion1/(Gsize*Gsize);
 			value2			:= pi*c1*dmeltbdry*diffusion2/(Gsize*Gsize*Gsize);
+
+			visco_mobility	:=	1.0/(TN*Tmelt*phonon + electron);
 
 {	The following calculations have to be done in the best order to
 	prevent the intermediate values producing arithmetic underflows
@@ -371,13 +438,18 @@ BEGIN
 	obst_energy		:=	delFo*mu.b-cubed/kT
 	prls_energy		:=	delFo*mu.b-cubed/kT
 }
-{			dornLT		:=	1.0e-6*0.5*tmelt*ref_factor*10*dmeltcore*diffusion3 
+{			dornLT		:=	1.0e-6*0.5*tmelt*ref_factor*10*dmeltcore*diffusion3
 									*ref_const*ref_const/(dovol*burgv*burgv);
 }
 			dornLT1		:=	diffusion3;	{	we can mix and match LT1 and LT2	}
 			dornLT2		:=	1.0e-6*0.5*tmelt*ref_factor*10*dmeltcore
 									*ref_const*ref_const/(dovol*burgv*burgv);
 
+{	Note that here the temperature-dependent shear modulus is used for the
+	obstacle and Peierls-stress mechanisms, whereas	the old FORTRAN routine
+	just used the 300K modulus since that "partially compensated"
+	for the lack of temperature dependence of the burgers vector.
+}
 			obst_energy		:=	delFo*shear_mod*1.0e9*b3_k/T;
 
 			prls_energy		:=	delFl*shear_mod*1.0e9*b3_k/T;
@@ -392,6 +464,8 @@ BEGIN
 		Writeln(db, ' diffusion2=',diffusion2:9,' diffusion1=',diffusion1:9);
 		Writeln(db, ' diffusion4=',diffusion4:9,' diffusion3=',diffusion3:9);
 		Writeln(db, ' dorn      =',dorn:9,      ' dornLT1   =',dornLT1:9,'  dornLT2   =',dornLT2:9);
+{$ENDIF}
+{$IFDEF detail}
 		Write(db,'Stress&SN                 b_diff    v_diff    plc_ht    ');
 		Write(db,'plc_lt    S_plc');
 		Writeln(db,'     o_glide   pls_drag  S_glide     Rate      field');
@@ -400,8 +474,10 @@ BEGIN
 END;   {DIFFUSION_RATES.    }
 {---------------------------------------------------------------------------}
 FUNCTION any_null ( MechSet: T_mechset): BOOLEAN;
+{	If, in the set of mechanisms given, any one is null, then this
+	returns True.	}
 VAR
-	mech	:	T_mech;
+	mech	:	E_mech;
 	b		:	BOOLEAN;
 BEGIN
 	b := FALSE;
@@ -415,7 +491,7 @@ END;	{	any_null	}
 PROCEDURE Conjoin_Mechanisms (StrRate: T_mecharray;
 										MechSet: T_mechset;
 										Op:	T_ops;
-										VAR field: T_mech;
+										VAR field: E_mech;
 										VAR Rate: a_real);
 
 {	This procedure is passed a SET of mechanisms together with parameters
@@ -439,11 +515,11 @@ PROCEDURE Conjoin_Mechanisms (StrRate: T_mecharray;
 			result:=mech;
 	The check for null mechanisms now has to be done explicitly, outside
 	this procedure.  But I didn't like it, so I put it back again.
-   15-December-1989 08:38 
+   15-December-1989 08:38
 	PMS
 }
 VAR
-	mech, result	:	T_mech;
+	mech, result	:	E_mech;
 BEGIN
 { ----- Maximum OR Minimum of the strain rates for
 	individual mechanisms in order to find dominant mechanism ----- }
@@ -480,7 +556,7 @@ BEGIN
 
 	CASE Op.all OF
 		dom_op:	BEGIN
-					{	overall strain rate is that due only to 
+					{	overall strain rate is that due only to
 						the dominant mechanism	}
 						Rate := StrRate [result];
 					END;
@@ -511,7 +587,9 @@ FUNCTION StressFunction (SN: a_real): a_real;
 {	This function is independent of temperature and so can be
 	implemented as a memory function, i.e. if it already has
 	been called once with that stress, return the value calculated
-	the last time and don't recalculate}
+	the last time and don't recalculate.  It does depend on the
+	stresses given being PRE-DEFINED and on KNOWING the current
+	value of stress_step! Unclean, Unclean..}
 CONST
 	four_thirds		=	1.3333333;
 	three_quarters	=	0.75;
@@ -557,24 +635,68 @@ BEGIN
 
 END;	{	Obstacles	}
 {---------------------------------------------------------------------------}
+FUNCTION Breakdown (Stress, power: a_real): a_real;
+
+VAR
+	sinh_term, tau	:	a_real;
+BEGIN
+{	The breakdown becomes significant at stresses above beta, so we could
+	get a discontinuity at beta if we use beta as the changeover from one
+	equation to the other.  If we use half-beta then the Sinh(x) will be damn
+	near identical to (x), at x=0.5, sinh(x) is 0.52.
+	PMS 3-February-1990 02:18
+}
+	tau := Stress/ref_stress;
+	IF ( tau < 0.5* beta_ref) THEN
+		Breakdown := exp(ln(tau)*power)
+	ELSE
+		BEGIN
+			sinh_term := 0.5 * beta_ref *
+								(exp(tau/beta_ref) - exp(-tau/beta_ref));
+			Breakdown := exp(ln(sinh_term)*power);
+		END;
+
+END;	{	Breakdown	}
+{---------------------------------------------------------------------------}
+FUNCTION PhononDrag (SN: a_real): a_real;
+
+BEGIN
+	PhononDrag := visco_mobility * SN;
+
+END;	{	PhononDrag	}
+{---------------------------------------------------------------------------}
+FUNCTION Relativistic (SN: a_real): a_real;
+VAR
+	slow_pd :	a_real;
+BEGIN
+	slow_pd := visco_mobility * SN;
+
+	IF (slow_pd < 0.5 * StrainRateLimit) THEN		{fudge so not relativistic}
+		Relativistic := slow_pd * 1.1
+	ELSE
+		Relativistic := slow_pd/Sqrt(1.0+Sqr(slow_pd/StrainRateLimit));
+
+END;	{	Relativistic	}
+{---------------------------------------------------------------------------}
 PROCEDURE STRAIN_RATES (TN, LgSN: a_real;
 								VAR Rate: a_real;
-								VAR field: T_mech;
+								VAR field: E_mech;
 								VAR hint_stress : a_real);
 { ----- Calculate the strain rates due to each mechanism ----- }
 VAR
-	SN, 
+	SN,
 	Stress	:	a_real;
 	fudge		:	a_real;
 	StrRate	:	T_mecharray;
-	mech		:	T_mech;
-	field_diffusion, field_glide, field_drag, field_plc,field_dislcn	:	T_mech;
+	mech		:	E_mech;
+	field_diffusion, field_glide, field_drag, field_plc,field_dislcn	:	E_mech;
 	Rate_diffusion, Rate_glide, Rate_drag, Rate_plc, Rate_dislcn		:	a_real;
 
 BEGIN
+	Inc(SRcount);
 	FOR mech := null TO rel_drag DO
 		mechID[mech] := mech;
-	FOR mech := null TO rel_drag DO 
+	FOR mech := null TO rel_drag DO
 		StrRate[mech] := 0.0;
 
 {	SN is dimensionless, shear_mod is in GPa, we want Stress in Pa	}
@@ -586,14 +708,17 @@ BEGIN
 
 	StrRate[b_diff]	:= multiply(Stress,value2);		{Boundary Diffusion}
 	StrRate[v_diff]	:= multiply(Stress,value1); 		{Volume diffusion}
-	StrRate[plc_ht]	:= dorn *
-									exp(ln(Stress/ref_stress)*n_crp);	{HT Power-Law Creep}
-	StrRate[plc_lt]	:= (dornLT1*dornLT2) *
-									exp(ln(Stress/ref_stress)*(n_crp+2));	{LT Power-Law Creep}
-	StrRate[o_glide]	:= Obstacles(SN);	{	Obstacle glide	}
-	StrRate[pls_drag]	:= Peierls(SN);	{	Peierls drag	}
-	StrRate[phn_drag]	:= 0.5e6;	{	Phonon Drag	}
-	StrRate[rel_drag]	:= 0.7e6;	{	Relativistic Phonon Drag	}
+
+	{ HT & LT Power-Law Creep}
+	StrRate[plc_ht]	:= dorn * Breakdown(Stress,n_crp);
+	StrRate[plc_lt]	:= (dornLT1*dornLT2) * Breakdown(Stress,n_crp+2);
+
+	StrRate[o_glide]	:= Obstacles(SN);		{	Obstacle glide	}
+	StrRate[pls_drag]	:= Peierls(SN);		{	Peierls drag	}
+	StrRate[phn_drag]	:= PhononDrag(SN);	{	Phonon Drag	}
+	StrRate[rel_drag]	:= Relativistic(SN);	{	Relativistic Phonon Drag	}
+{	StrRate[phn_drag]	:= 0.5e6;} {PhononDrag(SN);}	{	Phonon Drag	}
+{	StrRate[rel_drag]	:= 0.7e6;} {Relativistic(SN);}	{	Relativistic Phonon Drag	}
 
 	IF (TN <= 0.0) THEN
 		BEGIN
@@ -610,10 +735,19 @@ BEGIN
 				StrRate[pls_drag]	:= HighRate
 			ELSE
 				StrRate[pls_drag]	:= LowRate;
+		END
+	ELSE 	IF ( TN <= Low_Temp_Limit ) THEN
+		{	all bets off with activation energies	}
+		BEGIN
+			mechID [plc_ht] := null;
+			mechID [plc_lt] := null;
+			mechID [v_diff] := null;
+			mechID [b_diff] := null;
+			mechID [plc_ht] := null;
 		END;
 
 { ----- Fix low-temp. and low-stress cutoffs ----- }
-{	These otherwise distort the shapes of the curves and give 
+{	These otherwise distort the shapes of the curves and give
 	the wrong dominant mechanisms	}
 
 	FOR mech := null TO rel_drag DO
@@ -641,8 +775,11 @@ BEGIN
 	Conjoin_Mechanisms (StrRate, M_plc, Ops_plc, field_plc, Rate_plc);
 	mechID [S_plc] := field_plc;
 	StrRate[S_plc] := Rate_plc;
-	IF any_null (M_plc) THEN
-		mechID [S_plc] := null;
+	{	NOTE the lack of a check for null participant mechanisms.
+		This is because at low temperatures, plc_HT bottoms out and
+		becomes NULL, which would cut-out plc_LT from being considered,
+		which allows b_diff to dominate over a narrow temp. band.
+		2-March-1990 04:13 PMS }
 
 	Conjoin_Mechanisms (StrRate, M_glide, Ops_glide, field_glide, Rate_glide);
 	mechID [S_glide] := field_glide;
@@ -651,11 +788,12 @@ BEGIN
 		mechID [S_glide] := null;
 
 {	a FIX for the alumina_oxides, YUKK!! to prevent a low pls_drag value
-	being ignored because it is null.  For all other mechanisms, a null
+	being ignored because it is null.  For MOST other mechanisms, a null
    result means that it should be ignored.  This is not true for drag
-   mechanisms (but the other drag mechanisms are never null, so it is
+   mechanisms (but the non-pls_drag mechanisms are never null, so it is
    easier just to reset this one. 	}
 	mechID [pls_drag] := pls_drag;
+
 	Conjoin_Mechanisms (StrRate, M_drag, Ops_drag, field_drag, Rate_drag);
 	mechID [S_drag] := field_drag;
 	StrRate[S_drag] := Rate_drag;
@@ -704,47 +842,58 @@ BEGIN
 
 {$IFDEF detail}
 	Write(db, Stress:8,' ',SN:7,'    ',StrRate[b_diff]:7, StrRate[v_diff]:7,
-			StrRate[plc_ht]:7, StrRate[plc_lt]:7, StrRate[S_plc]:7, StrRate[o_glide]:7, 
+			StrRate[plc_ht]:7, StrRate[plc_lt]:7, StrRate[S_plc]:7, StrRate[o_glide]:7,
 			StrRate[pls_drag]:7,StrRate[S_glide]:7,'  ',Rate:7,' ');
 
-	CASE field OF
-		null		:	Write(db,'null  ');
-		re_cryst	:	Write(db,'re_cryst');
-		b_diff	:	Write(db,'b_diff');
-		v_diff	:	Write(db,'v_diff');
-		plc_ht	:	Write(db,'plc_ht');
-		plc_lt	:	Write(db,'plc_lt');
-		o_glide	:	Write(db,'o_glide');
-		pls_drag	:	Write(db,'pls_drag');
-		phn_drag	:	Write(db,'phn_drag');
-		rel_drag	:	Write(db,'rel_drag');
-		ELSE
-			Write(db,'+ error +');
-	END;	{	Case	}
+	WRITE_FIELDNAME (field);
 
-	IF (TN <= 0.0) THEN
-		Writeln(db);
 {	IF (TN <= 0.0) THEN
+		Writeln(db);
+	IF (TN <= 0.0) THEN
 		Write(db, Stress:8,' ', SN:7,'    ',Rate_drag:8, StrRate[S_drag]:8);
 		Writeln(db, StrRate[pls_drag]:8, StrRate[phn_drag]:8, StrRate[rel_drag]:8);
 	Writeln(db, SN:7,'    ', Rate_diffusion:8,StrRate[S_diff]:8,
 			Rate_drag:8,StrRate[S_drag]:8, Rate_glide:8, Rate_dislcn:8,
 			StrRate[S_plc]:8,StrRate[S_glide]:8);
 }
-{	Writeln(db,' ',(-obst_energy*(1-SN/tobst)):8);	}
+{	Writeln(db,' obst_energy term ',(-obst_energy*(1-SN/tobst)):8);	}
 {$ENDIF}
 
 END;   {STRAIN_RATES.  }
 {---------------------------------------------------------------------------}
-{ Initialization }
+{$IFDEF debug}
+PROCEDURE WRITE_FIELDNAME (field: E_mech);
 BEGIN
-	IF (System.Test8087=0) THEN	{	no coprocessor present, using emulator	}
+	CASE field OF
+		null		:	Write(db,'NULL    ');
+		re_cryst	:	Write(db,'re_cryst');
+		b_diff	:	Write(db,'b_diff  ');
+		v_diff	:	Write(db,'v_diff  ');
+		plc_ht	:	Write(db,'plc_ht  ');
+		plc_lt	:	Write(db,'plc_lt  ');
+		o_glide	:	Write(db,'o_glide ');
+		pls_drag	:	Write(db,'pls_drag');
+		phn_drag	:	Write(db,'phn_drag');
+		rel_drag	:	Write(db,'rel_drag');
+		ELSE
+						Write(db,'+error+ ');
+	END;	{	Case	}
+END;
+{$ENDIF}
+{---------------------------------------------------------------------------}
+{ Unit Initialization }
+BEGIN
+{	no coprocessor present, using emulator,
+	but this does NOT affect limits now.. so commented out.}
+
+{	IF (System.Test8087=0) THEN
 		BEGIN
 			exp_limit		:=	87.0;
 			high_exp_limit	:=	6.0760e37;
 			low_exp_limit	:=	1.6458e-38;
 		END
 	ELSE
+}
 		BEGIN
 			exp_limit		:=	227.0;
 			high_exp_limit	:=	3.84457e98;
