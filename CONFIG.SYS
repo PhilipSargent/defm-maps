@@ -1,0 +1,4 @@
+buffers = 30
+country=044
+files=20
+shell = c:\command.com c:\ /p /e:800
