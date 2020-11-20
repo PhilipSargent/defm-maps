@@ -1,0 +1,1916 @@
+
+Operating Manual for DFM290
+
+
+CONTENTS
+
+TABLE 1: NOMENCLATURE AND UNITS	2
+OPERATING MANUAL FOR DFM290	4
+1.  INTRODUCTION	4
+2.  HARDWARE	4
+3.  LOADING THE PROGRAM	4
+3.1  Reading the Information	4
+3.2  Running the Program	5
+3.3  Command-Line Options	5
+4.  RUNNING THE PROGRAM	6
+4.1  Selection 'C': Creating	6
+4.2  Selection 'R': Reading a file	9
+4.3  Editing	11
+4.4  Deleting	11
+4.5  Fixing	11
+4.6  Selection 'S': The Same Material	11
+4.7  The End	12
+5.  DATA SETS, PARAMETERS AND THE MAPS	12
+5.1 Data Sets	12
+5.2 Material Parameters	13
+5.3 The Map Variables	14
+5.5 The Maps	15
+6.  TUNING THE DATA 	16
+6.1 Developing a Data Set	16
+6.2 Tuning the Parameters	16
+7.  THINGS THAT CAN GO WRONG	17
+7.1  The program won't load	17
+7.2  The program loads but refuses to read data or aborts when run
+	17
+7.3  The printer won't print   	17
+7.4  The printer prints text or rubbish but not graphics	17
+7.5  Run-time	18
+7.6  Subtler problems	19
+APPENDIX A:  The Mechanisms and Rate Equations	20
+APPENDIX B:  Scaling Relations	21
+APPENDIX C:  Data, Data Sets and SOurces	23
+References	23
+Index	24
+
+D R A F T   O P E R A T I N G   M A N U A L  
+F O R   
+DFM290
+A PROGRAM FOR CONSTRUCTING DEFORMATION MECHANISM MAPS  
+by  
+P.M. SARGENT
+Cambridge University Engineering Department,  
+Trumpington Street, Cambridge CB2 1PZ, U.K.  
+JUNE 1993
+The program DFM290 is based on current models for deformation   
+mechanisms, and is supplied with data files for a number of   
+crystalline materials.  Every care has been taken in selecting the   
+models and in critically assessing the data but further research will   
+certainly improve on both.  The program aims to assemble the best of   
+current thinking into a useful package.  No guarantee can be given,   
+however, that all possible mechanisms and phenomena are included, or   
+that inaccuracies do not exist in the data.  The user must consult the   
+sources and form his own judgement.
+
+
+
+
+TABLE 1: NOMENCLATURE AND UNITS
+
+acD0c	Dislocation core diffusion:See core diffusion: 
+pre-exponential term (m$/s)
+
+b	Burgers vector (m)
+
+dD0b	Grain boundary diffusion:See Boundary 
+diffusion:Boundary diffusion pre-exponential term (m/s) ob
+
+Dv	Lattice diffusion:See Volume diffusion:Volume 
+diffusion coefficient (m3/s)
+
+D0v	Pre-exponentials for volume (lattice) diffusion 
+(m2/s)
+
+g	Grain size (microns)
+
+	Shear strain rate (s-1)
+
+k	Boltzmann's constant (1.38 x 10-26 J/K)
+
+u0, u300	Shear modulus at O K, at 300 K (GPa)
+
+n	Creep exponent
+
+Qb	Activation energy for boundary diffusion 
+(kJ/mol)
+
+Qc	Activation energy for core diffusion (kJ/mol)
+
+Qv	Activation energy for volume (lattice) diffusion 
+(kJ/mol)
+
+Qplc	Activation energy for power-law creep 
+(kJ/mol)
+
+R	Gas constant (8.314 J/mol.K)
+
+T	Temperature, absolute (K)
+
+Tm	Melting point temperature, absolute (K)
+
+	Shear stress (MPa)
+
+	Yield strength (MPa)
+
+	Reference:Stress stress for creep: see text 
+(MPa)
+
+OMEGA	Atomic volume of diffusing species (m3)
+
+Eo	Activation energy for obstacle-controlled glide 
+(-)
+
+Ep	Activation energy for Peierls stress-
+controlled glide (-)
+
+	Temperature dependence of the shear modulus (-)
+
+
+OPERATING MANUAL FOR DFM290
+
+1.	INTRODUCTION
+
+2.	REQUIRED HARDWARE AND OPERATING SYSTEM
+
+3.	LOADING THE COMPILED PROGRAM
+
+3.1	Reading files onto a hard-disc
+
+3.2	Loading the program from the hard-disc
+
+3.3	Loading the program from a floppy disc
+
+3.4	Command-line-Line Options
+
+4.	RUNNING THE COMPILED PROGRAM
+
+4.1	Selection "C": Creating a data set
+
+4.2	Selection "R": Reading a data set
+
+4.3	Editing a data set
+
+4.4	Deleting a data set
+
+4.5	Duplicating a data set
+
+4.6	Selection "S": The Same material
+
+5.	DATA SETS, PARAMETERS, VARIABLES AND THE MAPS
+
+5.1	Data sets
+
+5.2	Material parameters
+
+5.3	The variables
+
+5.4	The maps
+
+6.	TUNING THE DATA, AND TUTORIAL EXAMPLES
+
+6.1	Developing a data set
+
+6.2	Tuning the parameters
+
+6.3	Tutorial Example 1: Map for copper
+
+6.4	Tutorial Example 2: Map for alumina, an oxide ceramic
+
+7.	THINGS THAT CAN GO WRONG
+
+7.1	The program won't load
+
+7.2	The program loads but won't read data
+
+7.3	The printer won't print
+
+7.4	The printer prints but not graphics
+
+7.5	Run-time errors and subtler problems
+
+APPENDIX A:	THE MECHANISMS AND RATE EQUATIONS
+
+APPENDIX B:	SCALING RELATIONS
+
+APPENDIX C:	DATA, DATA FILES AND SOURCES
+
+REFERENCES
+
+INDEX
+
+
+OPERATING MANUAL FOR DFM290
+
+1.  INTRODUCTION
+
+This program constructs deformation mechanism maps for metals, 
+ceramics and semiconductors.  It uses models and rate equations 
+devised by a very large number of researchers which have been 
+rationalised and summarised in the book "Deformation Mechanism Maps" 
+by Frost and Ashby (1982), and further work published by Sargent and 
+Ashby (see references). Sections 2 to 5 of this manual explain how to 
+load and run the program.  Section 6 contains tutorial examples which 
+introduce the user to the procedure for developing accurate maps.  
+Section 7 lists some of the errors that can crop up in the use of the 
+program, and how to fix them. The program code is written in Turbo 
+Pascal version 5.5.  No knowledge of Pascal:See Turbo Pascal:, 
+and no other sofware, is needed to run it.  The disc contains 
+everything.
+
+2.  HARDWAREHardware: See Printer, Graphics
+The program is designed to run on an IBM PC or PS/2,or a 
+Compaq or equivalent, operating under MS-DOS:Version 2.11 or 
+higher, with at least 640K of RAM and optionally, an 8087 math co-
+processor.  It is a great help to have a hard-disc.  The program 
+is designed for a micro with a standard colour display (VGA, 
+EGA or CGA), but will run perfectly well on a monochrome 
+system (VGA or Hercules).  The only required peripheral is a 
+printerprinter capable of graphics.  The standard IBM dot-
+matrix printer printer or one of the Epson LX or LQ series 
+printers is fine, but a Hewlett-Packard laserjet or equivalent 
+will require extra software, which is not supplied with this 
+package (see section 7.4). The compiled code is for a 286 or more 
+recent processor, with a numeric coprocessor, but it can be recompiled 
+for older machines without coprocessors very easily.
+
+3.  LOADING THE PROGRAM
+
+The disc contains DFM290 in compiled form, together with a number of 
+data files. 
+
+3.1  Data set:Reading READING THE FILES ONTO A HARD-DISC
+
+The best way to run the program is from a hard-disc.  If your 
+computer has one, then follow these steps.
+
+(a)	Make a DIRECTORY to put the files in.  To do so, switch on the 
+computer, wait for the C> prompt and type
+
+		MD  \DFMAP 	(R) 
+
+	(The slash is a backslash \ , not a  /.  The	(R) means 
+"carriage" return" key).  This creates a directory called DFMAP.
+
+(b)	Enter the new directory.  To do so, type
+
+		CD  \DFMAP	(R)
+
+(c)	Data set:ReadingRead the files into the directory.  To do 
+this, put the supplied floppy disc in Drive A and type
+
+		COPY A:*.* 	(R) 
+
+	with no spaces after the A.  The discs sing for a bit, and 
+finally you get the message
+
+		18 FILES COPIED. 
+
+Remove the disc and store it somewhere safe. 
+
+3.2  RUNNING THE PROGRAM FROM THE HARD-DISC
+
+Make sure you are in DRIVE C: and in the DFMAP directory, type: 
+
+		CD \DFMAP	(R)
+
+Then type:  
+
+		DFM	(R) 
+
+((R) means "carriage return").  
+
+The Batch files batchfile called DFM.BAT loads graphics 
+memory-resident software (needed to print the maps on your 
+printer printer, see 7.4) and runs the program DFM290.  The 
+opening screen appears.  It is described in a moment. 
+
+3.3  RUNNING THE PROGRAM FROM THE FLOPPY DISC
+
+(a)	Insert the floppy disc in DRIVE A:
+
+(b)	Type 
+
+		A: 	(R)
+
+(c)	Wait for the  A>  prompt, and type:
+
+		DFM	(R)
+
+The Batch files batchfile DFM.BAT loads GRAPHICS.COM 
+memory-resident software (which you need to print the maps on the 
+printerprinter, see 7.4) then it runs DFM290.  The opening screen 
+appears.  Section 4 tells you what to do next. 
+
+3.4  COMMAND-LINE OPTIONS
+
+The program has a number of options:See Command line which can be 
+helpful if you are running a lot of data sets of data using your own 
+MS-DOS batch files usage:     
+
+		DFM290 <matlname> <options>
+
+e.g.		DFMAP290 copper /f 
+/w:\op\copper.lst /s-
+
+where
+
+<matlname> is the name of a set of materials parameters previously
+
+loaded into the datafile, such as "copper"
+
+<options>  are as below:
+
+/h or /?	brief help and information only - this text
+
+/f	fast option, no interaction with user
+
+/d	as /f above, but with a 10 s delay for each map on the screen
+
+/e	display exit codes only
+
+/s+	produce a strain-rate map (default)default values
+
+/s-	do not produce a strain-rate map
+
+/t+	produce a temperature map (default)default values
+
+/t-	do not produce a temperature map
+
+/l	write a listing:To a printer of the material parameters to 
+the printer printer
+
+/w:<fn>	writes the listing :To a fileto a file instead 
+of the printer
+
+	(<fn> denotes full path & filename)
+
+/o	produce an Olivetti plot (640 x 400) on screen
+
+/c	produce a CGA plot (640 x 200) on screen
+
+
+
+Invalid or incomplete options are ignored.
+
+
+
+4.  RUNNING THE PROGRAM
+
+The opening screen looks like this.
+
+DFM290
+
+	                           
+	M E C H A N I S M   M A P S
+
+
+           P. M. Sargent, Cambridge University
+
+This program calculates and plots Deformation Mechanism Maps.  Details 
+of the equations and of the models on which they are based are given 
+in: H.J. Frost & M.F. Ashby, "Deformation Mechanism Maps". Pergamon 
+Press, Oxford, UK. (1983).
+
+       This software comes with NO WARRANTY.
+
+
+Press  W for warranty information
+
+Press  C for copying information
+Press  H for help, including some useful hints 
+
+
+
+PRESS ANY KEY TO CONTINUE
+
+If you select  H  you get two screens-full of HELP, outlining the 
+function of the program.  Press any other key, such as the space-bar, 
+to proceed.  The screen displays:
+
+DFM290 		30 Mar. 1990
+
+CREATE OR READ A MATERIAL DATA SET
+
+Press  C  to Create a data set for a new material. data 
+set:Creating
+Press  R  to Read an existing data set:Reading. 
+Press  D  to Duplicate data and give it a new name.Data 
+set:Duplicating
+
+Press  H  for help screen. 
+Press  A  for additional command-line information. Command line
+Press  ^C at any prompt to quit (discarding data) 
+
+
+MAKE SELECTION
+
+Selection 'C' allows you to Data set: CreatingCreate a new data 
+set for a material. Selection 'R' permits you to Data set:Reading 
+an existing data set. Selection 'H' gives a help screen which reminds 
+you of requirements for a valid material name (a material name can 
+have up to 9 letters or numbers, and certain other symbols and it 
+must not contain any spacesHelp Screen).
+
+The next two subsections detail the operation of the 'C' and 'R' 
+options.
+
+4.1  SELECTION 'C': Data set:CREATING A FILE
+
+The program contains special features to help you create and check 
+data sets of material parameters and of map variables.  If you make 
+the selection 'C' you will see:
+
+DFM290
+
+THE DATA FILE CURRENTLY CONTAINS 
+
+         FE-ALPHA             TI-ALPHA          ZR-ALPHA
+     ALUMINA              TI-BETA                ZR-BETA
+      COPPER            CO-EPSLON              GERMANIUM
+       LEAD             MAGNESIA               MAR-M200
+       SI3N4              MOLYBDM                 NICKEL
+    ROCKSALT                  SIC                SILICON
+     SILVER               SS-304                 SS-316
+   T-STEEL                  TIN               TUNGSTEN
+   URANIA             Y-Ba-CuO              ALUMINIUM
+POTASSIUM
+
+	Enter NAME of Material ... 	copper
+
+
+
+The upper part of the screen lists data set:Pre-existings of 
+existing data.  Do not reuse these names unless you mean to overwrite 
+the existing data, if you do, you will be asked to confirm your 
+decision.  (The sets of data and names supplied may differ slightly 
+from those listed here.)
+
+Enter a new material data set name, following the rules (up to 9 
+characters beginning with a letter, no spaces).  As an example: enter 
+DUMMY.  Press return.
+
+To be legal, a material name must have one through nine characters 
+(either letters of the alphabet or numbers 0 through 9), and the 
+special characters # % - ( ) $ !  .  Thus
+
+	COPPER      MARBLE-5      TUNGSTEN      and      PMMA#1 
+
+are all legal names.  The data sets are all stored in the same file 
+MATLPARS.DAT.  This file can be edited data set:Editingusing any 
+plain-text editor or most word-processors in "non-document" mode.  If 
+you do edit the data file directly, it is sensible to do this on a 
+copy and to keep a backup of your original.
+
+Having given a material name, the list of material parameters 
+appears: 
+
+DFM290	INPUT PARAMETERS FOR	DUMMY 
+
+0	Isomechanical Class:
+1	Melting point Point	K               
+2	T-dependence of Modulus
+
+3:	Shear Modulus @ O K	GPa
+4:	OK Flow Stress (lattice)
+5:	OK Flow Stress (obstacles)
+6:	Lattice Glide Actv. Activation Energy	(mu.b^3)
+7:	Obstacle Glide Actv. Activation Energy	(mu.b^3)
+8:	Pre-exp. Volume diffusion Diffusion	m^2/s
+9:	Activ. energy, Vol. Diff.	kJ/mol
+10:	Pre-exp. Bdry Diffusion	m^3/sBoundary 
+diffusion
+
+11:	Activ. energy, Bdry.Diff.	kJ/mol
+12:	Pre-exp. Core diffusionDiffusion	m^4/s
+13:	Activ. energy, Diff.	kJ/mol
+14:	Power Law Creep Exponent
+15:	Reference: Stress stress, P-L creep	MPa
+16:	Activ. energy for P-L creep	kJ/mol
+17:	Burgers vector	m
+18:	Atomic volume Volume	m^3
+
+
+EDIT THE FILE ?   (Y/N)
+
+The first parameter is the "isomechanical class"Isomechanical 
+ClassClass: See Isomechanical Class:.  Change the default 
+("unknown") by pressing the Tab key, you can go back by pressing the 
+Shift and Tab key together.  When you find the description that most 
+closely describes your new material, press the Return key.  All the 
+rest are numeric. The PARAMETERS are more defined fully in Section 
+5.1.  Enter the best estimates you can, but put zeros (0) where you 
+don't know a value. When you enter zero, the program calls up scaling 
+relations to estimate values for the missing parameters, using methods 
+which are described in APPENDIX B.  When the table is full (it goes 
+over two pages), you will be asked whether you wish to edit it.  
+Answer "N" for "no" this time.  You will then be asked whether you 
+wish to save it, press "Y" for "yes" when prompted.  Data 
+set:Editing is discussed in a moment.
+
+DFM290	Data set:Creating a new file for
+	DUMMY 
+
+17	Burgers vector	m	3.5E-10 
+18	Atomic volumeVolume	m^3 
+19	Phonon dragDrag Coefficient 
+20	Electron drag Drag Coefficient 
+21	Power-Law Breakdown Stress 
+22	Diffusion: Cut-off stress 
+23	Phase Change Temperature	K
+
+ENTER PARAMETERS
+
+The list of VARIABLES now appears.
+
+DFM290	INPUT VARIABLES FOR	COPPER
+
+1	NumberofProgramSteps	=	25
+2	Grainsizem	=	3.OE-05
+3	Lowerlimit,S/muaxis	=	1.OE-06
+4	Upperlimit,S/muaxis	=	0.01
+5	Lowerlimit,T/TMaxis	=	0
+6	Upperlimit,T/TMaxis	=	1
+7	Firststrain-ratecontour1/s	=	1.OE-14
+8	Multiplier:strainrates	=	100
+9	Numberstrain-ratecontours	=	10
+10	Lowerlimit,StrainRateaxis1/s	=	1.OE10
+11	Upperlimit,StrainRateaxis1/s	=	1.OE-4
+12	HighestTemperaturecontourK	=	1356
+13	TemperaturebetweencontoursK	=	100
+14	Numbertemperaturecontours	=	10
+
+EDIT THE FILE   (Y/N)
+
+These map VARIABLES govern the choice of plot, the range of the axes, 
+the values of variables which are to be held constant in a given 
+plot, and the number of program steps and they include also the grain 
+size of the material.  A full description is given in Section 5.2.  If 
+you already know some or all of these, enter them.  If not, enter 
+zeros (0).  The program automatically replaces zeros by reasonable 
+starting values.  When the table is full, decline to edit it by 
+pressing 'N' then save it by pressing 'Y'.  (Data set:EditingEdit 
+it if you wish, using the procedure described in Section 4.3). You are 
+now given an opportunity to type a description of the data, your 
+sources and comments.  Type anthing you like, and finish by pressing 
+the 'Alt' key and the 'W' key at the same time.  You will then be 
+given an opportunity to edit your description.
+
+DFM290  Data set:Creating a new reference for  DUMMY           30 
+Mar. 1990
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Use the cursor keys, Finish with "Alt-W". 
+
+You now have a complete set of files for DUMMY.  You are asked if you 
+want a printout: See Listing: (a printed list) of the data.
+
+DFM290     Immediate printout for     COPPER 
+
+SELECT TYPE OF PRINTOUT
+Press   N   No Listing.    
+Press   O   an Ordinary Listing.    
+Press   E   an Epson dot-matrix  REDUCED SIZE  Listing.    
+Press   L   a Laser-printer  REDUCED SIZE  Listing.Laserjet
+
+
+
+Press appropriate key   (N/O/E/L)  If you type 'O', 'E' or 'L' then 
+the tables plus any data check DATA CHECK messages (see next 
+paragraph) are printed. 
+
+The program now checks the files against known limits, using 
+isomechanical scaling laws described in Appendix B.  You will see    
+
+DFM290          CHECK ON INPUT DATA FOR COPPER 
+
+-----------  DATA  CHECK  COMPLETE  ----------
+
+
+The RUN-TIME for this map is roughly  =   61 seconds 
+
+
+
+RE-EDIT  FILES BEFORE PROCEEDING ?  (Y/N)
+
+Any parameter or variable which lies outside the expected, normal 
+range is flagged: a message appears on the screen.  A DATA-CHECK 
+data check message does not necessarily mean that the datum is 
+wrong, but it is suspect or very unusual.  You should check it.  
+Physically unreasonable data will cause the program to abort.  If it 
+does, start again by typing  DFM  and look hard at the DATA-CHECK 
+data check messages when they appear.
+
+Below this is an estimate of the run-time needed to plot one map it 
+depends roughly linearly on the number of steps and on the number of 
+contours (a map with 10 contours and 20 steps takes about 20 seconds 
+one with 150 steps takes 6 minutes on a PS/2-50).  Below this is the 
+question
+
+'RE-EDIT THE FILES BEFORE PROCEEDING?'. If you are happy with the 
+files as they are, type 'N'.  The program then calculates and plots 
+the maps.  They are described in Section 5. When a map is completed, 
+pressing the space-bar will cause it to go on to the next.  After the 
+last map, an opportunity to finish is given (see section 4.7 below) 
+and, if you wish to continue, the main menu reappears.  If you wish to 
+stop a map in the middle, press the 'Esc' key.  This aborts the map.  
+Then press space-bar to go on to the next as usual.
+
+4.2  SELECTION 'R': READING A FILE
+
+To read an existing data set:Reading(rather than create a new 
+set), make the selection 'R' (instead of 'C') at the main menu.  The 
+list of available datasets data set appears, as on Page 7.  You 
+are asked for a name: enter one of the names on the screen.  The name 
+must appear exactly as on the screen (except that lower and upper case 
+letters can be interchanged).  If you enter an invalid name the 
+program will ignore it and you will have to type it again correctly.
+
+Enter a name (COPPER for instance) and press return.  The name appears 
+in white.  If it is what you want, accept it by typing 'Y'. The table 
+of material parameters for COPPER appears:
+
+
+
+DFM290	INPUT PARAMETERS FOR	COPPER
+
+0 Isomechanical Class:	fcc
+1 Melting point Point K	=	1356
+2 T-dependence of Modulus	=	0.4823715
+3 Shear Modulus @ O K GPa	=	53.566593
+4 OK Flow Stress (lattice)	=	6.3E-03
+5 OK Flow Stress (obstacles)	=	1.3E-03
+6 Lattice Glide Actv. Activation Energy (mu.b^3)	=	0.05
+7 Obstacle Glide Actv. Activation Energy (mu.b^3)	=	0.5
+8 Pre-exp. Volume diffusion Diffusion m^2/s	=	6.2E-05
+9 Activ. energy, Vol. Diff. kJ/mo1	=	207
+10 Pre-exp. Bdry Diffusion m^3/s	=	5.12E-15
+11 Activ. energy, Bdry.Diff. kJ/mo1	=	105
+12 Pre-exp. Core diffusionDiffusion m^4/s	=	1.0E-24
+13 Activ. energy, Core diffusionDiff. kJ/mo1	=	117
+14 Power Law Creep Exponent	=	4.8
+15 Reference:Stress stress, P-L creep MPa	=	35
+16 Activ. energy for P-L creep kJ/mo1	=	197
+
+
+
+EDIT  THE  DATA ?    (Y/N)
+
+
+
+
+
+DFM290	INPUT PARAMETERS FOR	COPPER
+
+
+17	Burgers vector m	=	2.56E-10
+18	Atomic volumeVolume m^3	=	1.18E-29
+19	Phonon dragDrag Coefficient	=	6.OE-10
+20	Electron drag Drag Coefficient	=	2.OE-08
+21	Power-Law Breakdown Stress	=	1.OE-03
+22	Diffusion: Cut-off stress	=	0.3
+23	Phase change Temperature K	=	1356
+		PgUp for more
+
+EDIT THE FILE ?    (Y/N)
+
+
+
+and you are given the opportunity to edit it.  this is followed by the 
+map Variables, again with the edit option, and finally the 'reference' 
+or comment text. Bibliographic Information
+
+After the material 'Parameters' and the map 'Variables', there is an 
+opportunity to add a textual reference:Text to the source of the 
+information and perhaps a few comments.  The text can be edited 
+whenever it appears on the screen, and can be changed by overtyping:
+
+ DFM290        REFERENCE DESCRIPTION FOR COPPER  
+
+COMMERCIAL PURITY COPPER 
+
+Data are from 
+
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps", Pergamon 
+Press, Oxford (1982) and from 
+
+Swinkels F.B. and Ashby M.F. Acta Metall. 29 (1981) 259 and 
+
+Helle A.S., Easterling K.E. and Ashby M.F. Acta Metall. 33 (1983) 
+2163.
+
+EDIT  THE  DATA ?     (Y/N) 
+
+Use the cursor (arrow) keys to move to where your wish to edit. 
+Finish by pressing the <Alt><W> keys together ('W' stands for 
+'windup'. Again, the offer of editing.  Decline in with an 'N' for the 
+moment. You are asked whether you want a hard copy or not.  Accepting 
+('O', 'L', or 'E') dumps the tables, plus any later DATA CHECKdata 
+check  messages, to the printer. printer The program then 
+executes a DATA CHECKdata check  and displays any material 
+parameters or variables which lie outside the normally expected range.  
+Take DATA CHECKdata check  seriously.  If one appears, make sure 
+that the number you entered is in the right units and has the right 
+sign.  Physically unreasonable data cause the program to abort.  If it 
+does, you have to start again by typing  DFM290.
+
+DFM290          CHECK ON INPUT DATA FOR COPPER 
+
+-----------  DATA  CHECK  COMPLETE  ----------
+The RUN-TIME for this map is roughly  =   61 seconds 
+
+RE-EDIT  FILES BEFORE PROCEEDING ?  (Y/N)
+
+The words DATA CHECKdata check  COMPLETE mean what they say.  
+Below appears an estimate of the run time per map it depends on the 
+number of steps and number of contours.  If the run-time is too long, 
+or you have second thoughts about other parameters or variables, 
+accept the offer of re-edit.  Otherwise press 'N'.  The program then 
+computes and displays the maps. 
+
+4.3  DATA SET:EDITING A SET OF DATA
+
+Whenever a set of data is displayed, the message
+
+EDIT THE DATA  (Y/N) ? 
+
+will appear, sooner or later, along the bottom line of the display. If 
+you accept ('Y'), you are prompted for the line-number that you wish 
+to edit.  Enter the number and press (R).  The descriptor for that 
+line appears on the bottom line of the display.  Enter the new value 
+and press (R).  It immediately appears in the table, and (on 
+colour displays) the edited line is picked out in white.  The 
+bottom line now reads
+
+FINISHED EDITING  (Y/N) ? 
+
+The response 'N' gives you another go.  The response 'Y' terminates 
+editing of that file and confronts you with
+
+SAVE THE DATA  (Y/N) ?
+
+It is usually best to save it - if you don't, you have no record of 
+the values.  If you do, you overwrite the previous version of that 
+data set.  Watch out for DATA CHECKdata check  messages, and 
+check any change that you have made with special care if one 
+appears.  You can get a hard copy of the edited files on the printer 
+printerimmediately before the maps are calculated even if you 
+haven't saved the data.. 
+
+4.4  .iData set:DELETING A SET OF DATA
+
+If your disc gets too full, you may wish to delete some of the data 
+data set:Deletings it contains.  To delete a file, exit from the 
+DFM290 program (press 'Q' for Quit when prompted, or press the 
+<Ctrl>C keys at any prompt).  The C:\DFMAP> or A:\> prompt appears.  
+Use a word processor or text editor to edit the file MATLPARS.DAT and 
+delete all files beginning with the name of the material you wish to 
+discard.  But be careful. Once they are gone, they are gone. 
+
+4.5  Data set:DuplicatingDUPLICATING A DATA SET
+
+Selection 'D' on the main menu presents the list of existing material 
+data sets and asks for the original material, and then a new name for 
+the copy.  It then leads directly in to the editing screens since the 
+normal use for this option is to make some small number of changes to 
+an already loaded data set. 
+
+4.6  SELECTION 'S': THE SAME MATERIAL
+
+After all the maps have been produced, the main menu reappears - with 
+an extra option, 'S':Data set:Same 
+
+DFM290		30 Mar. 1990 
+
+CREATE OR READ A MATERIAL DATA SET
+
+Press  S  for the same material.
+Press  C  to Create a data set:Creating for a new material.
+Press  R  to Read an existing data set:Reading.
+Press  D  to Duplicate data and give it a new name.Data 
+set:Duplicating
+
+Press  H  for help screen.
+Press  A  for additional command-line information.Command line
+Press ^C  at any prompt to quit (discarding data).^C:See 
+<Ctrl><Break>:
+
+
+MAKE SELECTION 
+
+which, if selected, retains the same data as used in the previous maps 
+without reloading it from disc.  (Note that if the data had been 
+edited and not saved to disc, then it is the edited data which will be 
+used again). 
+
+4.7  THE END
+
+After the maps are produced, an opportunity to finish quit 
+exit the program is given:
+
+TO  QUIT  TYPE   "Q"
+
+TO  CONTINUE,  PRESS  ANY  OTHER  KEY
+
+5.  DATA SETS, PARAMETERS AND THE MAPS 
+
+5.1  DATA SETS
+
+A number of data sets are provided with the program, and more can 
+be created by using the Create and Duplicate options from the main 
+menu.  A Data Set for a material consists of a set of 
+Parameter values, a set of Variable values, and some 
+Bibliographic information which are described below.  The Data Sets 
+supplied with the program are listed in Table 5.1.
+
+TABLE 5.1:   DATA SETSdata set
+
+DATA NAME	DESCRIPTION
+
+COPPER	Commercial purity copper
+LEAD	Commercial purity lead
+NICKEL	Commercial purity nickel
+SILVER	Commercial purity silver
+
+TUNGSTEN	Commercial purity tungsten
+MOLYBDM	Commercial purity molybdenum
+FE-ALPHA	Commercial purity BCC iron
+TI-ALPHA	Commercial purity alpha (HCP) titanium
+
+TI-BETA	Commercial purity beta (BCC) titanium
+ZR-ALPHA	Commercial purity alpha (HCP) zirconium
+ZR-BETA	Commercial purity beta (BCC) zirconium
+TIN	Commercial purity tin
+
+MAR-M200	Superalloy MAR-M200
+SS-304	Grade 304 stainless steel
+SS-316	Grade 316 stainless steel
+T-STEEL	Tool steel
+
+ROCKSALT	Sodium chloride, rock salt
+ALUMINA	Commercial aluminium oxide ceramic
+MAGNESIA	Commercial magnesium oxide ceramic
+URANIA	Uranium dioxide
+
+CO-EPSLON	Epsilon phase cobalt
+Y-BA-CUO	Yttrium-barium-copper oxideY-Ba-CuO
+ZIRCONIA	Zirconium dioxide
+GERMANIUM	Germanium, semiconductor purity
+
+SILICON	Silicon, semiconductor purity
+SIC	Alpha silicon carbide
+SI3N4	Silicon nitride
+INSB	Indium antimonite, semiconductor purity
+
+
+
+These data provide a starting point only.  They are derived from 
+measurements on a wide variety of different batches of material and 
+have not been checked.  It is essential that the data are tuned to 
+match the particular batch of material with which you are working.  
+The procedure for doing this is outlined in Section 6.  The DFM290 
+program corrects mistakes which were present in earlier Fortran 
+programs so datasets from ref. (1) will require re-evaluation against 
+even the old experimental data. 
+
+5.2  MATERIAL PARAMETERS
+
+The material Parameter:See Parameter: parameters describe the 
+properties of the material you wish to model.  At the very least, you 
+must know Parameter 0, the isomechanical class, and 
+Parameter 1: The melting point.  If you know no other (and 
+enter zeros) the program makes sensible estimates for the rest 
+(Appendix B), enters them and proceeds.  But you cannot expect the 
+maps to be of any real value if this is all you provide. As you add 
+more data, the estimates for the remaining blanks become more 
+accurate.  The idea is to let you compute a first guess for the map 
+it can then be refined by using data from actual yield and creep 
+experiments.
+
+The other MATERIAL PARAMETERS are the obvious ones that are needed to 
+evaluate the models of deformation mechanisms: modulus, yield 
+strength, diffusion :See Volume, Boundary, Core:coefficients, 
+creep constants, etc.  All are in SI units.  Stresses are in MPa, 
+shear modulus in GPa.  The creep parameters need a bit more 
+explanation, given below, and are discussed
+
+fully in Appendix B.  In slightly more detail, then:
+
+Parameter 0:	Isomechanical class.
+
+Parameter 1:	Melting point, Tm, of the solid, in units 
+of degrees Kelvin (K).
+
+Parameter 2:	The temperature dependence of the shear 
+modulus:	it is entered as a positive number (e.g. 0.5).
+
+Parameter 3:	Shear modulus, , for the material at room 
+temperature, in units of Giga-Pascals (GPa or GN/m2).
+
+Parameter 8:	The pre-exponential for lattice diffusion, D, 
+in units of metres squared per second (m2/s).
+
+Parameter 9:	The activation energy for lattice 
+diffusion, Q , in units of kilojoules per mole (kJ/mol).
+
+Parameter 10:	The pre-exponential for grain boundary 
+diffusion, D  the usual pre-exponential is multiplied here by the 
+boundary thickness (usually about 2 atom diameters), so the units are 
+metres cubed per second (m3/s).
+
+Parameter 11:	The activation energy for grain boundary 
+diffusion, Q , in units of kilojoules per mole (kJ/mol).
+
+Parameter 12:	The pre-exponential for dislocation core 
+diffusion, ac D0c , units of metres to the fourth per second (m4/s).
+
+Parameter 13:	The activation energy for core diffusion, 
+Qc, in units of kilojoules per mole (kJ/mol).
+
+Parameter 14:	The power-law creep exponent, n. Is the 
+dimensionless exponent in the power-law creep equation = A. ( / ) 
+. exp (- Q /RT) where is the shear strain rate caused by a shear 
+stress , and n, A and Q are creep constants.
+
+Parameter 15:	The reference:Stress stress for power-law 
+creep, , an unfamiliar quantity. It is the stress required to cause a 
+steady tensile creep rate of 10 /s at a temperature of one half of the 
+absolute melting temperature. This way of characterising creep has a 
+number of advantages. For details see Appendix B. 
+
+Parameter 16:	The activation energy for power-law creep, 
+Q , in units of kilojoules per mole (kJ/mol).
+
+Parameter 17:	Burger's vector, b:the dislocation slip 
+distance (in metres).
+
+Parameter 18:	The atomic volume, OMEGA, in units of cubic 
+metres (m).
+
+Some of the parameters will need further adjustment to give an 
+accurate map guidance in doing this is provided in Section 6.  When 
+modelling an alloy or a ceramic the atomic volume and the diffusion 
+coefficients are those for the slowest diffusing species if this (as 
+is usual) is rate-controlling in mass transport.
+
+A listing of some of the Parameter data sets provided with the 
+program is given in Appendix C.  Tables of conversion factors for 
+units are given in the inside covers of this manual.
+
+5.3  THE MAP VARIABLES
+
+The map Variable:See Variable VARIABLES include everything that is 
+not a material property.
+
+Briefly, they are:
+
+Variable 1:	An important variable - the number of program 
+steps. The value 30 gives a map very quickly, and is useful to 
+check that the axes are set correctly.  Increasing the number of 
+steps increases the precision, but it also increases the run-time, 
+roughly in proportion to the number of steps.  Use 150 for a really 
+precise map. The program resets numbers less than 2 to 2 and it 
+resets numbers greater than 300 to 300 (default : 40).
+
+Variable 2:	The grain size (in microns, 10   metres).
+
+Variables 3 & 4      The end values of the range of normalised 
+shear stress (  / ) axis.  Default values: 10-6   and 10-2 .
+
+Variables 5 & 6:     The end values of the range of homologous 
+temperature (T/Tm) axis.  Defaults 0.0 and 1.0.
+
+Variable 7:	Lowest contours:Strain rate contour.  
+Defaults 10    s  .
+
+Variable 8:	The Contours:Multiplying factor by which 
+the strain-rate increases between contours (default value : 100).
+
+Variable 9:	The number of contours :Number of(default 
+: 10, giving, with the other default values, contours which span the 
+range 10    to 10  s .
+
+Variables 10 & 11      The range of strain rates for the axes 
+of the strain-rate/stress plot
+
+Variable 12:	The temperature of the highest 
+contours:Temperature contour (K).
+
+Variable 13:	The Contours:Temperature Difference 
+between temperature contours (K).
+
+Variable 14:	The number of temperature 
+contours:Temperature.
+
+If you enter zeros when creating or editing a Parameter or 
+Variable file, the program inserts the default values listed 
+above. The quick way to get started with the program is to enter zeros 
+for everything. Default values
+
+5.5.THE MAPS
+
+Three classes of mechanism contribute to the total strain: plastic 
+yielding, power-law creep, and diffusion.  The program uses 
+rate equations for each mechanism, adding the rates when 
+appropriate.  The results are presented as Strain-rate-contour, Stress 
+/ Temperature axes maps, or as temperature-contour, Strain-Rate / 
+Stress axes maps.
+
+Examples of the two sorts of map are show in Figure 5.1 and 5.2. The 
+left-hand and bottom axes show the  normalised variables the 
+right-hand and upper axes show the  absolute values  of the variables. 
+The numbers at either end of the absolute scales correspond to the 
+marker axis nearest to that end of the axis.  If (as occasionally 
+happens when scales are expanded) the axis has only one marker on it, 
+the same number appears at both ends.
+
+The box in the top-right corner shows, in order:
+
+(a)	The  material name data name  (as listed in Table 5.1).
+
+(b)	The  grain size, in microns. 
+
+At the bottom left, the strain rates corresponding to the first and 
+last  strain rate contours  are listed.  The contours differ by a 
+constant multiplying factor which you can set (Variable 15).  Here 
+it is 100.  The  current date  is printed at the top right.
+
+The axis can be chosen to cover any sensible range you like: you can, 
+for instance, blow up the bit from  T/Tm = 0.5 to T/Tm = 0.55  
+homologous temperature to fill the whole diagram by setting the 
+range of the temperature axis to these values (Variables 6 and 7).  As 
+an example, the boxes marked on Figures 5.1a and 5.2a are shown, 
+expanded by changing the appropriate variables, in Figures 5.1b and 
+5.2b.
+
+Each map is divided by heavy broken lines into fields showing the 
+range of dominance of a given mechanism.  They are identified by 
+abbreviations listed in Table 5.2.
+
+The best way to develop a map is to use a small number of program 
+steps (say 20) to start with, displaying the map on the screen 
+quickly, until you have the axis ranges, contour numbers and spacing, 
+and so on, to your satisfaction.  Save the data sets at each 
+stageData set:Saving.  When you are happy, change the number of 
+program steps to 150 and rerun. Print the map by pressing the print 
+screen key <PRT SCR>.  Examples which illustrate all these points 
+are given in the next section.
+
+	TABLE 5.2  FIELD NAMES AND DESCRIPTIONS 
+
+FIELD	DESCRIPTION 
+
+PEIERLS	Yield, dislocation motion limited by 
+Peierls stress drag 
+
+PHONON	Yield, dislocation motion limited by 
+Phonon dragDrag (relativistic and non-relativistic) 
+
+RECRYST	Area of the map where dynamic  
+recrystallization is expected  
+
+OBSTCLE  Deformation by plastic yielding when the dislocation 
+glide is limited by obstacles  
+
+V-DIFF	Deformation by volume (lattice) diffusion  of 
+vacancies 
+
+B-DIFF	Deformation by grain-boundary diffusion of 
+vacancies 
+
+PLC-LT	Low-temperature power-law creep (core 
+diffusion) 
+
+PLC-HT	High-temperature power-law creep  
+
+6.	TUNING THE DATA AND TUTORIAL EXAMPLES
+
+
+
+6.1	DEVELOPING A DATA SET
+
+
+
+6.2	TUNING THE PARAMETERS
+
+
+
+6.3	TUTORIAL EXAMPLE 1: MAP FOR COPPER
+
+6.4	TUTORIAL EXAMPLE 2:	MAP FOR ALUMINA, AN OXIDE CERAMIC
+
+7.  THINGS THAT CAN GO WRONG 
+
+7.1  THE PROGRAM WON'T LOAD   
+
+(a)	Disc in wrong disc drive.  
+
+	Change to DRIVE A: if you are running from the floppy disc, 
+or to C:\DFMAP if from the hard-disc.   
+
+(b)	The system reports a Sector Read error, or complains that the 
+DOS is wrong.  
+
+	You have booted the system with an operating system which is not 
+compatible with that used to make the DFM290 disc. Insert the DFM290 
+Disc in DRIVE A: and either switch the computer off and then on again, 
+or press <Ctrl><Alt><Del> all at once.  The computer will boot 
+from your hard  disc. The compiled version supplied was compiled 
+using MS-DOS 6.0 but it has been tested (not extensively) with 3.3, 
+4.01 andd 5.0.  
+
+(c)	The program appears to load, but aborts before the first screen 
+appears.  
+
+	Check that you are running the program from a directory 
+which contains the appropriate Borland Graphics Interface file 
+for your graphics system.  This is EGAVGA.BGI for PS/2 computers.  
+A full set is supplied on the disc.  If you are a Turbo Pascal 
+programmer, ensure that you are using the Turbo Pascal 6.0 
+versions with DFM290. Check also that you have sufficient 
+memory, DFM290 requires 248K.  Use the program  MEMMAP.COM 
+supplied on the floppy disc to check. (Documentation is in the 
+file MEMMAP.DOC).
+
+7.2  THE PROGRAM LOADS BUT REFUSES TO READ DATA OR ABORTS WHEN RUN   
+
+The program loads, and reads files, but the data sets they contain is 
+blank or nonsense and the program aborts when you try to plot a map.  
+It is probable that the file MATLPARS.DAT is data 
+set:Corruptedcorrupted.  Recopy it from the original DFM290 floppy 
+disc. 
+
+7.3  THE PRINTER WON'T PRINT   printer
+
+(b)	Printer not switched on, is not connected properly, or is out of 
+paper. 
+
+(b)	Printer set OFF LINE.   
+
+(c)	Printer incorrectly set up.  Go through setup procedure for 
+printer given in the documentation of your computer and printer.  Try 
+using the  MS-DOS MODE command: 
+
+		MODE LPT1:80,6	(R).
+
+7.4  THE PRINTER PRINTS TEXT OR RUBBISH BUT NOT GRAPHICS 
+printer
+
+This is the most complex and difficult part of the system.  It is 
+nothing to do with DFM290, screen dumps are always difficult.   
+
+(a)	The printer is of the wrong sort and won't handle graphics.   
+
+(b)	You omitted to load .iGRAPHICS.COM before running DFM290.  Press 
+<Ctrl><Break> and run DFM290 by typing DFM <enter>.   
+
+(c)	You loaded GRAPHICS.COM from some other hard or floppy 
+disc, and it is for the wrong version of DOS. It is essential that 
+the program GRAPHICS.COM which is loaded by DFM.BAT matches the 
+version of MS-DOS that you use.  either re-boot (press 
+<Ctrl><Alt><Del> ) with the floppy discsupplied in drive A:, 
+and use GRAPHICS.COM supplied, or copy you own copy of 
+GRAPHICS.COM  from your MS-DOS disc into directory C:\DFMAP.   
+
+(d)	Users of PS/2 and machines with EGA graphics adapters 
+may need to run the program with the /c option to get the lower 
+resolution CGA graphics on screen (type "DFM /c" to run the 
+mapping program) which can be more easily printed.  If you insist an 
+using MS-DOS:Version 3.3. with a VGA display you will have to 
+do this.
+
+(e)	If you have an Olivetti or AT&T computer then you can 
+get higher resolution plots on the screen by using the /o option when 
+you run the program, e.g. DFM /o.  (This may also work with some 
+Compaq computers.)  If you want to do screen dumps of these plots 
+you will need to read your MS-DOS documentation of the 
+GRAPHICS command very carefully, and you will certainly need to 
+use the GRAPHICS.COM program which came with your computer.   
+
+(f)	If you have a Hercules graphics adapter then the 
+appropriate dump program screen dump program is HGC.COM or 
+MGC.COM, instead of GRAPHICS.COM  and it should have been 
+supplied with your computer. One solution to graphics dump 
+problems is to purchase a commercial screen-capture utility which 
+supports a wid range of printers - including HP LaserJets.  We have 
+found Graph-Plus to be effective.  It can be ordered from "Grey 
+Matter", 2 Prigg Meadow, Ashburton, Deven TG13 7DF, or see their 
+regular advertisements in Byte magazine (tel. +44 (364) 53499).  
+Alternatively, your word processor or desktop publishing program may 
+have a screen-capture utiltiy with which you can dump screens into 
+your word processor.  MS Word 5.0 for DOS does this. Remember: run 
+GRAPHICS before running DFM290 if you want to dump the plot to a 
+dot-matrix  printer.  Do this by running the program GRAPHICS.COM  
+supplied with the MS-DOS operating system which came with your 
+computer.  The batch file DFM.BAT does this automatically..
+
+You can get a hard copy of the screen by pressing the <PRT SCR> key 
+when the plot has finished and is labelled on the screen.  This key 
+may require the shift key to be pressed to be effective.
+
+7.5  RUN-TIME ERRORS
+
+Run-time errors halt the running of the program and abort it.  
+To recover, you have to exit from the batch file  DFM  when prompted, 
+then retype  DFM  and start again.  (If you want to abort the program 
+deliberately, press the <Ctrl><Break> keys.  It only works when the 
+program is paused, awaiting an instruction.  When it is plotting, 
+however, it checks the keyboard intermittently, so while it will stop, 
+it may take a while to respond.)  A run-time error gives an error 
+message which looks like this:
+
+Run-time error  160 at 0779:6041
+Run-time error 103 at 0DF1:002E 
+
+The origins of run-time errors are these: 
+
+(a)	The printer was not switched on when you tried to print 
+(error 160) or it is out of paper (error 159). 
+
+(b)	You pressed the <Ctrl><Break> Keys in the middle of the 
+program run  (error 103). 
+
+(c)	You read a data set with wildly incorrect numbers in it.  
+
+	Some parameters have to be positive (and, when properly 
+chosen, always are) positive others, non-zero.  Errors of this sort 
+result in the program dividing by zero, or taking the square root of a 
+negative number, and that gives Run-time errors 200 to 207 (but 
+see 7.6 below).  
+
+	Reload DFM290, check the data file MATLPARS.DAT, and look at 
+the DATA CHECK data check messages when they appear.  The program 
+contains numerous checks, and inserts default values which, as far 
+as possible, prevent this happening.  But you are much cleverer than 
+it is, and you may find a way round the protection. 
+
+(d)	Error 150 occurs if you try to save the data sets to a file 
+on a disc which is write-protected. In all cases, the only solution is 
+to abandon the batch file and type DFM  to reload and start again.  In 
+extreme cases, you may have to turn off your computer, wait 10 
+seconds, and turn it back on again before you type  DFM  again. 
+Floppy disc:Full Hard-disc:Full Data set:Saving 
+Disc:See Hard-disc, Floppy disc:
+
+7.6  SUBTLER PROBLEMS
+
+There is always the possibility that "resident" programs which are 
+loaded and stay in memory while DFM290 runs may cause problems.  
+If a persistent error occurs, reboot your computer and run DFM290 
+as the first program you run.  Examine your CONFIG.SYS and 
+AUTOEXEC.BAT files for programs and device drivers.  Use the 
+program MEMMAP.COM (supplied on the disc) to investigate the 
+memory use in your computer, documentation for this program is in 
+the file MEMMAP.DOC.  These problems can apperar as run-time errors of 
+all kinds. 
+
+At this stage, the only additional problems I have encountered arise 
+from faulty discs, which misread.  A particular problem occurs with 
+discs formatted as 360K but written-to using 1.2M (/AT compatible) 
+floppy disc:Errordrives.Back-up
+
+ALWAYS KEEP AT LEAST ONE BACK-UP COPY OF THE WHOLE DISC
+
+
+APPENDIX A:  THE MECHANISMS AND RATE EQUATIONS
+
+A number of mechanisms contribute to deformation.  They are fully-
+described in ref.1 by Frost and Ashby (1982).  
+
+Each mechanism can be modelled to give a rate-equation which 
+defines the contribution of that mechanism to the current strain rate.  
+they are central to the way the program works.  rate equation 
+consitutive equationEach has the form:
+
+eps-dot	=	f(S, T, parameters)	(1)
+
+where eps-dot is the steady-state strain rate, S is the stress, and T 
+the temperature.  There are 12 rate equations in all.
+
+The program evaluates the rate equations at each temperature step and 
+several iterations are required to locate each strain-rate contour.  
+the number of temperature steps is set by variable 17.
+
+The equations for deformation are taken directly from the book by 
+Frost and Ashby (1982).  The five important mechanisms are:
+
+(a)	Obstacle controlled glide (OBSTCLE)
+
+(b)	Vacancy diffusion through the volume of the grains (V-DIFF)
+
+(c)	Vacancy diffusion along grain boundaries (B-DIFF)
+
+(d)	Power-law creep, both low-temperature and high-temperature 
+varieties
+
+(e)	Harper-Dorn creep, another dislocation mechanism
+
+(f)	Phonon dragand electron drag controlled glide
+
+(g)	Peierl's stress controlled glide
+
+(h)	Dynamic recrystallization.
+
+The equations are summarized here.  There are a few slight changes and 
+additions to the rate equations as published by Frost and Ashby and 
+these are noted below in context.  The rate equations are listed in 
+Table A1, most have the form of equation (1).  The symbols are defined 
+in Table A2.
+
+	TABLE A1: EQUATIONS FOR STRAIN RATE
+
+Obstacle controlled glide 
+
+
+
+Volume diffusion
+
+
+
+Boundary Diffusion
+
+
+Power-law creep high-temperature 
+
+
+Power-law creep low-temperature 
+
+
+Harper-Dorn creep
+
+
+Phonon dragand electron drag controlled glide
+
+
+Peierls stress controlled glide
+
+
+
+Dynamic recrystallization
+
+
+APPENDIX B:  SCALING RELATIONS
+
+The properties of a material are not independent of each other.  
+Metals with high melting points have high moduli, high surface 
+energies and (at a given absolute temperature) low rates of diffusion.  
+Alloys with high yield strengths generally have high creep strengths.  
+Detailed studies of these correlations lead to scaling relations 
+which allow estimates to be made of some material properties when 
+others are known.  Scaling rlations are used in the program in two 
+ways:
+
+(a)	To check all data entered by the user.  If the data do not lie 
+within the expected limits, a DATA CHECK data checkmessage is 
+displayed on the screen, and is printed (with more details) when a 
+printout is requested.
+
+(b)	To estimate data when real experimental values cannot be found.  
+When a zero (0) is entered in teh table of material parameters when 
+Creating or Editing a data set, the program automatically calls on 
+these relations to estimate a value for the unknown datum.default 
+values estimate data set:Creating data set:Editing  The 
+value is, of course, only an estimate, but it is of the right order of 
+magnitude and it allows the user to get started.  Then he or she can 
+adjust the estimated parameters to give a good fit to experimental 
+deformation data, as described in section 6.  (If zeros are entered 
+when creating or editing the map Variables the program again estimates 
+sensible values indeed the best way to start is to enter zeros for 
+all the Variables.)Variable Parameter
+This appendix lists the scaling relations used in the program.  The 
+interested reader will find details of their origin, and more 
+sophisticated methods, described in Frost and Ashby (1982, Chapter 18) 
+and in Brown and Ashby (1980a, b).
+
+The same scaling relations are used for all materials, but the scaling 
+parameters are different for different isomechanical classes of 
+materials.Parameter:Scaling
+1. The melting point Tm, Young's modulus E and atomic 
+volume OMEGA of metals and ceramics are related by:
+
+E	=	100 k Tm / OMEGA	(B1)
+
+where k is Boltzmann's constant (1.38 x 10-23 J/K).  The error seldom 
+exceeds 35%.
+
+2. The temperature dependence of the modulus:Temperature-
+dependence of metals and ceramics, when normalised in the way shown 
+in the next equation, almost always lies in the range -0.1 to -0.95.  
+CHecking is based on this range estimation uses:
+
+(Tm/u0).(du/dT)	=	 - C0		(B2)
+
+(the minus sign is omitted in entering the data - the program inserts 
+it automatically).  Different isomechanical classes have different 
+values for C0, e.g.
+
+0.5	for body-centred cubic transition metals
+
+0.1	for tetrahedrally-bonded semiconductors
+
+3. The yield strengths of materials in comparable states of purity 
+scale as the modulus, that isyielding
+
+Sy	=	C1 E				(B3)
+
+For commercially pure metals (those with an impurity level of perhaps 
+0.1 atom %), C1 is about 1/1000.  For heavily alloyed metals it can 
+rise to 1/100 and for ceramics it can be as high as 1/50.alloying 
+purity
+
+4. The activation energy for volume diffusion, Qv, is related 
+to the melting temperature by
+
+Qv/RTm	=	C2				(B4)
+
+where R is the gas constant and C2 is about 18 for metals and 25 for 
+ceramics.  The value is quite well defined for quite subtle 
+distinctions between isomechanical classes, and these are used in the 
+program.
+
+5. The pre-exponential, D0v, is found from the observation that the 
+melting point :Diffusivitydiffusivity, for a given class of solid, 
+is given approximately by:
+
+Dv(Tm) / Omega2/3	=	C3			(B5)
+
+where C3 is about 107 s-1.
+
+6. Boundary diffusion parameters are estimated by a similar 
+procedure.  For the activation energy 
+
+Qb/RTm	=	C4				(B6)
+
+where C4 is about 11 for metals about 15 for simple ceramics.  This 
+usually corresponds to the approximation
+
+Qb	=	0.6 Qv				(B7)
+
+The pre-exponential is estimated from
+
+dD0b	=	2 Omega1/3 D0v		(B8)
+
+6. Power-law creep is described in the following way.  We start 
+with the conventional description
+
+eps-dot	=	A.Sn.exp -(Qplc/RT)	(B9)
+
+where n and A are creep constants.  Define Sref as the stress which 
+will cause a uniaxial strain rate of 10-6 s-1 at a temperature of 
+exactly one half the absolute melting point (T=Tm/2):
+
+106	=	A.Srefn.exp -(2Qplc/RTm)	(B9)
+
+Dividing the first by the second gives
+
+eps-dot	=	10-6.(S/Sref)n.exp -{(Qplc/RTm). (T/Tm - 2)}
+	(B9)
+
+This is the form of the creep equation used by the program for high-
+temperature power-law creep.  Its great advantage is that it 
+minimizes extrapolation errors (because creep testing, typically, is 
+carried out at temperatures around or higher than Tm/2 and involves 
+strain rates of 10-6 s-1), and it makes checking simpler (because Sref 
+is usually of the order of Sy/2).
+
+The creep exponent, if unknown, is best estimated by
+
+n	=	3				(B10)
+
+(but see Brown and Ashby (1980a, b) and Derby and Ashby (1987) for 
+more information on this point.)  The activation energy for creep is 
+for many materials the same as that for volume diffusion
+
+Qplc	=	Qv				(B11)
+
+The reference :Stressstress Sref, defined as above, is 
+conveniently read from a deformation mechanism map.  (Remember to 
+convert shear stress to uniaxial stress if necessary by 
+multiplying by 1.732).  When asked for a reference stress, if you 
+reply with a zero (0), a secondary menu will appear in which you can 
+enter a uniaxial stress, a uniaxial strain-rate and a temperature.  
+This will calculate the reference stress for you.  If you reply with 
+zeros to all three of these, then the estimate of Sy/2 will be used, 
+taking Sy from the obstacle-controlled flow stress.yielding  
+You should be aware that for certain creep-resistant alloys, 
+particularly the superalloys, Sref can be greater than Sy.  This 
+is not as silly as it sounds: it is caused by the fact that creep is 
+neglible at Tm/2 in these alloys.
+
+APPENDIX C:  DATA, DATA SETS AND SOURCES
+
+Developing an accurate parameter data set 
+:Sourcesreference:Text(that is, a set of the material parameters 
+listing in section 5.2) for a material is an iterative process.  The 
+starting point is data for the properties of the bulk solid.  For some 
+materials (like pure copper) these are well-established, the 
+problem is simply that of finding them.  For others (like Y-Ba-
+CuO) the proerties have to be estimated by the methods outlined in 
+Appendix B.  But the data have to be "tuned" in the way described in 
+Section 6 of the text, and illustrated in the case studies.
+
+The data provided with the program gives starting point values for 22 
+materials.  The data given here provides only a first estimate for a 
+given material.  No confidence should be placed in this data without 
+first checking original sources yourself.  It is supplied to show you 
+what to expect, and tuning should involve only relatively small 
+changes in the parameters.
+
+This section gives the parameter data sets in the order given in Table 
+C1, and gives sources.  Often, once source lists most of the 
+properties - then the single source is quoted.  Where data have been 
+assembled from several sources, details are given.
+
+REFERENCES
+
+data set :Sourcesreference:Text
+
+	American Institute of Physics Handbook (1972) 3rd edition, 
+Am. Inst. of Phys. and McGraw-Hill.
+
+[Ash75]	Ashby, M.F. (1975) Acta Metall. 11 591.
+
+	ASM Metals Handbook (1975), Vol.8 8th edition, American 
+Society for Metals, Metals Park, Columbus, Ohio, USA.
+
+[Bro80a]	Brown, A.M. and Ashby, M.F. (1980) Acta Metall. 28 1085.
+
+[Bro80b]	Brown, A.M. and Ashby, M.F. (1980) Scripta Metall. 14 1297
+
+	Diffusion Data (1968 to present) a journal taken by most 
+science libraries.
+
+[Fro82]	Frost, H.J. and Ashby, M.F. (1982) "Deformation Mechanism 
+Maps", Pergamon Press, Oxford.
+
+	Landholt-Bornstein Tables III-1 (1966) and III-2 (1969), 
+SPringer-Verlag, Berlin.
+
+[Mal80]	Malakondaiah, G.A. (1980) Ph.D. thesis, Banares Hindu 
+University, Varanesi, India.
+
+	Metals handbook (1961) Vol.1, ASM, Columbus, Ohio, USA.
+
+[Sim71]	Simmons, G. and Wang, H. (1971) "Single Crystal Elastic 
+Constants and Calculated Aggregate properties", 2nd edition, MIT 
+Press.
+
+
+INDEX
+
+
+<Alt><W> 10
+
+<Ctrl><Alt><Del> 17
+
+<Ctrl><Break> 17, 18
+
+<PRT SCR> 16
+
+Activation energy 2, 7, 10, 14, 
+21, 22
+
+alloying 21
+
+AT&T 18
+
+Atomic volume 2, 7, 8, 10, 21
+
+AUTOEXEC.BAT 19
+
+axes 15
+
+Back-up 19
+
+Batch files 5
+
+Borland 17
+
+Boundary diffusion 7, 22
+
+Burger's vector 14
+
+^C 6, 12
+
+See <Ctrl><Break> 12
+
+CGA 4, 5, 18
+
+check 9, 11, 14, 17, 18
+
+Class
+
+See Isomechanical Class 7
+
+colour 4, 11
+
+Command line 6, 12
+
+comments 10
+
+Compaq 4, 18
+
+CONFIG.SYS 19
+
+consitutive equation 20
+
+contours
+
+Multiplying factor 15
+
+Number of 15
+
+Strain rate 15
+
+Temperature 15
+
+Temperature Difference 15
+
+COPPER 13, 23
+
+COPPER            7
+
+Core diffusion 7, 10, 14
+
+Creep 7, 10
+
+Creep exponent 2, 14, 22
+
+data check 9, 10, 11, 18, 21
+
+Data set 9, 12, 13
+
+Corrupted 17
+
+Creating 6, 8, 12, 21
+
+Deleting 11
+
+Duplicating 6, 11, 12
+
+Editing 7, 8, 11, 21
+
+Pre-existing 7
+
+Reading 4, 6, 9, 12
+
+Same 11
+
+Saving 16, 19
+
+Sources 23
+
+date 15
+
+default values 5, 15, 18, 21
+
+Diffusion
+
+Cut-off stress 8, 10
+
+See Volume, Boundary, Core 13
+
+Disc
+
+See Hard-disc, Floppy disc 19
+
+dislocation 16, 20
+
+Dislocation core diffusion
+
+See core diffusion 2
+
+Drag 8, 10, 16
+
+EGA 4, 18
+
+Electron drag 8, 10, 20
+
+End 12
+
+Epson 9
+
+error 18, 19
+
+error  18
+
+estimate 21
+
+exit 12
+
+exponent 14
+
+fields 15
+
+Finish 8, 10, 12
+
+floppy disc 4, 5, 17
+
+Error 19
+
+Full 19
+
+Fortran 13
+
+glide 16, 20
+
+Grain boundary diffusion
+
+See Boundary diffusion 2
+
+Grain size 2, 15
+
+Graph-Plus 18
+
+graphics 3, 4, 5, 17, 18
+
+GRAPHICS.COM 5, 17, 18
+
+hard-disc 3, 4, 5, 17
+
+Full 19
+
+Hardware
+
+See Printer, Graphics 4
+
+Harper-Dorn creep 20
+
+help screen 6, 12
+
+Hercules 4, 18
+
+Hewlett-Packard 4
+
+HGC.COM 18
+
+homologous temperature 15
+
+IBM 4
+
+isomechanical 9
+
+Isomechanical Class 7, 10, 13, 
+21
+
+laserjet 4, 9
+
+Lattice diffusion
+
+See Volume diffusion 2
+
+listing 9
+
+To a file 5
+
+To a printer 5
+
+map Variable
+
+See Variable 14
+
+material name 15
+
+material Parameter
+
+See Parameter 13
+
+mechanism 15, 20
+
+Melting point 2, 7, 10, 13, 21
+
+Diffusivity 22
+
+MEMMAP.COM 17, 19
+
+memory 5, 17, 19
+
+MGC.COM 18
+
+MODE command 17
+
+Modulus 7, 10, 14, 21
+
+Temperature-dependence 21
+
+MS-DOS 5, 17, 18
+
+Version 4, 18
+
+NICKEL 7, 13
+
+obstacles 16
+
+Olivetti 5, 18
+
+options
+
+See Command line 5
+
+Parameter 12, 13, 14, 15, 18, 
+21, 23
+
+Scaling 21
+
+Pascal
+
+See Turbo Pascal 4
+
+Peierl's stress 20
+
+Peierls stress 2, 16, 20
+
+Phase change 10
+
+Phonon drag 8, 10, 16, 20
+
+POTASSIUM 7
+
+Power-Law Breakdown 10
+
+power-law creep 2, 15, 16, 20, 
+22
+
+printer 4, 5, 10, 11, 17, 18
+
+printout 21
+
+See Listing 8
+
+Program 5
+
+purity 21
+
+quit 6, 11, 12
+
+RAM 4
+
+rate equation 20
+
+recrystallization 16
+
+Reference
+
+Stress 2, 7, 10, 14, 23
+
+Text 10, 23
+
+ROCKSALT 13
+
+ROCKSALT                  7
+
+Run-time 18
+
+scaling relations 21
+
+shear stress 15, 23
+
+SILICON 7, 13
+
+software 4
+
+steps 14, 20
+
+strain rate 15
+
+superalloys 23
+
+Temperature 2, 10, 15
+
+Turbo Pascal 4, 17
+
+uniaxial stress 23
+
+variable 8, 12, 14, 15, 21
+
+VGA 4, 18
+
+Volume diffusion 7, 10, 21
+
+Y-Ba-CuO 7, 13, 23
+
+yielding 15, 16, 21, 23
+
+.End Index.
+
+
+
+
+
