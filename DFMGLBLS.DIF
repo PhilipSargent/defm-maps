@@ -1,0 +1,10 @@
+2c2
+< { PMS 14-April-1990 02:30 }
+---
+> { PMS 14-April-1990 00:49 }
+57,58c57,58
+< 	maxcontournumber	= 10;
+< 	max_steps			= 80;
+---
+> 	maxcontournumber	= 20;
+> 	max_steps			= 300;

@@ -1,5 +1,5 @@
  Unit DfmModls;
-{ PMS 24-May-1990 16:54 }
+{ PMS 24-May-1990 20:17 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -441,9 +441,11 @@ BEGIN
 {			dornLT		:=	1.0e-6*0.5*tmelt*ref_factor*10*dmeltcore*diffusion3
 									*ref_const*ref_const/(dovol*burgv*burgv);
 }
-			dornLT1		:=	diffusion3;	{	we can mix and match LT1 and LT2	}
+		{	we can mix and match LT1 and LT2, note dovol commented out to make
+			behaviour exactly like Frost & Ashby BOOK	}
+			dornLT1		:=	diffusion3;	
 			dornLT2		:=	1.0e-6*0.5*tmelt*ref_factor*10*dmeltcore
-									*ref_const*ref_const/(dovol*burgv*burgv);
+									*ref_const*ref_const/({ dovol* } burgv*burgv);
 
 {	Note that here the temperature-dependent shear modulus is used for the
 	obstacle and Peierls-stress mechanisms, whereas	the old FORTRAN routine

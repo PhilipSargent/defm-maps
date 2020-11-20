@@ -1,0 +1,36 @@
+
+PKUNPAK     FAST!     Archive Extract Utility     Version 3.61    08-02-88
+Copyright (c) 1986-1988 PKWARE Inc. All Rights Reserved. PKUNPAK/h for help
+
+Searching: DFM-ARC.ARC
+
+Filename	Length	 Method     Size   Ratio    Date      Time    CRC
+--------        ------   ------    ------  -----    ----      ----    ---
+ATT.BGI           6348  Crunched     5678   11%   10-23-90  06:00:00  1C1B
+CGA.BGI           6332  Crunched     5682   11%   10-23-90  06:00:00  BCC9
+COPYING          18321  Squashed     8941   52%   06-07-93  00:53:24  42CD
+DFM.BAT            218  Crunched      197   10%   05-26-90  02:12:48  9AC4
+DFM290.EXE      140560  Squashed    87401   38%   06-12-93  04:28:08  DB7B
+DFMAP.DOC          247  Crunched      219   12%   06-12-93  07:15:30  0FA6
+DFMFIX.EXE      142448  Squashed    89306   38%   06-12-93  05:45:54  DA94
+EGAVGA.BGI        5554  Crunched     5083    9%   10-23-90  06:00:00  CE10
+EXTRAS.ARC        9654   Stored      9654    0%   06-12-93  07:17:54  773F
+GRAPHCPQ.COM      7204  Crunched     3756   48%   02-06-87  12:00:00  A035
+GRAPHICS.COM      3300  Crunched     2502   25%   03-17-87  12:00:00  32D5
+HELP.BAT           340  Crunched      259   24%   03-23-90  12:10:56  35CB
+HERC.BGI          6204  Crunched     5567   11%   10-23-90  06:00:00  66C4
+HGC.COM           1618  Crunched     1539    5%   08-20-86  00:00:00  0A77
+IBM8514.BGI       6665  Crunched     4146   38%   10-23-90  06:00:00  E7AE
+MAKEDIST.BAT      1898  Crunched     1075   44%   06-12-93  07:12:08  E833
+MATLPARS.DAT     53684  Squashed    12737   77%   05-24-90  19:09:02  017B
+MATLREFS.DAT     10623  Crunched     4908   54%   05-24-90  14:27:42  E729
+MEMMAP.COM        9984  Crunched     7832   22%   09-26-85  14:41:04  F0E3
+MEMMAP.DOC        1280  Crunched      743   42%   09-26-85  14:41:04  A61E
+PC3270.BGI        6012  Crunched     5408   11%   10-23-90  06:00:00  455D
+README            8501  Crunched     4998   42%   06-12-93  06:32:26  E479
+README.BAT          20   Stored        20    0%   06-12-93  06:33:16  BE58
+RUNALL.BAT         499  Crunched      239   53%   03-13-90  03:12:40  5F33
+SOURCE.ARC      146041   Stored    146041    0%   06-12-93  07:17:40  CF56
+TEXTSORT.EXE     17040  Crunched    13663   20%   12-31-87  04:00:00  71B0
+----            ------             ------  -----
+0026            610595             427594   30%
