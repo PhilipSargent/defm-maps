@@ -1,8 +1,7 @@
 { DFM290.pas }
-{ PMS 2-February-1990 23:15 }
+{ PMS 2-May-1990 01:06 }
 
 Program DFM290(input,output);
-
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
@@ -16,6 +15,9 @@ Program DFM290(input,output);
 	system and that you specify $N+ and $E+ for each unit.
 	15-December-1989 02:17 PMS
 }
+
+{.$M 16384, 0, 655360}	{	stacksize, heapmin, heapmax	}
+{$M 8000, 0, 655360}	{	stacksize, heapmin, heapmax	}
 
 Uses
   Crt,

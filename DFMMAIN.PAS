@@ -1,5 +1,5 @@
 Unit Dfmmain;
-{ PMS 26-March-1990 18:26 }
+{ PMS 18-April-1990 13:12 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -36,6 +36,7 @@ Uses
 	StringIO,
 	Dfmglbls,
 	Dfmfiles,
+	Dfmedits,
 	Dfmmodls,
 	Dfmplots;
 

@@ -1,18 +1,21 @@
  Unit DfmModls;
-{ PMS 25-March-1990 00:41 }
+{ PMS 24-May-1990 16:54 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
    *************   P.M.Sargent and M.F.Ashby        **************
-   *************   February 1990                    **************
+   *************   April 1990                       **************
 }
-{$IFDEF  contour}		{	ensure compiler directives are consistent	}
-{$DEFINE  detail}
-{$ENDIF}
+{	ensure compiler directives are consistent	}
 {$IFDEF  detail}
 {$DEFINE  debug}
 {$ENDIF}
+{$IFDEF  contour}
+{$DEFINE  debug}
+{$ENDIF}
+{      	All these options set in command line when we run the compiler, 
+			and are NOT set here (hence the dots).	}
 {.$R+}    {Range checking on}
 {.$B+}    {Boolean complete evaluation on}
 {.$S+}    {Stack checking on}
@@ -28,7 +31,6 @@ Uses
 PROCEDURE DEFINE_UNITS (VAR dud_steps: INTEGER; VAR dud_TN, dud_K: a_real);
 
 PROCEDURE DIFFUSION_RATES;
-
 { ----- Calculates the rates of diffusion and the reference creep rate ----- }
 
 PROCEDURE STRAIN_RATES (TN, LgSN: a_real;
@@ -52,7 +54,6 @@ CONST
 	HighRate	=	1.0e30;
 	StrainRateLimit = 1.0e6;		{	maximum expected in a real material }
 VAR
-	stress_stash:	ARRAY [1..max_steps, 1..2] OF a_real;
 	kT			:	a_real;
 	correct	:	a_real;
 	exp_fix	:	a_real;
@@ -157,6 +158,7 @@ VAR
 	i		:	Byte;
 	TNstep:	a_real;
 BEGIN
+	SRcount := 0;		{	initialise count of calls to STRAIN_RATES	}
 
 { ----- Assign program names to the parameters ----- }
 
@@ -338,8 +340,6 @@ BEGIN
 {$IFDEF debug}
 	writeln(db,' Exponential fix number is: ',fix:10:4);
 {$ENDIF}
-
-	memory_enable	:= FALSE;
 
 END;  {DEFINE_UNITS.     }
 {---------------------------------------------------------------------------}
@@ -587,28 +587,20 @@ FUNCTION StressFunction (SN: a_real): a_real;
 {	This function is independent of temperature and so can be
 	implemented as a memory function, i.e. if it already has
 	been called once with that stress, return the value calculated
-	the last time and don't recalculate.  It does depend on the
-	stresses given being PRE-DEFINED and on KNOWING the current
-	value of stress_step! Unclean, Unclean..}
+	the last time and don't recalculate.  
+	Mem. funct removed. 19-April-1990 16:46 }
 CONST
 	four_thirds		=	1.3333333;
 	three_quarters	=	0.75;
 VAR
 	r, n	:	a_real;
 BEGIN
-	IF memory_enable AND (SN = stress_stash[stress_step, 1] ) THEN
-		StressFunction := Stress_stash [stress_step, 2]
-	ELSE
-		BEGIN
-			n :=	exp (three_quarters*ln(SN/tprls));
-			IF (n < 1) THEN
-				r	:= exp( four_thirds * ln (1 - n ) )
-			ELSE	{	n >= 1	}
-				r	:=	0.0;
-			stress_stash [stress_step, 1] := SN;
-			stress_stash [stress_step, 2] := r;
-			StressFunction := r;
-		END;
+	n :=	exp (three_quarters*ln(SN/tprls));
+	IF (n < 1) THEN
+		r	:= exp( four_thirds * ln (1 - n ) )
+	ELSE	{	n >= 1	}
+		r	:=	0.0;
+	StressFunction := r;
 END;	{	StressFunction	}
 {---------------------------------------------------------------------------}
 FUNCTION Peierls (SN: a_real): a_real;
@@ -735,6 +727,17 @@ BEGIN
 				StrRate[pls_drag]	:= HighRate
 			ELSE
 				StrRate[pls_drag]	:= LowRate;
+
+	{ ----- Exceptionally, fcc metals display no Peierls stress (pls-drag).	}
+
+			IF (imc = fcc) THEN
+				hint_stress :=(Ln(tobst))/(Ln10)
+			ELSE
+				hint_stress :=(Ln(tprls))/(Ln10);
+{$IFDEF detail}
+			WriteLn(db,' 0K hint_stress..',TN:12,' ',hint_stress:8:3,' ',tobst:12,' ',tprls:12,' imc:',Ord(imc));
+{$ENDIF}
+
 		END
 	ELSE 	IF ( TN <= Low_Temp_Limit ) THEN
 		{	all bets off with activation energies	}
@@ -829,6 +832,8 @@ BEGIN
 	actually giving it a mechanism or changing any strain-rates in
 	any way	}
 
+{	Cancelled until we can do it properly..
+
 	fudge := ln(Rate)/Ln10 ;
 
 	IF ((( fudge < (-2 -10*(1-TN)/0.2) )
@@ -839,7 +844,7 @@ BEGIN
 	 		StrRate[field] := Rate;
 			mechID [field] := field;
 		END;
-
+}
 {$IFDEF detail}
 	Write(db, Stress:8,' ',SN:7,'    ',StrRate[b_diff]:7, StrRate[v_diff]:7,
 			StrRate[plc_ht]:7, StrRate[plc_lt]:7, StrRate[S_plc]:7, StrRate[o_glide]:7,

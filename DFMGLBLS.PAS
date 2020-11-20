@@ -1,18 +1,19 @@
-{ Dfmglbls.pas	}
-{ PMS 26-March-1990 18:06 }
-
+{ DfmGlbls.pas	}
+{ PMS 24-May-1990 16:49 }
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
    *************   P.M.Sargent and M.F.Ashby        **************
-   *************   February 1990                    **************
+   *************   April 1990                       **************
 }
 {$IFDEF  contour}		{	ensure compiler directives are consistent	}
-{$DEFINE  detail}
+{$DEFINE  debug}
 {$ENDIF}
 {$IFDEF  detail}
 {$DEFINE  debug}
 {$ENDIF}
+{      	All these options set in command line when we run the compiler, 
+			and are NOT set here (hence the dots).	}
 {.$R+}	{Range checking on}
 {.$B+}	{Boolean complete evaluation on}
 {.$S+}	{Stack checking on}
@@ -27,10 +28,10 @@ Uses
 	Crt;
 
 CONST
-	copyright = '(C) Copyright 1988,1990 M.F.Ashby & P.M.Sargent';
-	VersionDate			= '25 March 1990';
+	copyright = '(C) Copyright 1980,1990 P.M.Sargent & M.F.Ashby';
+	VersionDate			= '24 May 1990';
 	Version				= 'DFM290';
-	Release				= '0.81';
+	Release				= '0.88';
 	DF						= -32768;		{	Default.. for floats, longint, int	}
 
 	avogadro				= 6.022045e23;
@@ -48,8 +49,9 @@ CONST
 	parm_name_length	=	6;
 	desclength			= 28;
 	unitlength			= 10;
-	ref_buflength	 	= 1158;	{	61 * reflines   - 1 }
+	ref_buflength	 	= 1159;	{	refchars * reflines	}
 	reflines				= 19;
+	refchars				= 61;
 
 	pathlength			= 30;
 	lbllength	 		= 16;
@@ -77,6 +79,7 @@ CONST
 	CR						=	#13;
 	LF						=	#10;
 	Bksp					=	#8;
+	Tab					=	#9;
 
 {	Codes for function keys After #0 read	}
 	PageUp				=	#73;
@@ -85,12 +88,6 @@ CONST
 	Right					=	#77;
 	Down					=	#80;
 	Up						=	#72;
-	Home					=	#71;
-	EndCh					=	#79;
-	Ins					=	#82;
-	Del					=	#83;
-	AltQ					=	#16;
-	AltW					=	#17;
 
 	C_text				= yellow;
 	C_screen				= blue;
@@ -150,8 +147,8 @@ TYPE
 	filestring			= string[pathlength];
 	R_pars				= 0..numberofparameters;
 	R_vbls				= 1..numberofvariables;
-	R_refs				= 1..ref_buflength;
-	pagedepth			= 1..reflines;
+	R_refs				= 0..ref_buflength;
+	R_lines				= 0..reflines;
 
 	lblstring			=	array[1..lbllength] of char;
 	chararray			= array[1..12] of char;
@@ -225,8 +222,6 @@ VAR
 	matl_index 		:	0..list_max;
 	matl_ok			:	BOOLEAN;	{	Status of material name list	}
 
-	stress_step		:	Word;
-	memory_enable	:	BOOLEAN;
 	SpeedValue		:	REAL;
 	SRcount			:	Word;
 
@@ -258,6 +253,7 @@ VAR
 	ref				:  refarray;
 	parnumber		:  R_pars;
 	vblnumber		:  R_vbls;
+	ref_written_lines	:	R_lines;
 	matlname			:  filestring;
 	listfilename	:  filestring;
 	ppicfilename	:  filestring;
@@ -269,6 +265,7 @@ VAR
 	datafilename	:  filestring;
 	phpgfilename	:  filestring;
 	thpgfilename	:  filestring;
+	compiler_opts	:	String;
 {$IFDEF debug}
 	db					:	TEXT;		{	debug file	}
 {$ENDIF}
@@ -363,6 +360,7 @@ TYPE
 			  		END;
 VAR
 	ad	:	T_PtrRec;
+	s	:	String;
 {	The checking on $F+ is so that if it is set by compiler directive,
 	we do not then switch it off after this procedure by accident.}
 BEGIN
@@ -375,11 +373,25 @@ BEGIN
 	IF (ErrorAddr <> NIL) THEN 	{	run-time error	}
 		BEGIN
 			ad := T_PtrRec(ErrorAddr);
-			Writeln('Run-time error : ',ExitCode:4);
-			Writeln('   at (decimal): ',ad.seg:5,':',ad.ofs:5);	{DECIMAL!}
+			Writeln(Version,' detected:');
+			CASE ExitCode OF
+				4:	s:='Too many open files: CONFIG.SYS FILES=? is too small';
+				200:	s:='Division by zero';
+				201:	s:='Range Check error, re-boot computer';
+				202:	s:='Stack Overflow error, Contact Philip Sargent';
+				205:	s:='Floating point OVERflow error, re-boot computer';
+				207:	s:='Floating point invalid operation, re-boot computer';
+				100..106:	s:='File read/write error';
+				150..158:	s:='Critical File i/o error';
+				159:			s:='Printer out of paper';
+				160..162:	s:='Critical disc-drive error';
+				ELSE	s:='Contact Philip Sargent, or see Turbo Pascal 5.5 Reference manual pp467-472';
+			END;	{	Case	}
+			WriteLn(s);
+{			Writeln('   at (decimal): ',ad.seg:5,':',ad.ofs:5);}	{DECIMAL!}
 {$IFDEF  debug}
-			Writeln(db,'Run-time error : ',ExitCode:4);
-			Writeln(db,'   at (decimal): ',ad.seg:5,':',ad.ofs:5);	{DECIMAL!}
+			Writeln(db,Version,' detected:');
+			WriteLn(db,s);
 {$ENDIF}
 		END;
 {$IFDEF  debug}
@@ -966,11 +978,28 @@ END;      {end of get_imc_string procedure}
 {-------------------------------------------------------------------}
 { Unit Initialization }
 BEGIN
-	Writeln(Version,' v',Release,' ',VersionDate);
+	compiler_opts := '';
+{$IFDEF  debug}
+	compiler_opts := compiler_opts+'+Debug';
+{$ENDIF}
+{$IFDEF  contour}	  
+	compiler_opts := compiler_opts+'+Contour';
+{$ENDIF}
+{$IFDEF cntrfix }
+	compiler_opts := compiler_opts+'+CntrFix';
+{$ENDIF}
+{$IFDEF  detail}
+	compiler_opts := compiler_opts+'+Detail';
+{$ENDIF}
+{$IFDEF  indent}
+	compiler_opts := compiler_opts+'+Indent';
+{$ENDIF}
+	Writeln(Version,' v',Release,' ',VersionDate,' Compiler options:',compiler_opts);
 	Writeln('       ',copyright);
 
 	WriteLn(MemAvail:8,' bytes (total) available, above this program');
 	WriteLn(MaxAvail/1024:5:0,'    K     (largest contiguous block) available');
+	Delay(500);
 
 	{ ----- Open DEBUG file	----- }
 {$IFDEF  debug}
@@ -983,6 +1012,9 @@ BEGIN
 			BEGIN
 				Assign(db,'debug.txt');
 				Rewrite(db);
+				Writeln(db,Version,' v',Release,' (',VersionDate,')');
+				Writeln(db,'(Compiler options:',compiler_opts,')');
+				Writeln(db,copyright);
 			END;
 {$ENDIF}
 

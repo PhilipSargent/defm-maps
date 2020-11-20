@@ -1,254 +1,243 @@
 FE-ALPHA
 Alpha-IRON
-The mechanical, diffusion and creep data are adapted from 
-Frost H.J. and Ashby M.F. 
-"Deformation Mechanism Maps" Pergamon Press (1982), 
+The mechanical, diffusion and creep data are adapted from
+Frost H.J. and Ashby M.F.
+"Deformation Mechanism Maps" Pergamon Press (1982),
 
-Swinkels F.B. and Ashby, M.F. 
-Acta Met 29 (1981) 259, and 
+Swinkels F.B. and Ashby, M.F.
+Acta Met 29 (1981) 259, and
 
-Helle A.S., Easterling K.E. and Ashby M.F. 
+Helle A.S., Easterling K.E. and Ashby M.F.
 Acta Met 33 (1983) 2163.
 
 FE-DELTA
 Delta-IRON
-The mechanical, diffusion and creep data are adapted from 
-Frost H.J. and Ashby M.F. 
-"Deformation Mechanism Maps" Pergamon Press (1982), 
+The mechanical, diffusion and creep data are adapted from
+Frost H.J. and Ashby M.F.
+"Deformation Mechanism Maps" Pergamon Press (1982),
 
-ALUMINA 
-ALUMINIUM OXIDE, AL2O3 
-Most data are from Frost H.J. and Ashby, M.F. "Deformation 
-Mechanism Maps", Pergamon Press, Oxford (1982) p. 99. 
-See also Helle A.S., Easterling K.E. and Ashby M.F. 
+ALUMINA
+ALUMINIUM OXIDE, AL2O3
+Most data are from Frost H.J. and Ashby, M.F. "Deformation
+Mechanism Maps", Pergamon Press, Oxford (1982) p. 99.
+See also Helle A.S., Easterling K.E. and Ashby M.F.
 Acta Met vol 33 (1985) p. 2163, Table 1.
 
-ALUMINUM 
-COMMERCIAL PURITY ALUMINIUM 
-Data are from Frost H.J. and Ashby M.F. "Deformation 
-Mechanism Maps", Pergamon Press (1982), Table 4.1. 
-The surface diffusion and boundary mobility constants 
+ALUMINUM
+COMMERCIAL PURITY ALUMINIUM
+Data are from Frost H.J. and Ashby M.F. "Deformation
+Mechanism Maps", Pergamon Press (1982), Table 4.1.
+The surface diffusion and boundary mobility constants
 are estimates.
-
-CAMPHENE
-Om's research work, 1989-1990. 
 
 TI-ALPHA
 alpha-TITANIUM
-Data are from the compilations by: 
+Data are from the compilations by:
 Sargent P.M. and Ashby M.F.
 "Deformation Maps for Titanium and Zirconium"
 Scripta Met. 16 (1982) 1415-1422
 
-Frost H.J. and Ashby M.F. 
-"Deformation Mechanism Maps" Pergamon Press (1982), and 
+Frost H.J. and Ashby M.F.
+"Deformation Mechanism Maps" Pergamon Press (1982), and
 
-Simmons G. and Wang H. "Single Crystal Elastic 
-Properties and Calculated Aggregate Properties" MIT Press 
+Simmons G. and Wang H. "Single Crystal Elastic
+Properties and Calculated Aggregate Properties" MIT Press
 (1971).
 
-TI-BETA 
+TI-BETA
 beta-TITANIUM
-Data are from the compilations by: 
+Data are from the compilations by:
 Sargent P.M. and Ashby M.F.
 "Deformation Maps for Titanium and Zirconium"
 Scripta Met. 16 (1982) 1415-1422
 
-Frost H.J. and Ashby M.F. "Deformation Mechanism Maps" 
-Pergamon Press (1982), and 
-Simmons G. and Wang H. "Single Crystal Elastic 
-Properties andCalculated Aggregate Properties" MIT Press 
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps"
+Pergamon Press (1982), and
+Simmons G. and Wang H. "Single Crystal Elastic
+Properties andCalculated Aggregate Properties" MIT Press
 (1971).
 
-COPPER 
-COMMERCIAL PURITY COPPER 
-Data are from Frost H.J. and Ashby M.F. "Deformation 
-Mechanism Maps", Pergamon Press, Oxford (1982); 
-and from Swinkels F.B. and Ashby M.F. Acta Metall. 29 
-(1981) 259; and Helle A.S., Easterling K.E. and Ashby M.F. 
-Acta Metall. 33 (1983) 2163.
-
-GERMANIUM 
+GERMANIUM
 Data are from:
-Frost H.J. and Ashby M.F. "Deformation Mechanism Maps" 
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps"
 Pergamon Press (1982), and
 
-Sargent P.M. and Ashby M.F. "A Deformation Mechanism Map 
+Sargent P.M. and Ashby M.F. "A Deformation Mechanism Map
 for a III-V Compound, Indium Antimonide"
 Scripta Met. 18 (1984) 219-224.
 
 INSB
 INDIUM ANTIMONIDE
 Data are from:
-Sargent P.M. and Ashby M.F. "A Deformation Mechanism Map 
+Sargent P.M. and Ashby M.F. "A Deformation Mechanism Map
 for a III-V Compound, Indium Antimonide"
 Scripta Met. 18 (1984) 219-224.
 
-LEAD 
-COMMERCIAL PURITY LEAD 
-Frost H.J. and Ashby M.F. "Deformation Mechanism Maps" 
-Pergamon Press (1982); 
-Swinkels F.B. and Ashby, M.F. Acta Met 29 (1981) 
-259; and Helle A.S., Easterling K.E. and Ashby M.F. 
-Acta Met 33 (1983)2163. 
+LEAD
+COMMERCIAL PURITY LEAD
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps"
+Pergamon Press (1982);
+Swinkels F.B. and Ashby, M.F. Acta Met 29 (1981)
+259; and Helle A.S., Easterling K.E. and Ashby M.F.
+Acta Met 33 (1983)2163.
 
-MAGNESIA 
+MAGNESIA
 MAGNESIUM OXIDE MgO
-Data are from the compilation by: 
-Frost H.J. and Ashby M.F. "Deformation Mechanism Maps", 
+Data are from the compilation by:
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps",
 Pergamon Press (1982).
 
-MAR-M200 
-SUPERALLOY MAR-M200 
-Frost H.J. and Ashby M.F. "Deformation Mechanism Maps", 
-Pergamon Press, Oxford (1982). 
+MAR-M200
+SUPERALLOY MAR-M200
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps",
+Pergamon Press, Oxford (1982).
 
-MOLYBDM 
+MOLYBDM
 MOLYBDENUM
-Data are from the compilation by: 
-Frost H.J. and Ashby M.F. "Deformation Mechanism Maps", 
+Data are from the compilation by:
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps",
 Pergamon Press (1982).
 
-NICKEL 
-The mechanical, diffusion and creep data are adapted from 
-Frost H.J. and Ashby M.F. "Deformation Mechanism Maps" 
-Pergamon Press (1982), 
-Swinkels F.B. and Ashby, M.F. Acta Met 29 (1981) 
-259, and Helle A.S., Easterling K.E. and Ashby M.F. 
+NICKEL
+The mechanical, diffusion and creep data are adapted from
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps"
+Pergamon Press (1982),
+Swinkels F.B. and Ashby, M.F. Acta Met 29 (1981)
+259, and Helle A.S., Easterling K.E. and Ashby M.F.
 Acta Met 33 (1983) 2163.
 
 POTASSIUM
-Sargent H.J. and Ashby M.F. 
+Sargent H.J. and Ashby M.F.
 "Deformation Mechanism Maps for Alkali Metals"
 Scripta met. 18 (1984) 145-155
 
-ROCKSALT 
-ROCKSALT, NaCl 
-Frost H.J. and Ashby M.F. "Deformation Mechanism Maps", 
-Pergamon Press, Oxford (1982), pages 75-79. 
-Surface energy from Swalin, R.A. "Thermodynamics 
-of Solids", Wiley, New York (1972). 
-Polycrystalline yield strength from Skrotzki, 
-W., Frommeyer, G. and Haasen, P. 
-"Plasticity of Polycrystalline Ionic Solids", 
-phys. stat. sol. (a) volume 66, p. 
+ROCKSALT
+ROCKSALT, NaCl
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps",
+Pergamon Press, Oxford (1982), pages 75-79.
+Surface energy from Swalin, R.A. "Thermodynamics
+of Solids", Wiley, New York (1972).
+Polycrystalline yield strength from Skrotzki,
+W., Frommeyer, G. and Haasen, P.
+"Plasticity of Polycrystalline Ionic Solids",
+phys. stat. sol. (a) volume 66, p.
 219-228.
 
-SI3N4 
-ALPHA SILICON NITRIDE. 
-Data are from the compilation by M. F. Ashby 
-"Predictions for the Hot-Isostatic Pressing 
-of Silicon Carbide and Silicon Nitride", 
-Cambridge University Engineering Department Report 
-CUED/C-Mats./TR151, November, 
-1988, Cambridge University, Cambridge CB2 1PZ, UK. 
+SI3N4
+ALPHA SILICON NITRIDE.
+Data are from the compilation by M. F. Ashby
+"Predictions for the Hot-Isostatic Pressing
+of Silicon Carbide and Silicon Nitride",
+Cambridge University Engineering Department Report
+CUED/C-Mats./TR151, November,
+1988, Cambridge University, Cambridge CB2 1PZ, UK.
 
 
-SIC 
-BETA SILICON CARBIDE. 
+SIC
+BETA SILICON CARBIDE.
 Data are from:
-Sargent P.M. and Ashby M.F. "Deformation Mechanism Maps for 
+Sargent P.M. and Ashby M.F. "Deformation Mechanism Maps for
 Silicon Carbide" Scripta Met. 17 (1983) 951.
 
-and the compliation by M. F. Ashby 
-"Predictions for the Hot-Isostatic Pressing 
-of Silicon Carbide and Silicon Nitride", 
-Cambridge University Engineering Department Report 
-CUED/C-Mats./TR151, November 1988, 
-Cambridge University, Cambridge CB2 1PZ, UK. 
+and the compliation by M. F. Ashby
+"Predictions for the Hot-Isostatic Pressing
+of Silicon Carbide and Silicon Nitride",
+Cambridge University Engineering Department Report
+CUED/C-Mats./TR151, November 1988,
+Cambridge University, Cambridge CB2 1PZ, UK.
 
 SILICON
 Data are from:
-Frost H.J. and Ashby M.F. "Deformation Mechanism Maps", 
-Pergamon Press , Oxford (1982). 
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps",
+Pergamon Press , Oxford (1982).
 
 and see also:
-Sargent P.M. and Ashby M.F. "Deformation Mechanism Maps for 
+Sargent P.M. and Ashby M.F. "Deformation Mechanism Maps for
 Silicon Carbide" Scripta Met. 17 (1983) 951.
 
-Sargent P.M. and Ashby M.F. "A Deformation Mechanism Map 
+Sargent P.M. and Ashby M.F. "A Deformation Mechanism Map
 for a III-V Compound, Indium Antimonide"
 Scripta Met. 18 (1984) 219-224.
 
-SILVER 
-COMMERCIALLY PURE SILVER 
-Frost H.J. and Ashby M.F. "Deformation Mechanism Maps", 
-Pergamon Press, Oxford, (1982); 
-Swinkels F.B. and Ashby M.F. Acta Metall. 29 (1981) 
-259; and Helle A.S., Easterling K.E. and Ashby M.F. 
+SILVER
+COMMERCIALLY PURE SILVER
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps",
+Pergamon Press, Oxford, (1982);
+Swinkels F.B. and Ashby M.F. Acta Metall. 29 (1981)
+259; and Helle A.S., Easterling K.E. and Ashby M.F.
 Acta Metall. 33 (1983) 2163.
 
-SS-304 
-TYPE 304 STAINLESS STEEL 
-Frost H.J. and Ashby M.F. "Deformation Mechanism Maps", 
-Pergamon Press , Oxford (1982). 
+SS-304
+TYPE 304 STAINLESS STEEL
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps",
+Pergamon Press , Oxford (1982).
 
-SS-316 
-TYPE 316 STAINLESS STEEL 
-Data are from the compilation by: 
-Frost H.J. and Ashby M.F. "Deformation Mechanism Maps", 
-Pergamon Press (1982), and 
-Swinkels, F.B. and Ashby M.F. Acta Metall. 29 
+SS-316
+TYPE 316 STAINLESS STEEL
+Data are from the compilation by:
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps",
+Pergamon Press (1982), and
+Swinkels, F.B. and Ashby M.F. Acta Metall. 29
 (1981) 259.
 
-T-STEEL 
-TOOL STEEL 
-Helle A.S. Easterling K.E. and Ashby M.F. 
+T-STEEL
+TOOL STEEL
+Helle A.S. Easterling K.E. and Ashby M.F.
 Acta Met 33 (1935) 2163.
 
-TI-AL 
-gamma-TiAl INTERMETALLIC 
-Data from Choi B.W. Deng Y.G. McCullough C. Paden B. 
-and Mehrabian R. "Densification of Rapidly Solidified 
-Titanium Aluminide Powders during Hot Isostatic Pressing", 
+TI-AL
+gamma-TiAl INTERMETALLIC
+Data from Choi B.W. Deng Y.G. McCullough C. Paden B.
+and Mehrabian R. "Densification of Rapidly Solidified
+Titanium Aluminide Powders during Hot Isostatic Pressing",
 Report, Materials Program, Engineering School, UCSB (1989).
 
-TIN 
+TIN
 COMMERCIAL PURITY TIN
-Data are from the compilation by: 
+Data are from the compilation by:
 Swinkels F.B. and Ashby M.F. Acta Met 29 (1981) 259.
 
-TUNGSTEN 
-The mechanical, diffusion and creep data are adapted from 
-Frost H.J. and Ashby M.F. "Deformation Mechanism Maps" 
-Pergamon Press (1982), 
-Swinkels F.B. and Ashby, M.F. Acta Met 29 (1981) 
-259, and Helle A.S., Easterling K.E. and Ashby M.F. 
+TUNGSTEN
+The mechanical, diffusion and creep data are adapted from
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps"
+Pergamon Press (1982),
+Swinkels F.B. and Ashby, M.F. Acta Met 29 (1981)
+259, and Helle A.S., Easterling K.E. and Ashby M.F.
 Acta Met 33 (1983) 2163.
 
-URANIA 
+URANIA
 URANIUM DIOXIDE
-Data from the compilations by: 
-Ashby M.F. Acta Met 22 (1975) 275, and 
-Frost H.J. and Ashby M.F. "Deformation Mechanism 
+Data from the compilations by:
+Ashby M.F. Acta Met 22 (1975) 275, and
+Frost H.J. and Ashby M.F. "Deformation Mechanism
 Maps" Pergamon Press (1982).
 
-Y-BA-CUO 
+Y-BA-CUO
 Ceramic Superconductor
-See the Tutorial Example in the manual of the 
-Hot Isostatic Pressing modelling program "HIP 6.0", 
+See the Tutorial Example in the manual of the
+Hot Isostatic Pressing modelling program "HIP 6.0",
 M.F. Ashby, 1990.
 
-ZIRCONIA 
+ZIRCONIA
 ZIRCONIUM DIOXIDE
-Data from the compilations by: 
-Frost H.J. and Ashby M.F. "Deformation Mechanism 
+Data from the compilations by:
+Frost H.J. and Ashby M.F. "Deformation Mechanism
 Maps" Pergamon Press (1982) for Urania and Thoria, also
-"Deformation Map for Zirconia", 
+"Deformation Map for Zirconia",
 Sargent & Ashby (unpublished and in preparation).
 The diffusion data is for diffusing oxygen, not zirconium.
 
-ZR-ALPHA 
+ZR-ALPHA
 alpha-ZIRCONIUM
-Melting point: Ardell A.J. Acta Met 11 (1963) 591. 
-Modulus: Simmons G. and Wang H "Single Crystal Elastic 
-Constants" MIT Press (1971). 
-Lattice Diffusion: Flubacher P. EIR Bericht No.49 
-(1968). Boundary Diffusion: Bernstein I.M. Trans AIME 
-239 (1967) 1518 and a fit to the creep data of Malakondaiah 
-G.A. PhD Thesis Banaras Hindu University, Varanesi, India 
-(1980). Power-Law Creep: Pahutova M. and Cadek 
-J. Mat Sci Eng 11 (1973) 151 and Luton M.J. and Jonas J.J 
+Melting point: Ardell A.J. Acta Met 11 (1963) 591.
+Modulus: Simmons G. and Wang H "Single Crystal Elastic
+Constants" MIT Press (1971).
+Lattice Diffusion: Flubacher P. EIR Bericht No.49
+(1968). Boundary Diffusion: Bernstein I.M. Trans AIME
+239 (1967) 1518 and a fit to the creep data of Malakondaiah
+G.A. PhD Thesis Banaras Hindu University, Varanesi, India
+(1980). Power-Law Creep: Pahutova M. and Cadek
+J. Mat Sci Eng 11 (1973) 151 and Luton M.J. and Jonas J.J
 Canad Met Quart 11 (1972) 79.
 
 Sargent P.M. and Ashby M.F.
@@ -257,47 +246,82 @@ Scripta Met. 16 (1982) 1415-1422
 
 ZR-BETA
 beta-ZIRCONIUM
-Melting point: Ardell A.J. Acta Met 11 (1963) 591. 
-Modulus: Simmons G. and Wang H "Single Crystal Elastic 
-Constants" MIT Press (1971). 
-Lattice Diffusion: Flubacher P. EIR Bericht No.49 
-(1968). Boundary Diffusion: Bernstein I.M. Trans AIME 
-239 (1967) 1518 and a fit to the creep data of Malakondaiah 
-G.A. PhD Thesis Banaras Hindu University, Varanesi, India 
-(1980). Power-Law Creep: Pahutova M. and Cadek 
-J. Mat Sci Eng 11 (1973) 151 and Luton M.J. and Jonas J.J 
+Melting point: Ardell A.J. Acta Met 11 (1963) 591.
+Modulus: Simmons G. and Wang H "Single Crystal Elastic
+Constants" MIT Press (1971).
+Lattice Diffusion: Flubacher P. EIR Bericht No.49
+(1968). Boundary Diffusion: Bernstein I.M. Trans AIME
+239 (1967) 1518 and a fit to the creep data of Malakondaiah
+G.A. PhD Thesis Banaras Hindu University, Varanesi, India
+(1980). Power-Law Creep: Pahutova M. and Cadek
+J. Mat Sci Eng 11 (1973) 151 and Luton M.J. and Jonas J.J
 Canad Met Quart 11 (1972) 79.
 
 Sargent P.M. and Ashby M.F.
 "Deformation Maps for Titanium and Zirconium"
 Scripta Met. 16 (1982) 1415-1422
 
-ICE 
-Data for fresh-water ice. 
-Modulus: Dantl G. Physik der Kondensierten Materie, 
-7 (1968) 390. 
-Surface energy: Fletcher N.H. "The Chemical 
-Physics of Ice" Cambridge University Press (1970). 
-Lattice diffusion: Ramseier R.O. 
-J. Appl. Phys. 38 (1967) 2553. 
-Boundary diffusion: estimated 
-by standard methods. Creep: Barnes P., Tabor D. 
-and Walker J.C.F. Proc. Roy. Soc. A324 (1971) 127. 
-See also: the compliation 
-of data by Frost H.J. and Ashby M.F 
+ICE
+Data for fresh-water ice.
+Modulus: Dantl G. Physik der Kondensierten Materie,
+7 (1968) 390.
+Surface energy: Fletcher N.H. "The Chemical
+Physics of Ice" Cambridge University Press (1970).
+Lattice diffusion: Ramseier R.O.
+J. Appl. Phys. 38 (1967) 2553.
+Boundary diffusion: estimated
+by standard methods. Creep: Barnes P., Tabor D.
+and Walker J.C.F. Proc. Roy. Soc. A324 (1971) 127.
+See also: the compliation
+of data by Frost H.J. and Ashby M.F
 "Deformation Mechanism Maps" Pergamon Press (1982).
 
 CO-EPSLON
 COMMERCIAL PURITY epsilon-COBALT
-Data are from Sargent P.M., and Ashby M.F.,                                                              Ashby M.F. and Malakondiah,
-"A Deformation Map for Cobalt", 
+Data are from Sargent P.M., Malakondaiah G.A.
+and Ashby M.F.,
+"A Deformation Map for Cobalt",
 Scripta Met. 17 (1983) 625-629
 
 ALUMINIUM
 COMMERCIAL PURITY ALUMINIUM
-Data are from Frost H.J. and Ashby M.F. "Deformation 
-Mechanism Maps", Pergamon Press, Oxford (1982); 
+Data are from Frost H.J. and Ashby M.F. "Deformation
+Mechanism Maps", Pergamon Press, Oxford (1982);
 
 CAMPHENE
- This data is a first try, done by Om.                                                                                     The new IMC "bcc_rotator" has been added to the program      for his use.
+This data is a first try, done by Om.
+The new IMC "bcc_rotator" has been added to the program
+for his use.
+
+COPPER
+COMMERCIAL PURITY COPPER                                     
+Data are from Frost H.J. and Ashby M.F.                      
+"Deformation Mechanism Maps", Pergamon Press, Oxford (1982); 
+and                                                          
+                                                             
+from Swinkels F.B. and Ashby M.F. Acta Metall. 29            
+(1981) 259; and                                              
+                                                             
+Helle A.S., Easterling K.E. and Ashby M.F.                   
+Acta Metall. 33 (1983) 2163.                                 
+
+AL-FINE
+COMMERCIAL PURITY ALUMINIUM                                  
+Data are from Frost H.J. and Ashby M.F. "Deformation         
+Mechanism Maps", Pergamon Press, Oxford (1982);              
+                                                             
+Ultra-fine grain size test.                                  
+
+NI-FINE
+The mechanical, diffusion and creep data are adapted from    
+Frost H.J. and Ashby M.F. "Deformation Mechanism Maps"       
+Pergamon Press (1982),                                       
+Swinkels F.B. and Ashby, M.F. Acta Met 29 (1981)             
+259, and Helle A.S., Easterling K.E. and Ashby M.F.          
+Acta Met 33 (1983) 2163.                                     
+                                                             
+Fine grain size, high strain-rate contours and focussing     
+on the top LH corner..                                       
+                                                             
+PMS May 8th 1990                                             
 
