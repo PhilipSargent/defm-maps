@@ -1,5 +1,5 @@
 { Dfmglbls.pas	}
-{ PMS 28-June-1988 17:51 }
+{ PMS 15-December-1989 04:26 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -7,10 +7,12 @@
    *************   M.F.Ashby and P.M.Sargent        **************
    *************   June  1988                       **************
 }
-{$R-}    {Range checking off}
+{$R+}    {Range checking on}
 {$B+}	{Boolean complete evaluation on}
 {$S+}	{Stack checking on}
 {$I+}	{I/O checking on}
+{$N+}    {Use numeric coprocessor}
+{$E+}		{Include copy of 8087 Emulator - default anyway}
 
 Unit Dfmglbls;
 
@@ -83,11 +85,7 @@ CONST
 {$ENDIF}
 	
 TYPE
-{$IFOPT N-}
-	a_real	=	real;
-{$ELSE}
-	a_real	=	double;
-{$ENDIF}
+	a_real				=	double;
 	T_dominance			=	(max_op, min_op);
 	T_overall			=	(add_op, dom_op, mean_op);
 	T_ops					=	RECORD
@@ -152,6 +150,8 @@ VAR
 	matl_ok			:	BOOLEAN;	{	Status of material name list	}
 
 	stress_step		:	Word;
+	memory_enable	:	BOOLEAN;
+
 	xoffset			:  integer;
 	xlength			:  integer;
 	yoffset			:  integer;
@@ -306,6 +306,9 @@ PROCEDURE Finish(h: Byte);
 	the graphics properly.	}
 BEGIN
 	ExitProc := OldExitProc; { Restore exit PROCEDURE address }
+{$IFDEF debug}
+	Close (db);
+{$ENDIF}
 	Halt(h);
 END;	{	Finish	}
 {---------------------------------------------------------------------------}
@@ -317,6 +320,9 @@ BEGIN
 	textmode(LastMode);
 	Textbackground(black);
 	Textcolor(white);
+{$IFDEF  debug}
+	Close (db);
+{$ENDIF}
 
 END; { MyExitProc }
 {$F-}

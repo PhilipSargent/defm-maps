@@ -1,16 +1,18 @@
 Unit Dfmmain;
-{ PMS 27-June-1988 23:43 }
+{ PMS 15-December-1989 02:47 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
 	*************     Department, Cambridge, UK.     **************
    *************   M.F.Ashby and P.M.Sargent        **************
-   *************   April 1988                       **************
+   *************   January 1989                     **************
 }
-{$R-}    {Range checking off}
+{$R+}    {Range checking on }
 {$B+}    {Boolean complete evaluation on}
 {$S+}    {Stack checking on}
 {$I+}    {I/O checking on}
+{$N+}    {Use numeric coprocessor}
+{$E+}		{Include copy of 8087 Emulator - default anyway}
 
 Interface
 
@@ -274,7 +276,7 @@ BEGIN
 		UNTIL choice in ['a','A','c','C','r','R','s','S','d','D','h','H',Esc];
 		textcolor(C_text);
 
-		IF choice=Esc THEN Finish(0);
+		IF choice=Esc THEN Finish(0);					{ BUG! here, close(db) fails.. }
 		IF choice in ['h','H'] THEN      HELP_2;
 		IF choice in ['a','A'] THEN      HELP_3;
 		IF choice in ['d','D'] THEN		COPY_AND_RENAME;
@@ -471,11 +473,11 @@ BEGIN
 				END	{	Case	}
 			ELSE	{ a data name for vbl & par files }
 				BEGIN
-				IF Length(ParamStr(index)) <= pathlength THEN
-					BEGIN
-						matlname:=ParamStr(index);
-						modenamed:=TRUE;
-					END
+					IF Length(ParamStr(index)) <= pathlength THEN
+						BEGIN
+							matlname:=ParamStr(index);
+							modenamed:=TRUE;
+						END
 				ELSE
 					PathError(ParamStr(index));
 				END;
@@ -562,12 +564,14 @@ BEGIN
 
 	HANDLE_OPTIONS;
 	CheckDeviceMono;
-	Warning;
+{		Warning;		}
 	stash_index := 0;
 	matl_ok := FALSE;
 
 { ----- Open DEBUG file	----- }
-{	IF CannotOpen('debug.txt') THEN
+{$DEFINE debug}
+{$IFDEF  debug}
+	IF CannotOpen('debug.txt') THEN
 		BEGIN
 			Writeln(' *** Cannot Open Debug File ***');
 			Finish(4);
@@ -579,7 +583,7 @@ BEGIN
 			Writeln(db, matlname);
 			Writeln(db);
 		END;
-}
+{$ENDIF}
 	IF (NOT modenamed AND NOT modefast) THEN INTRODUCTION;
 
 	REPEAT
@@ -690,6 +694,21 @@ BEGIN
 
 			{ when using Crt and graphics, turn off Crt's memory-mapped writes }
 			DirectVideo := False;
+
+{			IF modetemp THEN
+				BEGIN
+					  CALC_Indentation_MAP;
+
+					IF modedemo THEN Delay(20000);
+
+					IF NOT modefast THEN
+						BEGIN
+							REPEAT UNTIL keypressed;
+						   answer:=Readkey; 	
+						END;
+				END;
+}
+		{	Stay in Graphics mode...	}
 			IF modetemp THEN
 				BEGIN
 					  CALC_TEMPERATURE_MAP;
@@ -703,9 +722,9 @@ BEGIN
 						END;
 				END;
 
-			DirectVideo := True;
-			textmode(LastMode);
-
+		{	Close Graphics, remove MyExitProc from exit chain (by running
+			it) and revert to Text mode, also closes debug file	}
+			MyExitProc;
 
 	{ ----- REPEAT the program UNTIL QUIT is input ----- }
 
@@ -738,10 +757,10 @@ BEGIN
 			clrscr;
 		END;
 
-	IF modeconcern THEN
-		Finish(2)
+	IF modeconcern THEN	{	use Halt because debug file & Exitproc OK now }
+		Halt(2)
 	ELSE
-		Finish(0);
+		Halt(0);
 
 END;  {main_PROCEDURE}
 

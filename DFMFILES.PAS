@@ -1,5 +1,5 @@
 Unit Dfmfiles;
-{ PMS 28-June-1988 17:40 }
+{ PMS 17-January-1989 11:17 }
 
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -7,10 +7,12 @@ Unit Dfmfiles;
    *************   M.F.Ashby and P.M.Sargent        **************
    *************   June 1988                        **************
 }
-{$R-}    {Range checking off}
+{$R+}    {Range checking on}
 {$B+}    {Boolean complete evaluation on}
 {$S+}    {Stack checking on}
 {$I+}    {I/O checking on}
+{$N+}    {Use numeric coprocessor}
+{$E+}		{Include copy of 8087 Emulator - default anyway}
 
 Interface
 
@@ -76,6 +78,7 @@ VAR
 PROCEDURE SET_PARAMETERS (n: parrange; VAR L,m,h: a_real);
 VAR
 	Q, guess	:	a_real;
+	s	:	String;
 	{----------------------------------------------------------------}
 FUNCTION dDbdry: a_real;
 BEGIN	
@@ -113,8 +116,8 @@ BEGIN	{	SET_PARAMETERS	}
 	18 : BEGIN	L := 1.0E-29;		m := 1.8E-29;		h := 5.0E-29	END;
 	END;	{	Case	}
 
- Q := R*par[1]/1000;
-				
+	Q := R*par[1]/1000;
+	
  	CASE imc OF
 		fcc:					BEGIN
 	CASE n of
@@ -231,9 +234,9 @@ BEGIN
 		parnumber := i;
 		LABELS_FOR_PARAMETERS;
 		i := i+1;
-	UNTIL (i > numberofparameters+1 ) OR (ck=id);
+	UNTIL (i > numberofparameters ) OR (ck=id);
 
-	IF (i > numberofparameters+1) THEN
+	IF (i > numberofparameters) THEN
 		number := -1
 	ELSE
 		number := parnumber;
@@ -251,9 +254,9 @@ BEGIN
 		vblnumber := i;
 		LABELS_FOR_VARIABLES;
 		i := i+1;
-	UNTIL (i > numberofvariables+1 ) OR (ck=id);
+	UNTIL (i > numberofvariables ) OR (ck=id);
 
-	IF (i > numberofvariables+1) THEN
+	IF (i > numberofvariables) THEN
 		number := -1
 	ELSE
 		number := vblnumber;
@@ -919,7 +922,7 @@ BEGIN
 		BEGIN
 			GotoXY(1,24);
 			WRITE('Stash full at ',stash_max,
-			'. Too many data items for this material, extra ignored.');
+			'. Too many data items for this material.');
 		END;
 END;	{	STASH_DATA_LINE	}
 {-------------------------------------------------------------------}
@@ -979,7 +982,7 @@ BEGIN
 				line := stash[i];
 				parid  := get_next_token(line);
 				NUMBER_FOR_PARAMETER (number,parid);
-				IF (number >= 0) THEN
+				IF ((number >= 0) AND (number <= numberofparameters)) THEN
 
 				{	Yes, it's a known parameter. Is the value readable ?	}
 					BEGIN
@@ -994,14 +997,6 @@ BEGIN
 							END;
 					END;
 			END;	{	now looked through the stash completely	}
-
-{	If we have some parameters without values, then take defaults.	}
-	FOR parnumber:= 0 TO numberofparameters DO
-		IF NOT check[parnumber] THEN
-			BEGIN
-				SET_PARAMETERS (parnumber, L,m,h);
-				par[parnumber] := m;
-			END;
 
 	CASE round (par[0]) OF
 		-1:					imc := imc_error;
@@ -1029,6 +1024,14 @@ BEGIN
 	ELSE
 				imc := unknown;
 	END; 	{	Case	}
+
+{	If we have some parameters without values, then take defaults.	}
+	FOR parnumber:= 1 TO numberofparameters DO
+		IF NOT check[parnumber] THEN
+			BEGIN
+				SET_PARAMETERS (parnumber, L,m,h);
+				par[parnumber] := m;
+			END;
 
 { ------- Display the file for inspection and editing ------- }
 
@@ -1064,7 +1067,7 @@ BEGIN
 				line := stash[i];
 				vblid  := get_next_token(line);
 				NUMBER_FOR_VARIABLE (number,vblid);
-				IF (number > 0) THEN
+				IF ((number > 0) AND (number <= numberofvariables)) THEN
 
 				{	Yes, it's a known variable. Is the value readable ?	}
 					BEGIN
