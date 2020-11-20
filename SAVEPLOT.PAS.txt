@@ -1,0 +1,50 @@
+{ ----- Ensure that the mark for the lowest contour is set sensibly ----- }
+	FOR c := contournumber DOWNTO 1 DO
+		oldmarks[c] := contourmark[c];
+
+	c:=1;
+
+{	If the lowest contour is not set, then search for the lowest contour
+	that has been set.	}
+
+	IF check[1] THEN
+		BEGIN
+			increment := 0.2*mark_step;
+			{ ----- Now set/check the rest, increment is only a guess	}
+			FOR cc := 2 TO contournumber-1 DO
+				IF NOT check[cc] THEN
+					IF check[cc+1] THEN
+						contourmark[cc] := (contourmark[cc-1]+contourmark[cc+1])/2
+					ELSE
+						contourmark[cc] := contourmark[cc-1]+increment;
+			cc := contournumber;
+			IF NOT check[cc] THEN
+				contourmark[cc] := contourmark[cc-1]+increment;
+		END
+	ELSE
+		BEGIN
+			REPEAT
+				c:=c+1;
+			UNTIL ( check[c] OR (c = contournumber));
+
+			IF (c <> contournumber ) THEN	{	found a set contour	}
+				BEGIN
+					increment := 0.5*mark_step/(c-1);
+					FOR cc := 1 TO c-1 DO
+						contourmark[cc] := contourmark[c] - (c-cc)*increment;
+
+					{ ----- Now set/check the rest, increment is only a guess	}
+					increment := 0.2*mark_step;
+					FOR cc := c+1 TO contournumber-1 DO
+						IF NOT check[cc] THEN
+							IF check[cc+1] THEN
+								contourmark[cc] := (contourmark[cc-1]+contourmark[cc+1])/2
+							ELSE
+								contourmark[cc] := contourmark[cc-1]+increment;
+					cc := contournumber;
+					IF NOT check[cc] THEN
+						contourmark[cc] := contourmark[cc-1]+increment;
+				END;
+{			ELSE	}{	not one of the contours has been set	}
+		END;
+
