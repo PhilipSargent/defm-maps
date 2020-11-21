@@ -15,6 +15,12 @@ This code runs in the DOS shell in DOSBOX 0.74-3 running on Windows 10 (tested 1
 runs, and the source code also compiles with Turbo Pascal 7.3.4 and produces the same results as the 1993 executable.
 This Turbo Pascal and DOSbox combination is distributed by the TPWDB project
 https://sourceforge.net/projects/turbopascal-wdb/ .
+Change this setting in C:\TPWDB\Main\DOSBox\dosbox.conf
+from:
+cycles=auto
+to:
+cycles=max
+as we want it to run as fast as possible and are not trying to match slow MS-DOS games.
 
 This set of commits on github has been synthesized from a disparate colleciton of backups done over the years, 
 some using ARC packaging format which does not preserve file timestamps. Fortunately I was using the
