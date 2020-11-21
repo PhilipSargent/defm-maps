@@ -1,13 +1,9 @@
 Unit dfmfiles;
-{ PMS 12-June-1993 03:02 }
+{ PMS 20 Nov 2020 14:22 }
 {---------------------------------------------------------------------------}
-{ $Revision:   1.1  $
-  $Date:   12 Jun 1993  4:11:42  $
-  $Logfile:   C:/DFMAP/VCSFILES/DFMFILES.PAV  $
- ---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
-   *************     Department, Cambridge, UK.     **************
+   *************   Department, Cambridge, UK.       **************
    *************   P.M.Sargent and M.F.Ashby        **************
    *************   June 1993                        **************
 
@@ -23,11 +19,6 @@ Unit dfmfiles;
    version 2 of the GNU General Public License which should not be
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- ---------------------------------------------------------------------------}
-{ $Log:   C:/DFMAP/VCSFILES/DFMFILES.PAV  $
- * 
- *    Rev 1.1   12 Jun 1993  4:11:42   PMSargent
- * New headers
  ---------------------------------------------------------------------------}
 {$IFDEF  contour}		{	ensure compiler directives are consistent	}
 {$DEFINE  detail}
@@ -99,6 +90,9 @@ VAR
 	file_out	:	Text;
 	tempfile	:	String;
 	bakfile	:	String;
+	
+TYPE
+	a_real	=	double; {DUPLICATED because fpc has declaration conflict issue}
 
 {-------------------------------------------------------------------}
 FUNCTION ALREADY_EXISTS (name: T_matl_name): BOOLEAN;
@@ -872,7 +866,7 @@ BEGIN
 	Writeln(lst,'      (Compiler options:',compiler_opts,')');
 	Writeln(lst,'      ',copyright);
 	writeln(lst,'      ',weekday,' ',Date_string,' ',time_string);
-	writeln(lst);
+	writeln(lst);
 	writeln(lst,'      =============================================================');
 	writeln(lst,'      ',Version,'     INPUT  PARAMETERS for  ',matlname);
 	writeln(lst,'      =============================================================');

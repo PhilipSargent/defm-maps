@@ -1,13 +1,9 @@
 { DfmGlbls.pas	}
-{ PMS 12-June-1993 04:27 }
+{ PMS 20 Nov 2020 14:59 }
 {---------------------------------------------------------------------------}
-{ $Revision:   1.2  $
-  $Date:   12 Jun 1993  4:30:38  $
-  $Logfile:   C:/DFMAP/VCSFILES/DFMGLBLS.PAV  $
- ---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
-   *************     Department, Cambridge, UK.     **************
+   *************   Department, Cambridge, UK.       **************
    *************   P.M.Sargent and M.F.Ashby        **************
    *************   June 1993                        **************
 
@@ -23,14 +19,6 @@
    version 2 of the GNU General Public License which should not be
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- ---------------------------------------------------------------------------}
-{ $Log:   C:/DFMAP/VCSFILES/DFMGLBLS.PAV  $
- * 
- *    Rev 1.2   12 Jun 1993  4:30:38   PMSargent
- * Fixed Warranty & Copying info.
- * 
- *    Rev 1.1   12 Jun 1993  4:09:40   PMSargent
- * Added GNU Public License details
  ---------------------------------------------------------------------------}
 {$IFDEF  contour}		{	ensure compiler directives are consistent	}
 {$DEFINE  debug}
@@ -54,10 +42,10 @@ Uses
 	Crt;
 
 CONST
-	copyright = '(C) Copyright 1980,1991 P.M.Sargent & M.F.Ashby';
-	VersionDate			= '05 Dec 1991';
+	copyright = '(C) Copyright 1980,1993 P.M.Sargent & M.F.Ashby; 2020 P.M.Sargent';
+	VersionDate			= '20 Nov 2020';
 	Version				= 'DFM290';
-	Release				= '0.89';
+	Release				= '0.90';
 	DF						= -32768;		{	Default.. for floats, longint, int	}
 
 	avogadro				= 6.022045e23;
@@ -403,7 +391,9 @@ BEGIN
 	Textcolor(white);
 	IF (ErrorAddr <> NIL) THEN 	{	run-time error	}
 		BEGIN
-			ad := T_PtrRec(ErrorAddr);
+{ incompatible with fpc running under turbo pascal mode -Mtp 
+			ad := T_PtrRec(ErrorAddr); 
+}
 			Writeln(Version,' detected:');
 			CASE ExitCode OF
 				4:	s:='Too many open files: CONFIG.SYS FILES=? is too small';
@@ -1109,7 +1099,7 @@ BEGIN
 		bcc_alkali       : s:='bcc_alkali      ';
 		bcc_trans        : s:='bcc_trans       ';
 		bcc_rare_earth   : s:='bcc_rare_earth  ';
-		bcc_rotator		  : s:='bcc_rotator     ';
+		bcc_rotator		 : s:='bcc_rotator     ';
 		hcp              : s:='hcp             ';
 		tetrag           : s:='tetrag          ';
 		trig             : s:='trig            ';
@@ -1154,11 +1144,13 @@ BEGIN
 {$ENDIF}
 	Writeln(Version,' v',Release,' ',VersionDate,' Compiler options:',compiler_opts);
 	Writeln('       ',copyright);
-
+{ MemAvail incompatible with fpc running under turbo pascal mode -Mtp 
+	https://www.freepascal.org/docs-html/current/prog/progse37.html#x224-2380008.7
+	
 	WriteLn(MemAvail:8,' bytes (total) available, above this program');
 	WriteLn(MaxAvail/1024:5:0,'    K     (largest contiguous block) available');
 	Delay(500);
-
+}
 	{ ----- Open DEBUG file	----- }
 {$IFDEF  debug}
 		IF CannotOpen('debug.txt') THEN

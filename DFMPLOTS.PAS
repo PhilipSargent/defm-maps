@@ -1,13 +1,9 @@
 Unit DfmPlots;
-{ PMS 12-June-1993 03:03 }
-{---------------------------------------------------------------------------}
-{ $Revision:   1.1  $
-  $Date:   12 Jun 1993  4:12:34  $
-  $Logfile:   C:/DFMAP/VCSFILES/DFMPLOTS.PAV  $
- ---------------------------------------------------------------------------}
+{ PMS 20 Nov 2020 14:49 }
+ {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
-   *************     Department, Cambridge, UK.     **************
+   *************   Department, Cambridge, UK.       **************
    *************   P.M.Sargent and M.F.Ashby        **************
    *************   June 1993                        **************
 
@@ -23,11 +19,6 @@ Unit DfmPlots;
    version 2 of the GNU General Public License which should not be
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- ---------------------------------------------------------------------------}
-{ $Log:   C:/DFMAP/VCSFILES/DFMPLOTS.PAV  $
- * 
- *    Rev 1.1   12 Jun 1993  4:12:34   PMSargent
- * New headers
  ---------------------------------------------------------------------------}
 {	ensure compiler directives are consistent	}
 {$IFDEF  detail}
@@ -73,7 +64,7 @@ Uses
 	Dos,
 	Printer,
 	Graph,
-{	Drivers, }{ all the BGI drivers }
+	{Drivers,} { all the BGI drivers }
 	StringIO,
 	DfmGlbls,
 	DfmModls;
@@ -235,8 +226,10 @@ BEGIN
 
 	IF mode400 THEN
 		BEGIN
-			GraphDriver:=ATT400;
-			GraphMode := ATT400Hi;
+			{ ATT400 not available with fpc
+			GraphDriver:=ATT400; 
+			GraphMode := ATT400Hi; }
+			GraphDriver := Detect;                  { use autodetection }
 			InitGraph(GraphDriver, GraphMode, '');  { activate graphics }
 			ErrorCode:=GraphResult;
 			{ Leave the error visible, don't fix with autodetect..}

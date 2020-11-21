@@ -1,13 +1,9 @@
 Unit DfmEdits;
-{ PMS 12-June-1993 03:02 }
+{ PMS 20 Nov 2020 14:22 }
 {---------------------------------------------------------------------------}
-{ $Revision:   1.1  $
-  $Date:   12 Jun 1993  4:11:24  $
-  $Logfile:   C:/DFMAP/VCSFILES/DFMEDITS.PAV  $
- ---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
-   *************     Department, Cambridge, UK.     **************
+   *************   Department, Cambridge, UK.       **************
    *************   P.M.Sargent and M.F.Ashby        **************
    *************   June 1993                        **************
 
@@ -23,11 +19,6 @@ Unit DfmEdits;
    version 2 of the GNU General Public License which should not be
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- ---------------------------------------------------------------------------}
-{ $Log:   C:/DFMAP/VCSFILES/DFMEDITS.PAV  $
- * 
- *    Rev 1.1   12 Jun 1993  4:11:24   PMSargent
- * New headers
  ---------------------------------------------------------------------------}
 {$IFDEF  contour}		{	ensure compiler directives are consistent	}
 {$DEFINE  detail}
@@ -58,7 +49,7 @@ PROCEDURE NUMBER_FOR_VARIABLE (VAR number: Integer; ck: String);
 {	Finds the variable number given a variable id	}
 
 PROCEDURE SET_PARAMETERS (n: R_pars; VAR L,m,h: a_real);
-PROCEDURE SET_VARIABLES (n: R_vbls;	VAR L,m,h: a_real);
+PROCEDURE SET_VARIABLES  (n: R_vbls; VAR L,m,h: a_real);
 
 FUNCTION GET_IMC(par_0: a_real): T_imc_classes;
 
@@ -82,13 +73,15 @@ Uses
 	Printer,
 	stringIO,
 	DfmFiles;
-
+	
 CONST
 	last_page1_parameter = 16;
 TYPE
 	T_page	=	(First, Second);
+	a_real	=	double; {DUPLICATED because fpc has declaration conflict issue}
 VAR
 	escape		:	BOOLEAN;
+
 
 {-------------------------------------------------------------------}
 PROCEDURE SET_PARAMETERS (n: R_pars; VAR L,m,h: a_real);
@@ -322,12 +315,12 @@ BEGIN
 	ELSE
 		CASE round (par_0) OF
 			-1:					imc := imc_error;
-			1, 10:				imc := bcc_trans;	{	default metal	}
-			2, 20:				imc := fcc_orderd;	{	default intermetallic	}
+			1, 10:				imc := bcc_trans;		{	default metal	}
+			2, 20:				imc := fcc_orderd;		{	default intermetallic	}
 			3, 30:				imc := alumina_oxides;	{	default oxide	}
-			4, 40:				imc := sphalerites;	{	default ceramic	}
-			5, 50:				imc := ice;	{	default molecular compound	}
-			6..10:				imc := imc_error;
+			4, 40:				imc := sphalerites;		{	default ceramic	}
+			5, 50:				imc := ice;				{	default molecular compound	}
+			6..9:				imc := imc_error;
 			11:					imc := fcc;
 			12:					imc := hcp;
 			13:					imc := bcc_alkali;

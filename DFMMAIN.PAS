@@ -489,12 +489,12 @@ BEGIN
 									REPEAT UNTIL KeyPressed;
 									answer := ReadKey;
 									Writeln;
-									Writeln('contact: Philip Sargent     e-mail: pms1@uk.ac.cam.phx');
-									Writeln('or:');
-									Writeln('         Engineering Dept., Trumpington St.,');
-									Writeln('         CAMBRIDGE CB2 1PZ, England');
-									Writeln('         tel. +44 (223) 332627');
-									Writeln('         fax. +44 (223) 332662');
+									Writeln('contact: Philip Sargent     e-mail: philip.sargent@gmail.com (formerly pms1@uk.ac.cam.phx) ');
+									{Writeln('or:');}
+									{Writeln('         Engineering Dept., Trumpington St.,');}
+									{Writeln('         CAMBRIDGE CB2 1PZ, England');}
+									{riteln('         tel. +44 (223) 332627');}
+									{Writeln('         fax. +44 (223) 332662');}
 									Finish(1);
 								END;
 					'e','E': BEGIN
@@ -770,11 +770,14 @@ BEGIN
 				CHECK_PARAMETERS(Screen);	{ which cannot involve listing	}
 
 	{ ----- State the computation time and offer rerun ----- }
-
-				IF (System.Test8087 > 0) THEN	{	there is an 8087 chip	}
+				SpeedValue := 0.0233;
+	
+	{			This is not implemented in fpc and is not necessary now. 
+	{			System.Test8087 > 0 means there is an 8087 chip	}
+	{			IF (System.Test8087 > 0) THEN	
 					SpeedValue := 0.0233
 				ELSE
-					SpeedValue := 0.0974;
+					SpeedValue := 0.0974;}
 
 				comptime  := vbl[1]*vbl[1]*SpeedValue; WRITELN; WRITELN;
 				gotoXY(1,21);
