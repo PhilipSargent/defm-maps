@@ -1,5 +1,5 @@
 Unit dfmfiles;
-{ PMS 20 Nov 2020 14:22 }
+{ PMS 21 November 2020 20:13 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -12,7 +12,7 @@ Unit dfmfiles;
    by the Free Software Foundation; either version 2 of the License,
    or (at your option) any later version.
 	This program is distributed in the hope that it will be useful, but
-   WITHOUT ANY WARRANTY; without even the implied warranty of 
+   WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
    General Public License for more details.
    The file COPYING enclosed with this software contains a copy of
@@ -90,7 +90,7 @@ VAR
 	file_out	:	Text;
 	tempfile	:	String;
 	bakfile	:	String;
-	
+
 TYPE
 	a_real	=	double; {DUPLICATED because fpc has declaration conflict issue}
 
@@ -165,7 +165,7 @@ BEGIN
 
 	IF FileNotThere(main_datafile) THEN
 		BEGIN
-			WRITELN('ERROR: Cannot open an Input File');
+			WRITELN('ERROR: Cannot open an Input File:');
 			Writeln('Cannot open file "',main_datafile,'"');
 			Finish(4);
 		END;
@@ -174,12 +174,14 @@ BEGIN
 
 	IF CannotOpen(tempfile) THEN
 		BEGIN
-			WRITELN('ERROR: Cannot open an Output File');
+			WRITELN('ERROR: Cannot open a Temporary File:');
 			Writeln('Cannot open file "',tempfile,'"');
 			Finish(4);
 		END;
 	Assign (file_out, tempfile);
 	Rewrite (file_out);
+	Reset (file_out);
+
 
 END;	{	BEGIN_FILE_SAVE	}
 {-------------------------------------------------------------------}
@@ -204,7 +206,7 @@ BEGIN
 
 	IF FileNotThere (tempfile) THEN
 		BEGIN
-			WRITELN('ERROR: Cannot open an Input File');
+			WRITELN('ERROR: Cannot open a Temporary Input File');
 			Writeln('Something very odd, we just created "',tempfile,
 				'" and now it cannot be found');
 			Finish(4);
@@ -355,7 +357,7 @@ BEGIN
 	Writeln(db,Esc,matlname);
 	FOR lines := 0 TO ref_written_lines DO
 		BEGIN
-			s[0] := Chr(refchars);	
+			s[0] := Chr(refchars);
 			FOR i:= 1 TO refchars DO
 				s[i] := ref[lines*refchars+i];
 			{	set length just to be sure	}
@@ -386,7 +388,7 @@ BEGIN
 			REPEAT
 				READLN(file_in, buf);
 			UNTIL Eof(file_in) OR (buf[1] = Esc);
-		{	Shouldn't see Eof, only if error condition, 
+		{	Shouldn't see Eof, only if error condition,
 			unless we are on last ref.	}
 			IF NOT Eof(file_in) THEN
 				{	Copy the rest of the file to output	}
@@ -403,7 +405,7 @@ BEGIN
 {	Write out ref.	}
 	FOR lines := 0 TO ref_written_lines DO
 		BEGIN
-			s[0] := Chr(refchars);	
+			s[0] := Chr(refchars);
 			FOR i:= 1 TO refchars DO
 				s[i] := ref[lines*refchars+i];
 			IF (Length(s) > 0) THEN
@@ -557,7 +559,7 @@ BEGIN
 							{	find how many non-blank lines there are	}
 							Inc(ref_written_lines);
 							READLN(file_ref, buf);
-							IF (index + refchars <= ref_buflength) 
+							IF (index + refchars <= ref_buflength)
 							AND (buf[1] <> Esc) THEN
 								pad_ref_line;
 						END;
@@ -912,7 +914,7 @@ BEGIN
 
 	FOR lines := 0 TO ref_written_lines DO
 		BEGIN
-			buf[0] := Chr(refchars);	
+			buf[0] := Chr(refchars);
 			FOR i:= 1 TO refchars DO
 				buf[i] := ref[lines*refchars+i];
 			IF (Length(buf) > 0) THEN

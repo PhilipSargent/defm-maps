@@ -404,7 +404,7 @@ BEGIN
 				207:	s:='Floating point invalid operation, re-boot computer';
 				100..106:	s:='File read/write error';
 				150..158:	s:='Critical File i/o error';
-				159:			s:='Printer out of paper';
+				159:		s:='Printer out of paper';
 				160..162:	s:='Critical disc-drive error';
 				ELSE	s:='Contact Philip Sargent, or see Turbo Pascal 5.5 Reference manual pp467-472';
 			END;	{	Case	}
@@ -442,6 +442,9 @@ BEGIN
 	{$I-}
 	Assign(f,name);
 	Rewrite(f);
+	Reset(f); 
+	{Reset(f); required by fpc - incmpatibility -
+	https://www.freepascal.org/docs-html/current/rtl/system/rewrite.html }
 	writeln(f,'...Attempting to open file:"',name,'"');
 	Close(f);
 	{$I+}
@@ -1156,12 +1159,13 @@ BEGIN
 		IF CannotOpen('debug.txt') THEN
 			BEGIN
 				Writeln(' *** Cannot Open Debug File ***');
-				Halt(4);
+				{ Halt(4); }
 			END
 		ELSE
 			BEGIN
 				Assign(db,'debug.txt');
 				Rewrite(db);
+				Reset(db);
 				Writeln(db,Version,' v',Release,' (',VersionDate,')');
 				Writeln(db,'(Compiler options:',compiler_opts,')');
 				Writeln(db,copyright);

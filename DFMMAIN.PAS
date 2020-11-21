@@ -538,8 +538,8 @@ BEGIN
 			WRITELN('The PIC file and HPGL file options are not yet written.');
 			Finish(7);
 		END;
-
-{	WRITELN('  modenamed:=FALSE ',modenamed);
+{
+	WRITELN('  modenamed:=FALSE ',modenamed);
 	WRITELN('  matlname ',matlname);
 	WRITELN('  modefast:=FALSE ',modefast);
 	WRITELN('  modetemp:=TRUE ',modetemp);
@@ -558,7 +558,7 @@ BEGIN
 		IF CannotOpen(listfilename) THEN
 			SetError:=TRUE;
 
-	IF modephpg THEN
+{	IF modephpg THEN
 		IF CannotOpen(phpgfilename) THEN
 			SetError:=TRUE;
 
@@ -573,15 +573,15 @@ BEGIN
 	IF modetpic THEN
 		IF CannotOpen(tpicfilename) THEN
 			SetError:=TRUE;
-
+}
 	IF SetError THEN
 		BEGIN
-			WRITELN('ERROR: Cannot open an Output File');
+			WRITELN('ERROR: Cannot open one of these Output Files');
 			WRITELN('   /l:  listfilename:=',listfilename);
-			WRITELN('   /pg: phpgfilename:=',phpgfilename);
+{			WRITELN('   /pg: phpgfilename:=',phpgfilename);
 			WRITELN('   /tg: thpgfilename:=',thpgfilename);
 			WRITELN('   /pl: ppicfilename:=',ppicfilename);
-			WRITELN('   /tg: tpicfilename:=',tpicfilename);
+			WRITELN('   /tg: tpicfilename:=',tpicfilename);}
 			Finish(4);
 		END;
 
