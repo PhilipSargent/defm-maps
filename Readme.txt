@@ -1,3 +1,0 @@
-dfm290 does not recognize DOUBLESPACE compressed discs.
-Run it from a floppy...
-
