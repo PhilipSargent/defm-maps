@@ -1,2 +1,8 @@
 *.o
 *.ppu
+*.lst
+debug.txt
+*.exe
+*.EXE
+
+
