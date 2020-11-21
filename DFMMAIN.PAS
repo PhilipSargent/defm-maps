@@ -1,13 +1,9 @@
 Unit Dfmmain;
-{ PMS 12-June-1993 03:03 }
+{ PMS 20 Nov 2020 14:49 }
 {---------------------------------------------------------------------------}
-{ $Revision:   1.1  $
-  $Date:   12 Jun 1993  4:12:00  $
-  $Logfile:   C:/DFMAP/VCSFILES/DFMMAIN.PAV  $
- ---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
-   *************     Department, Cambridge, UK.     **************
+   *************   Department, Cambridge, UK.       **************
    *************   P.M.Sargent and M.F.Ashby        **************
    *************   June 1993                        **************
 
@@ -23,11 +19,6 @@ Unit Dfmmain;
    version 2 of the GNU General Public License which should not be
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- ---------------------------------------------------------------------------}
-{ $Log:   C:/DFMAP/VCSFILES/DFMMAIN.PAV  $
- * 
- *    Rev 1.1   12 Jun 1993  4:12:00   PMSargent
- * New headers
  ---------------------------------------------------------------------------}
 {	ensure compiler directives are consistent	}
 {$IFDEF  contour}		
