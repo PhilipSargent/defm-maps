@@ -221,7 +221,15 @@ PROCEDURE Initialize;
 VAR
 	st	:	STRING;
 	newmode	:	integer;
+
+	lo, hi, tw, th: integer;
+	found: boolean;
+CONST
+  Line2 = 'We are now in 800 x 600 x 256 colors!';
+
 BEGIN
+IF False THEN
+	BEGIN
 	DirectVideo := False;
 
 	IF mode400 THEN
@@ -250,24 +258,55 @@ BEGIN
 				InitGraph(GraphDriver, GraphMode, '');  { activate graphics }
 				ErrorCode := GraphResult;               { error? }
 			END;
+			
+	GraphDriver := Detect;                  { use autodetection }
+	InitGraph(GraphDriver, GraphMode, '');  { activate graphics }
+	ErrorCode := GraphResult;               { error? }
 
+	MaxColor := GetMaxColor;  { Get the maximum allowable drawing color }
+	MaxX := GetMaxX;          { Get screen resolution values }
+	MaxY := GetMaxY;
+
+	END; {IF False }
+
+	DirectVideo := False;
+
+	{ We want an 8 bit mode }
+	GraphDriver := D8bit;
+{	GraphMode := GetGraphMode;}
+	GraphMode := m800x600;
+	MaxX := 800;          { Get screen resolution values }
+	MaxY := 600;
+
+	initgraph(GraphDriver,GraphMode,'');
+	{ Make sure you always check graphresult! }
 	IF ErrorCode <> grOk THEN
 		BEGIN
 			CloseGraph;
+			writeln('800x600x256 is not supported!');
 			Writeln('Graphics initialization error: ',
 				GraphErrorMsg(ErrorCode));
 			IF (ErrorCode = grFileNotFound) THEN
 				BEGIN
-					Writeln('=> Ensure that this file is put in the current directory <=');
+					Writeln('=> Ensure that this BGI file is put in the current directory <=');
 				END;
 			Writeln('This program cannot continue.');
 			Finish(6);
 		END;
+IF False THEN
+	BEGIN		
+	{ We are now in 800x600x256 }
+	setColor(cyan);
+	rectangle(0,0,getmaxx,getmaxy);
+	{ Write a nice message in the center of the screen }
+	setTextStyle(defaultFont,horizDir,1);
+	tw:=TextWidth(Line2);
+	th:=TextHeight(Line2);
+	outTextXY((getMaxX - TW) div 2,
+			(getMaxY - TH) div 2,Line2);
+	END; {IF False }
 
 	Randomize;                { init random number generator }
-	MaxColor := GetMaxColor;  { Get the maximum allowable drawing color }
-	MaxX := GetMaxX;          { Get screen resolution values }
-	MaxY := GetMaxY;
 	HalfX := Round(MaxX);
 	HalfY := Round(MaxY);
 
@@ -366,7 +405,7 @@ BEGIN
 
 	IF ErrorCode <> grOk THEN
 		BEGIN
-{			SetViewPort(0,0,MaxX,MaxY,ClipOn);
+			SetViewPort(0,0,MaxX,MaxY,ClipOn);
 			Str(xx2,ErrorStr);
 			ErrorStr:='Graphics SetViewPort error: '+GraphErrorMsg(ErrorCode);
 			GetViewSettings(vp);
@@ -382,7 +421,7 @@ BEGIN
 			WRITELN(xx1,' ',yy1,' ',xx2,' ',yy2);
 			REPEAT UNTIL keypressed; Ch:=ReadKey;
 			Initialize;
-}
+
 		END
 	ELSE
 		BEGIN
@@ -411,15 +450,15 @@ VAR
 	i	:	Byte;
 
 BEGIN
-{  SetTextStyle(DefaultFont, VertDir, 1);
+  SetTextStyle(DefaultFont, VertDir, 1);
 	OurOutTextXY(xstart,ystart+lbllength,lbl);
-}
+
 	FOR i:= 0 to lbllength-1 DO
 		BEGIN
 			OurOutTextXY(xstart,ystart+i*(TextHeight('M')+1),copy(lbl,i+1,1));
 		END;
 
-{  SetTextStyle(DefaultFont, HorizDir, 1); }
+  SetTextStyle(DefaultFont, HorizDir, 1); 
 END;
 
 {---------------------------------------------------------------------------}
