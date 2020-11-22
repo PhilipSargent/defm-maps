@@ -1,5 +1,5 @@
 Unit Dfmmain;
-{ PMS 20 Nov 2020 14:49 }
+{ PMS 22 Nov 2020 20:07 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -33,6 +33,7 @@ Unit Dfmmain;
 {.$I+}    {I/O checking on}
 {.$N+}    {Use numeric coprocessor}
 {.$E+}	 {Include copy of 8087 Emulator - default anyway}
+{$INFO This was coded on a rainy day by Bugs Bunny}
 
 Interface
 
@@ -44,6 +45,7 @@ Implementation
 
 Uses
 	Crt,
+	Cp437,
 	Dos,
 	Printer,
 	Graph,
@@ -494,19 +496,21 @@ BEGIN
 								END;
 					'f','F': modefast:=TRUE;
 					'd','D': modedemo:=TRUE;
+					{
 					'o','O': mode400 :=TRUE;
-					'c','C': modeCGA :=TRUE;	
+					'c','C': modeCGA :=TRUE;	}
 					{	if both /o and /c are set, it tries ATT first, then CGA	}
 					't','T': HANDLE_TEMPERATURE_PLOT_OPTIONS;
 					's','S': HANDLE_STRAIN_RATES_PLOT_OPTIONS;
+					{
 					'l','L': BEGIN
 									modelist:=TRUE;
 									stuf := ParamStr(index);
 									IF (Length(stuf)=4) THEN
 										hrdcopy:= stuf[4];
 									IF NOT (hrdcopy IN ['o','O','e','E','l','L']) THEN
-										hrdcopy := 'O';	{	ordinary	}
-								END;
+										hrdcopy := 'O';	
+								END;}
 					'w','W': BEGIN
 									pathfilelength:=Length(ParamStr(index))-3;
 									IF pathfilelength>0 THEN
@@ -582,7 +586,7 @@ BEGIN
 			WRITELN('   /tg: thpgfilename:=',thpgfilename);
 			WRITELN('   /pl: ppicfilename:=',ppicfilename);
 			WRITELN('   /tg: tpicfilename:=',tpicfilename);}
-			Finish(4);
+			{ Finish(4); }
 		END;
 
 	IF modethpg OR modetpic THEN
@@ -648,6 +652,7 @@ BEGIN
 			modelist:=FALSE
 	ELSE
 			modelist:=TRUE;
+			
 
 END;	{	HARDCOPY_OPTIONS	}
 
@@ -755,9 +760,10 @@ BEGIN
 					END;	{	choice can only be C, R or S	}
 
 	{ ----- Offer hardcopy of parameters, variables and data ----- }
+	{ LST special printer filename not avaialble in fpc
 				IF NOT modelist THEN
 					HARDCOPY_OPTIONS (hrdcopy);
-
+	}
 				CHECK_PARAMETERS(Screen);	{ which cannot involve listing	}
 
 	{ ----- State the computation time and offer rerun ----- }

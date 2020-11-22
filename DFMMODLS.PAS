@@ -1,5 +1,5 @@
  Unit DfmModls;
-{ PMS 20-November-2020 20:27 }
+{ PMS 22 Nov 2020 20:07 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -12,7 +12,7 @@
    by the Free Software Foundation; either version 2 of the License,
    or (at your option) any later version.
 	This program is distributed in the hope that it will be useful, but
-   WITHOUT ANY WARRANTY; without even the implied warranty of 
+   WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
    General Public License for more details.
    The file COPYING enclosed with this software contains a copy of
@@ -27,7 +27,7 @@
 {$IFDEF  detail}
 {$DEFINE  debug}
 {$ENDIF}
-{      	All these options set in command line when we run the compiler, 
+{      	All these options set in command line when we run the compiler,
 			and are NOT set here (hence the dots).	}
 {.$R+}    {Range checking on}
 {.$B+}    {Boolean complete evaluation on}
@@ -456,7 +456,7 @@ BEGIN
 }
 		{	we can mix and match LT1 and LT2, note dovol commented out to make
 			behaviour exactly like Frost & Ashby BOOK	}
-			dornLT1		:=	diffusion3;	
+			dornLT1		:=	diffusion3;
 			dornLT2		:=	1.0e-6*0.5*tmelt*ref_factor*10*dmeltcore
 									*ref_const*ref_const/({ dovol* } burgv*burgv);
 
@@ -603,7 +603,7 @@ FUNCTION StressFunction (SN: a_real): a_real;
 {	This function is independent of temperature and so can be
 	implemented as a memory function, i.e. if it already has
 	been called once with that stress, return the value calculated
-	the last time and don't recalculate.  
+	the last time and don't recalculate.
 	Mem. funct removed. 19-April-1990 16:46 }
 CONST
 	four_thirds		=	1.3333333;

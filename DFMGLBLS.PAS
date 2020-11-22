@@ -1,5 +1,5 @@
 { DfmGlbls.pas	}
-{ PMS 20 Nov 2020 14:59 }
+{ PMS 22 Nov 2020 20:07 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -39,13 +39,14 @@ Unit Dfmglbls;
 
 Interface
 Uses
-	Crt;
+	Crt,
+	Cp437;
 
 CONST
 	copyright = '(C) Copyright 1980,1993 P.M.Sargent & M.F.Ashby; 2020 P.M.Sargent';
-	VersionDate			= '20 Nov 2020';
-	Version				= 'DFM290';
-	Release				= '0.90';
+	VersionDate			= '22 Nov 2020';
+	Version				= 'DFM2020';
+	Release				= '0.91';
 	DF						= -32768;		{	Default.. for floats, longint, int	}
 
 	avogadro				= 6.022045e23;
@@ -64,12 +65,12 @@ CONST
 	desclength			= 28;
 	unitlength			= 10;
 	ref_buflength	 	= 1159;	{	refchars * reflines	}
-	reflines				= 19;
-	refchars				= 61;
+	reflines			= 19;
+	refchars			= 61;
 
 	pathlength			= 30;
 	lbllength	 		= 16;
-	datalabellength	= 60;
+	datalabellength		= 60;
 	maxcontournumber	= 20;
 	max_steps			= 300;
 	stash_max			= 150;
@@ -77,36 +78,36 @@ CONST
 	list_max				= 150;
 
 	Gamcrit		 		= 0.9;
-
-	CtrlC					= #3;
+{	fpc does not use the extended character set #128-#255 }
+	CtrlC				= #3;
 	Esc					= #27;
-	TLC					= #218;
-	TRC					= #191;
-	BLC					= #192;
-	BRC					= #217;
-	MLC					= #195;
-	MRC					= #180;
-	Horiz					= #196;
-	Vert					= #179;
-	Under					= #205;
+	TLC					= '+'; {#218;}
+	TRC					= '+'; {#191;}
+	BLC					= '+'; {#192;}
+	BRC					= '+'; {#217;}
+	MLC					= '+'; {#195;}
+	MRC					= '+'; {#180;}
+	Horiz				= '-'; {#196;}
+	Vert				= '|'; {#179;}
+	Under				= '_'; {#205;}
 
-	CR						=	#13;
-	LF						=	#10;
-	Bksp					=	#8;
+	CR					=	#13;
+	LF					=	#10;
+	Bksp				=	#8;
 	Tab					=	#9;
 
 {	Codes for function keys After #0 read	}
 	PageUp				=	#73;
 	PageDn				=	#81;
-	Left					=	#75;
-	Right					=	#77;
-	Down					=	#80;
-	Up						=	#72;
+	Left				=	#75;
+	Right				=	#77;
+	Down				=	#80;
+	Up					=	#72;
 
 	C_text				= yellow;
-	C_screen				= blue;
+	C_screen			= blue;
 	C_back				= black;
-	C_bright				= white;
+	C_bright			= white;
 	C_subdued			= LightGray;
 	C_warn				= red;
 
@@ -193,7 +194,7 @@ CONST	{	Typed constant, i.e. variables with a default	}
 	delFo				:  a_real = DF;
 	atvol				:  a_real = DF;
 	dovol				:  a_real = DF;
-	dlbdy				:	a_real = DF;
+	dlbdy				:  a_real = DF;
 	qvolm				:  a_real = DF;
 	qbdry				:  a_real = DF;
 	acdoc				:  a_real = DF;
@@ -206,7 +207,7 @@ CONST	{	Typed constant, i.e. variables with a default	}
 	Gsize				:  a_real = DF;
 	SNlast			:  a_real = DF;
 	SNfirst			:  a_real = DF;
-	TN					:	a_real = DF;
+	TN				:  a_real = DF;
 	TNfirst			:  a_real = DF;
 	TNlast			:  a_real = DF;
 	cntrfirst		:  a_real = DF;
@@ -442,12 +443,15 @@ BEGIN
 	{$I-}
 	Assign(f,name);
 	Rewrite(f);
-	Reset(f); 
-	{Reset(f); required by fpc - incmpatibility -
+	
+	{Reset(f); required by fpc if read access required - incmpatibility -
 	https://www.freepascal.org/docs-html/current/rtl/system/rewrite.html }
 	writeln(f,'...Attempting to open file:"',name,'"');
 	Close(f);
 	{$I+}
+	writeln('...Attempting to open file:"',name,'"');
+	writeln('...IOResult:',IOResult);
+	writeln('...NOT ((IOResult=0) AND (name <> '')):',NOT ((IOResult=0) AND (name <> '')));
 	CannotOpen:= NOT ((IOResult=0) AND (name <> ''));
 END;
 {-------------------------------------------------------------------}
@@ -1152,20 +1156,20 @@ BEGIN
 	
 	WriteLn(MemAvail:8,' bytes (total) available, above this program');
 	WriteLn(MaxAvail/1024:5:0,'    K     (largest contiguous block) available');
-	Delay(500);
 }
+	Delay(500);
 	{ ----- Open DEBUG file	----- }
 {$IFDEF  debug}
 		IF CannotOpen('debug.txt') THEN
 			BEGIN
 				Writeln(' *** Cannot Open Debug File ***');
-				{ Halt(4); }
+				Halt(4); 
 			END
 		ELSE
 			BEGIN
 				Assign(db,'debug.txt');
 				Rewrite(db);
-				Reset(db);
+				{Reset(db);}
 				Writeln(db,Version,' v',Release,' (',VersionDate,')');
 				Writeln(db,'(Compiler options:',compiler_opts,')');
 				Writeln(db,copyright);
