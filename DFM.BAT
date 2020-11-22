@@ -1,7 +1,5 @@
-rem DFM290 0.88
-rem PMS 26-May-1990 10:11
-graphics.com
-echo off
-rem Or try GRAPHCPQ.COM (Compaq), HGC.COM (Hercules) also on this disc
-rem for a Compaq computer or computer with a Hercules graphics card.
-dfmFIX
+rem Makes %1
+rem PMS 22-Nov-2020 15:04 
+rem /Ddebug /Ddetail, /Dcontour, /Dindent are possible options
+
+\TPWDB\BIN\tpc -T\TPWDB\BIN -U\TPWDB\UNITS %1 /$D+/$R+/$B+/$S+/$I+/$N+/$E+/$V+ /V /b /Dcontour /Ddebug /Ddetail
