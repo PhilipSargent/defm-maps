@@ -1,0 +1,7 @@
+{
+    "omnipascal.defaultDevelopmentEnvironment": "FreePascal",
+    "omnipascal.freePascalSourcePath": "C:\\FPC\\3.2.0\\src",
+    "omnipascal.searchPath": "C:\\FPC\\3.2.0\\*;C:\\FPC\\3.2.0\\units\\x86_64-win64\\rtl-console;C:\\FPC\\3.2.0\\units\\x86_64-win64\\rtl-extra;C:\\FPC\\3.2.0\\units\\x86_64-win64\\graph",
+    "omnipascal.symbolIndex": "searchPath",
+    "gitlens.currentLine.dateFormat": ""
+}
