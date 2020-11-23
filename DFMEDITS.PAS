@@ -1,5 +1,5 @@
 Unit DfmEdits;
-{ PMS 20 Nov 2020 14:22 }
+{ PMS 23 Nov 2020 20:42 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -28,11 +28,11 @@ Unit DfmEdits;
 {$ENDIF}
 {      	All these options set in command line when we run the compiler, 
 			and are NOT set here (hence the dots).	}
-{.$R+}    {Range checking on}
-{.$B+}    {Boolean complete evaluation on}
-{.$S+}    {Stack checking on}
-{.$I+}    {I/O checking on}
-{.$N+}    {Use numeric coprocessor}
+{$R+}    {Range checking on}
+{$B+}    {Boolean complete evaluation on}
+{$S+}    {Stack checking on}
+{$I+}    {I/O checking on}
+{$N+}    {Use numeric coprocessor}
 {.$E+}	 {Include copy of 8087 Emulator - default anyway}
 
 Interface

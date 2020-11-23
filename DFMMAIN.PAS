@@ -1,5 +1,5 @@
 Unit Dfmmain;
-{ PMS 23 Nov 2020 15:26 }
+{ PMS 23 Nov 2020 20:42 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -715,30 +715,30 @@ BEGIN
 		Window(1,1,80,25);
 		textbackground(C_screen);   ClrScr;
 		textcolor(C_text);
-		Initialize;		{	graphics display	}
 
 {$IFDEF indent}
 { should not use modestrate, should make a new mode, "modeindt", so that
 	indentation maps could always be run by playing with the commandline
 	arguments. PMS 17-January-1990 15:28 }
-	{		IF modestrate THEN		}
+		Initialize;		{	graphics display	}
+{		IF modeindt THEN		}
+		BEGIN
+			  CALC_Indentation_MAP;
+
+			IF modedemo THEN Delay(20000);
+
+			IF NOT modefast THEN
 				BEGIN
-					  CALC_Indentation_MAP;
-
-					IF modedemo THEN Delay(20000);
-
-					IF NOT modefast THEN
-						BEGIN
-							REPEAT UNTIL keypressed;
-						   answer:=Readkey;
-						END;
+					REPEAT UNTIL keypressed;
+				   answer:=Readkey;
 				END;
+		END;
 {$ENDIF}	{ indent }
 
-	{	Stay in Graphics mode...	}
 		IF modestrate THEN
 			BEGIN
-				  CALC_STRAIN_RATES_MAP;
+				Initialize;		{	graphics display	}
+				CALC_STRAIN_RATES_MAP;
 
 				IF modedemo THEN Delay(20000);
 
@@ -747,13 +747,8 @@ BEGIN
 						REPEAT UNTIL keypressed;
 					   answer:=Readkey; 	{ throw the answer away, never used }
 					END;
+				CloseGraph;              { Shut down the graphics system }
 			END;
-
-	{	Close Graphics, remove MyExitProc from exit chain (by running
-		it) and revert to Text mode, also closes debug file	}
-		MyExitProc;
-	{	Now reopen the debug file in append mode..}
-		Append(db);
 
 
 	{ ----- REPEAT the program UNTIL Q (quit) is input ----- }

@@ -370,19 +370,15 @@ PROCEDURE MyExitProc;
 PROCEDURE MyExitProc;
 {$F-}
 {$ENDIF}
-TYPE
-	T_PtrRec	=	RECORD	{	length-compatible with Pointer type	}
-	  					ofs,seg: Word
-			  		END;
+
 VAR
-	ad	:	T_PtrRec;
 	s	:	String;
 {	The checking on $F+ is so that if it is set by compiler directive,
 	we do not then switch it off after this procedure by accident.}
 BEGIN
 	ExitProc := OldExitProc; { Restore exit PROCEDURE address }
 	CloseGraph;              { Shut down the graphics system }
-	DirectVideo := True;
+	{DirectVideo := True;}
 	textmode(LastMode);
 	Textbackground(black);
 	Textcolor(white);

@@ -1,6 +1,6 @@
 Unit DfmPlots;
-{ PMS 20 Nov 2020 14:49 }
- {---------------------------------------------------------------------------}
+{ PMS 23 Nov 2020 20:42 }
+{---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
    *************   Department, Cambridge, UK.       **************
@@ -27,13 +27,12 @@ Unit DfmPlots;
 {$IFDEF  contour}
 {$DEFINE  debug}
 {$ENDIF}
-{      	All these options set in command line when we run the compiler, 
-			and are NOT set here (hence the dots).	}
-{.$R+}    {Range checking on}  
-{.$B+}    {Boolean complete evaluation on}
-{.$S+}    {Stack checking on}
-{.$I+}    {I/O checking on}
-{.$N+}    {Use numeric coprocessor}
+
+{$R+}    {Range checking on}  
+{$B+}    {Boolean complete evaluation on}
+{$S+}    {Stack checking on}
+{$I+}    {I/O checking on}
+{$N+}    {Use numeric coprocessor}
 {.$E+}	 {Include copy of 8087 Emulator - default anyway}
 
 Interface
@@ -64,7 +63,6 @@ Uses
 	Dos,
 	Printer,
 	Graph,
-	{Drivers,} { all the BGI drivers }
 	StringIO,
 	DfmGlbls,
 	DfmModls;
@@ -103,6 +101,9 @@ TYPE
 	T_field_ids		=	ARRAY [E_n_stress] OF T_field_stress;
 
 CONST
+	MaxX  :	word = 800;     { The maximum resolution of the device m800x600 }
+	MaxY  :	word = 600;     { The maximum resolution of the device m800x600 }
+
 	{ The two text directions available }
 	TextDirect : array[0..1] of string[8] = ('HorizDir', 'VertDir');
 
@@ -122,7 +123,6 @@ VAR
 	GraphDriver :	INTEGER;  { The Graphics device driver }
 	GraphMode   :	INTEGER;  { The Graphics mode value }
 	Error		:	INTEGER;
-	MaxX, MaxY  :	word;     { The maximum resolution of the screen }
 	HalfX, HalfY:	word;
 	ErrorCode   :	INTEGER;  { Reports any graphics errors }
 	MaxColor    :	word;     { The maximum color value available }
@@ -171,18 +171,75 @@ VAR
 {---------------------------------------------------------------------------}
 procedure Abort(Msg : string);
 begin
-  Writeln(Msg, 'GraphErrorMsg(GraphResult): ', GraphErrorMsg(GraphResult));
+	Writeln(Msg, 'GraphErrorMsg(GraphResult): ', GraphErrorMsg(GraphResult));
+	Writeln(db,Msg, 'GraphErrorMsg(GraphResult): ', GraphErrorMsg(GraphResult));
   Halt(10);
+end;
+{---------------------------------------------------------------------------}
+procedure GraphicsErrorDump;
+begin
+	ErrorCode := GraphResult;               { error? }
+	Writeln('Graphics  error: ',
+		GraphErrorMsg(ErrorCode));
+	Writeln(db,'Graphics  error: ',
+		GraphErrorMsg(ErrorCode));
+	CloseGraph;
+	Close(db);
+	Finish(6);
+
+end;
+{---------------------------------------------------------------------------}
+procedure 	myLine(xx1,yy1,xx2,yy2: Word);
+{ Procedure in the original TurboPascal but unaccountably not documented in fpc }
+begin
+	MoveTo(xx1,yy1);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+
+	LineTo(xx2,yy2);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 end;
 {---------------------------------------------------------------------------}
 PROCEDURE BoxDefaults;
 { Select the maximum color in the Palette for the drawing color }
+{ This is the first time we actually draw graphics on screen }
+VAR
+	vp: ViewPortType;
 BEGIN
-	SetColor(MaxColor);
-
+	SetColor(white);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+	
 	SetTextJustify(LeftText, CenterText);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+	
 	SetTextStyle(DefaultFont, HorizDir, 1);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+	
 	SetViewPort(0, 0, MaxX, MaxY, ClipOn);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+	
+	Writeln(db,'No obvious Graphics  errors in BoxDefaults().');
+
+	GetViewSettings(vp);
+	IF vp.x1 <>0 THEN
+		Writeln(db,'viewport error x1: ',vp.x1);
+	IF vp.y1 <>0 THEN
+		Writeln(db,'viewport error y1: ',vp.x2);
+	IF vp.x2 <>MaxX THEN
+		Writeln(db,'viewport error x2: ',vp.x2);
+	IF vp.y2 <>MaxY THEN
+		Writeln(db,'viewport error y2: ',vp.y2);
+	IF vp.clip <>ClipOn THEN
+		Writeln(db,'viewport error clip: ',vp.Clip);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+	Writeln(db,'No obvious ViewPort  errors in BoxDefaults().');
+
 
 	empty_zones:=NIL;	{	should really DISPOSE of the list first..	}
 END; { BoxDefaults }
@@ -198,9 +255,7 @@ end;	{	function Max	}
 {---------------------------------------------------------------------------}
 PROCEDURE Range_Check (s:String);
 BEGIN
-{$IFDEF debug}
 	Writeln(db,s);
-{$ENDIF}
 	Graph.OutTextXY(0,0,s);
 END;	{	Range_Check	}
 {---------------------------------------------------------------------------}
@@ -220,50 +275,23 @@ BEGIN
 	GraphDriver := D8bit;
 	GraphMode := m800x600; 	{ 0..599 x 0..799 x 0..255 }
 	
-	Initgraph(GraphDriver,GraphMode,'');
+	InitGraph(GraphDriver,GraphMode,'');
 	{ Make sure you always check graphresult! }
+	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN
 		BEGIN
 			CloseGraph;
-			Writeln('800x600x256 is not supported!');
+			Writeln('Initializing.. 800x600x256 is not supported!');
 			Writeln('Graphics initialization error: ',
 				GraphErrorMsg(ErrorCode));
-			IF (ErrorCode = grFileNotFound) THEN
-				BEGIN
-					Writeln('=> Ensure that the relevant BGI file is put in the current directory <=');
-				END;
+			Writeln(db,'Initializing.. 800x600x256 is not supported!');
+			Writeln(db,'Graphics initialization error: ',
+				GraphErrorMsg(ErrorCode));
 			Writeln('This program cannot continue.');
 			Finish(6);
 		END;
 	MaxX := getMaxX;          { Get screen resolution values only after Initgraph() }
 	MaxY := getMaxY;
-	MaxColor := GetMaxColor;  { Get the maximum allowable drawing color }
-	{DirectVideo := False;}
-
-IF True THEN
-	{-----------------------------------------------------------------------}	
-	BEGIN		
-	{ We are now in 800x600x256 ?}
-	setColor(cyan);
-	rectangle(10,10,getMaxX-10,getMaxY-10);
-
-	{ Write a nice message in the center of the screen }
-	setColor(blue);
-	setTextStyle(defaultFont,horizDir,1);
-	tw:=TextWidth(Line2);
-	th:=TextHeight(Line2);
-	outTextXY((getMaxX - tw) div 2,
-			(getMaxY - th) div 2,Line2);
-
-	setColor(cyan);
-	Str(MaxColor:8,st);
-	st := 'MaxColor: '+st;
-	outTextXY((getMaxX - tw) div 2,
-			((getMaxY - th) div 2)+2*th,st);
-
-	readln();
-	END; {IF False }
-	{-----------------------------------------------------------------------}	
 
 	Randomize;                { init random number generator }
 	HalfX := Round(MaxX);
@@ -275,8 +303,8 @@ IF True THEN
 	ylength     := Round(0.904523 * MaxY);
 	xend        := xoffset+xlength;
 	yend        := yoffset+ylength;
-	xfactor		:= MaxX/639;
-	yfactor		:= MaxY/199;
+	xfactor		:= MaxX/(MaxX-1);
+	yfactor		:= MaxY/(MaxY-1);
 
 	empty_zones:=NIL;
 
@@ -317,6 +345,8 @@ VAR
 	z			:	TP_zone_list;
 
 BEGIN
+	WRITELN(db,'Entering ClearTextSpace');
+
 	xx1:= Round(xfactor*x1);
 	yy1:= Round(yfactor*y1);
 	xx2:= Round(xfactor*x2);
@@ -340,10 +370,10 @@ BEGIN
 		yy2:=yoffset+1;
 	IF xx2 < xoffset+1 THEN
 		xx2:=xoffset+1;
-	Line(xx1,yy1,xx1,yy2);
-	Line(xx1,yy1,xx2,yy1);
-	Line(xx2,yy2,xx2,yy1);
-	Line(xx2,yy2,xx1,yy2);
+	myLine(xx1,yy1,xx1,yy2);
+	myLine(xx1,yy1,xx2,yy1);
+	myLine(xx2,yy2,xx2,yy1);
+	myLine(xx2,yy2,xx1,yy2);
 
 {	Now add the cleared zone to (the front of) the global list
 	of empty zones, but FIRST we SHOULD really check whether we
@@ -361,6 +391,7 @@ BEGIN
 {	Now clear the zone	}
 	SetViewPort(xx1,yy1,xx2,yy2,ClipOn);
 	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 
 	IF ErrorCode <> grOk THEN
 		BEGIN
@@ -368,14 +399,15 @@ BEGIN
 			Str(xx2,ErrorStr);
 			ErrorStr:='Graphics SetViewPort error: '+GraphErrorMsg(ErrorCode);
 			GetViewSettings(vp);
-			Line(vp.x1,vp.y1,vp.x1,vp.y2);
-			Line(vp.x1,vp.y1,vp.x2,vp.y1);
-			Line(vp.x2,vp.y2,vp.x2,vp.y1);
-			Line(vp.x2,vp.y2,vp.x1,vp.y2);
+			myLine(vp.x1,vp.y1,vp.x1,vp.y2);
+			myLine(vp.x1,vp.y1,vp.x2,vp.y1);
+			myLine(vp.x2,vp.y2,vp.x2,vp.y1);
+			myLine(vp.x2,vp.y2,vp.x1,vp.y2);
 
 			REPEAT UNTIL keypressed; Ch:=ReadKey;
 			CloseGraph;
 			WRITELN(ErrorStr);
+			WRITELN(db,ErrorStr);
 			WRITELN(x1,'|',xfactor*x1);
 			WRITELN(xx1,' ',yy1,' ',xx2,' ',yy2);
 			REPEAT UNTIL keypressed; Ch:=ReadKey;
@@ -387,6 +419,7 @@ BEGIN
  			ClearViewPort;
 		END;
 	SetViewPort(0,0,MaxX,MaxY,ClipOn);
+	WRITELN(db,'Exiting ClearTextSpace');
 
 END;	{	ClearTextSpace	}
 {---------------------------------------------------------------------------}
@@ -399,6 +432,9 @@ BEGIN
 	xx:= Round(xfactor*x);
 	yy:= Round(yfactor*y);
 	Graph.OutTextXY(xx,yy,s);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+
 END;	{	OurOutTextXY	}
 
 {---------------------------------------------------------------------------}
@@ -409,7 +445,7 @@ VAR
 	i	:	Byte;
 
 BEGIN
-  SetTextStyle(DefaultFont, VertDir, 1);
+	SetTextStyle(DefaultFont, VertDir, 1);
 	OurOutTextXY(xstart,ystart+lbllength,lbl);
 
 	FOR i:= 0 to lbllength-1 DO
@@ -417,7 +453,7 @@ BEGIN
 			OurOutTextXY(xstart,ystart+i*(TextHeight('M')+1),copy(lbl,i+1,1));
 		END;
 
-  SetTextStyle(DefaultFont, HorizDir, 1); 
+	SetTextStyle(DefaultFont, HorizDir, 1); 
 END;
 
 {---------------------------------------------------------------------------}
@@ -425,40 +461,46 @@ PROCEDURE PLOT_STRAIN_RATES_BOX (LgSNfirst, LgSNlast: real);
 
 { ----- Constructs box for temperature DFM-map and labels the axes ----- }
 
+const
+	msgLine = 'Why do the lines not appear?';
+
 var
 	xscale, yscale   :	INTEGER;
 	Tinterval        :	REAL;
 	xmark, ymark     :	INTEGER;
-	scale					:	INTEGER;
+	scale			:	INTEGER;
+	TW, TH			: Integer;
 	T, Tnormalised		:	Real;
 	S, Sfirst, Slast	:	Real;
 	LgSfirst, LgSlast	:	Real;
-	minor					:	Byte;	{	The number of minor marks between big marks }
+	minor				:	Byte;	{	The number of minor marks between big marks }
 
 BEGIN
-	SetGraphMode(GraphMode);
+	{SetGraphMode(GraphMode);}
 	BoxDefaults;
 
 { --------- Draw  Box ----------}
+	SetColor(white);
 
-	Line(xoffset,yoffset,xoffset,yend);
-	Line(xoffset,yoffset,xend,yoffset);
-	Line(xend,yend,xoffset,yend);
-	Line(xend,yend,xend,yoffset);
+	myLine(xoffset,yoffset,xoffset,yend);
+	myLine(xoffset,yoffset,xend,yoffset);
+	myLine(xend,yend,xoffset,yend);
+	myLine(xend,yend,xend,yoffset);
 
 { --------- Put on NORMALIZED STRESS scale --------- }
 	minor   := 1;	{	because it's a log axis, so minor marks are not useful }
 
 	yscale  := round(LgSNlast*minor - LgSNfirst*minor);
-
+	
+	SetColor(yellow);
 	FOR scale := (round(LgSNfirst*minor)) to (round(LgSNfirst*minor) + yscale - 1) DO
 		BEGIN
 			ymark := yoffset +
 				ylength - round((scale - round(LgSNfirst*minor))/yscale*ylength);
 			IF (frac(scale/minor) = 0)  THEN
-				Line(xoffset,ymark,xend,ymark)
+				myLine(xoffset,ymark,xend,ymark)
 			ELSE
-				Line(xoffset,ymark,xoffset+3,ymark);
+				myLine(xoffset,ymark,xoffset+3,ymark);
 		END;
 
 { --------- Put on ABSOLUTE STRESS scale ---------- }
@@ -493,7 +535,7 @@ BEGIN
 				round(ylength*(1 - (Ln(S)/Ln10 - LgSfirst)/
 												(LgSlast - LgSfirst)));
 		IF (ymark >= yoffset) AND (ymark <= yend) THEN
-			Line(xend,ymark,xend-6,ymark);
+			myLine(xend,ymark,xend-6,ymark);
 
 { -----	Nested IFs because of BUG with 8087 chip if IFs too complicated	}
 		Str(S:4:1,st);
@@ -518,9 +560,9 @@ BEGIN
 			xmark :=  xoffset +
 				round((scale- round(TNfirst*100))/xscale*xlength);
 			IF (frac(scale/20) = 0) THEN
-			Line(xmark, yend,xmark,yoffset);
+			myLine(xmark, yend,xmark,yoffset);
 			IF (frac(scale/10) = 0) THEN
-			Line(xmark, yend,xmark,(yend - 4));
+			myLine(xmark, yend,xmark,(yend - 4));
 		END;
 
 { --------- Put on the CENTIGRADE TEMPERATURE scale ---------- }
@@ -537,7 +579,7 @@ BEGIN
 			xmark := xoffset +
 				round((Tnormalised - TNfirst)/(TNlast - TNfirst)*xlength);
 		IF (xmark >= xoffset) AND (xmark <= xend) THEN
-			Line(xmark,yoffset,xmark,yoffset+3);
+			myLine(xmark,yoffset,xmark,yoffset+3);
 
 		Str(round(T):6,st);
 		IF (Tnormalised>=TNfirst) THEN
@@ -574,18 +616,18 @@ VAR
 BEGIN
 	DATE_AND_TIME;
 
-	xof    := 0.125196 * 640;
-	yof    := 0.050251 * 200;
-	xl     := 0.782473 * 640;
-	yl     := 0.904523 * 200;
+	xof    := 0.125196 * MaxX;
+	yof    := 0.050251 * MaxY;
+	xl     := 0.782473 * MaxX;
+	yl     := 0.904523 * MaxY;
 
 	delta_x := 6/xfactor;										{ avoid axes marks }
 	delta_y := 6/yfactor;										{ avoid axes marks }
 	ClearTextSpace(xof+3*xl/4,yof+delta_y,xof+xl-delta_x,yof+yl/4);
 
-	Line(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
+	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
 		xoffset+xlength,yoffset+round(ylength/4));
-	Line(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
+	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
 		xoffset+round(3*xlength/4),yoffset);
 
 	OurOutTextXY(465,16,matlname);
@@ -613,8 +655,8 @@ BEGIN
 	{	This is called within the Stress-Loop, within the Temperature-Loop,
 			so the plotting window is already set to the graph axes	}
 
-	Line(x-s1, y, x+s1,y);
-	Line(x-s1, y+s2, x+s1,y+s2);
+	myLine(x-s1, y, x+s1,y);
+	myLine(x-s1, y+s2, x+s1,y+s2);
 
 END;   {DRAW_FIELD_BOUNDARY.   }
 {---------------------------------------------------------------------------}
@@ -632,7 +674,7 @@ BEGIN
 		y_last := round(ylength*(1 - (stress_mn - LgSNfirst)/(LgSNlast - LgSNfirst)));
 
 	SetLineStyle(DashedLn,0,ThickWidth);
-	Line(x_last, y_last, x_now, y_now);
+	myLine(x_last, y_last, x_now, y_now);
 	SetLineStyle(SolidLn,0,NormWidth);
 
 END;   {DRAW_FIELD_LINE   }
@@ -662,25 +704,31 @@ END;    {IDENTIFY_CONTOURS.    }
 {---------------------------------------------------------------------------}
 PROCEDURE IDENTIFY_FIELDS;
 
-{	local versions of these..	}
-CONST
-	xoffset	=	0.125196*639;
-	yoffset	=	0.050251*199;
-	xend		=	xoffset + 0.782473*639;
-	yend		=	yoffset + 0.904523*199;
+
+	
 VAR
 	P1,P2				:	integer;
 	r1,r2				:	a_real;
-	x1,y1,x2,y2		:	a_real;
-	x_shift			:	a_real;
-	y_shift			:	a_real;
+	x1,y1,x2,y2			:	a_real;
+	x_shift				:	a_real;
+	y_shift				:	a_real;
 	x0,y0				:	Word;
 	mech				:	E_mech;
+	
+	{	local versions of these..	}
+	xoffset, yoffset	:	a_real;
+	xend, yend			:	a_real;
+
 BEGIN
 { This procedure had the implicit assumption that there were 80
 	lines to the screen, even though it was general with respect to
 	the number of graphics pixels on the screen.
 }
+	xoffset	:=	0.125196*(MaxX-1);
+	yoffset	:=	0.050251*(MaxY-1);
+	xend	:=	xoffset + 0.782473*(MaxX-1);
+	yend	:=	yoffset + 0.904523*(MaxY-1);
+
 { ----- Position and print the remaining field labels ----- }
 
 	FOR mech := null TO rel_drag DO
@@ -693,7 +741,7 @@ BEGIN
 			graphics co-ords after conversion. PMS 4-February-1988 10:50 	}
 				CASE { mechID[mech] } mech OF
 					null:  		st:='ELASTIC';
-					re_cryst	:	st:='RECRYST';
+					re_cryst:	st:='RECRYST';
 					b_diff:  	st:='DIFF-B';
 					v_diff:  	st:='DIFF-V';
 					plc_ht:  	st:='PL-(HT)';
@@ -1583,7 +1631,7 @@ VAR
 	lastTN			:	a_real;
 	TNstep			:	a_real;
 	last_contour	:	T_contour_reals;
-{		contourlevels	:	T_all_contours;		SAVE SPACE for DEBUGGING	}
+{	contourlevels	:	T_all_contours;		SAVE SPACE for DEBUGGING	}
 
 BEGIN	{Calc_STRAIN_RATES_Map	}
 
@@ -1669,9 +1717,9 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 		to check the second condition.	}
 {						contourlevels [c, i] := x1;		SAVE SPACE	}
 						IF (x1 < 3*xlength/4) THEN
-							Line(x1,y1,x2,y2);
+							myLine(x1,y1,x2,y2);
 						IF (y1 > ylength/4) THEN
-							Line(x1,y1,x2,y2);
+							myLine(x1,y1,x2,y2);
 					END;
 {				Writeln(db);	}
 			END;
@@ -1752,15 +1800,15 @@ var
 	minor					:	Byte;	{	The number of minor marks between big marks }
 
 BEGIN
-	SetGraphMode(GraphMode);
+	{SetGraphMode(GraphMode);}
 	BoxDefaults;
 
 { --------- Draw  Box ----------}
 
-	Line(xoffset,yoffset,xoffset,yend);
-	Line(xoffset,yoffset,xend,yoffset);
-	Line(xend,yend,xoffset,yend);
-	Line(xend,yend,xend,yoffset);
+	myLine(xoffset,yoffset,xoffset,yend);
+	myLine(xoffset,yoffset,xend,yoffset);
+	myLine(xend,yend,xoffset,yend);
+	myLine(xend,yend,xend,yoffset);
 
 { --------- Put on NORMALIZED STRESS scale --------- }
 	minor   := 1;	{	because it's a log axis, so minor marks are not useful }
@@ -1772,9 +1820,9 @@ BEGIN
 			ymark := yoffset +
 				ylength - round((scale - round(LgHNfirst*minor))/yscale*ylength);
 			IF (frac(scale/minor) = 0)  THEN
-				Line(xoffset,ymark,xend,ymark)
+				myLine(xoffset,ymark,xend,ymark)
 			ELSE
-				Line(xoffset,ymark,xoffset+3,ymark);
+				myLine(xoffset,ymark,xoffset+3,ymark);
 		END;
 
 { --------- Put on ABSOLUTE STRESS scale ---------- }
@@ -1809,7 +1857,7 @@ BEGIN
 				round(ylength*(1 - (Ln(H)/Ln10 - LgHfirst)/
 												(LgHlast - LgHfirst)));
 		IF (ymark >= yoffset) AND (ymark <= yend) THEN
-			Line(xend,ymark,xend-6,ymark);
+			myLine(xend,ymark,xend-6,ymark);
 
 { -----	Nested IFs because of BUG with 8087 chip if IFs too complicated	}
 		Str(H:4:1,st);
@@ -1836,7 +1884,7 @@ BEGIN
 				round(xlength*(1 - (Ln(t)/Ln10 - Lgt_first)/
 												(Lgt_last - Lgt_first)));
 		IF (xmark >= xoffset) AND (xmark <= xend) THEN
-			Line(xmark,yend,xmark,yend-6);
+			myLine(xmark,yend,xmark,yend-6);
 
 { -----	Nested IFs because of BUG with 8087 chip if IFs too complicated	}
 		Str((Ln(t)/Ln10):4:1,st);
@@ -1878,18 +1926,18 @@ VAR
 BEGIN
 	DATE_AND_TIME;
 
-	xof    := 0.125196 * 640;
-	yof    := 0.050251 * 200;
-	xl     := 0.782473 * 640;
-	yl     := 0.904523 * 200;
+	xof    := 0.125196 * MaxX;
+	yof    := 0.050251 * MaxY;
+	xl     := 0.782473 * MaxX;
+	yl     := 0.904523 * MaxY;
 
 	delta_x := 6/xfactor;										{ avoid axes marks }
 	delta_y := 6/yfactor;										{ avoid axes marks }
 	ClearTextSpace(xof+3*xl/4,yof+delta_y,xof+xl-delta_x,yof+yl/4);
 
-	Line(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
+	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
 		xoffset+xlength,yoffset+round(ylength/4));
-	Line(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
+	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
 		xoffset+round(3*xlength/4),yoffset);
 
 	OurOutTextXY(96,20,'Indentation Creep Trajectories');
@@ -1982,7 +2030,7 @@ BEGIN
 {$ENDIF}
 		ELSE
 			BEGIN
-				Line(x1,y1,x2,y2);
+				myLine(x1,y1,x2,y2);
 {$IFDEF debug}
 				Writeln(db,' *');
 {$ENDIF}
@@ -1990,8 +2038,8 @@ BEGIN
 					BEGIN
 						x := round((x1+x2)/2);
 						y := round((y1+y2)/2);
-						Line(x-s1, y, x+s1,y);
-						Line(x-s1, y+s2, x+s1,y+s2);
+						myLine(x-s1, y, x+s1,y);
+						myLine(x-s1, y+s2, x+s1,y+s2);
 					END;
 			END;
 		DETECT_SKIP;
