@@ -2,7 +2,6 @@
 *.ppu
 *.lst
 debug.txt
+dfmdebug.txt
 *.exe
 *.EXE
-
-

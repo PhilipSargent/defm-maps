@@ -1,4 +1,0 @@
-ftp to 148.88.8.84
-username uploads
-password uploads
-to directory ibmpc-dos
