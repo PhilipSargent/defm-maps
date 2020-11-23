@@ -103,11 +103,6 @@ TYPE
 	T_field_ids		=	ARRAY [E_n_stress] OF T_field_stress;
 
 CONST
-	{ The names of the various device drivers supported }
-	DriverNames : array[0..10] of string[8] =
-	('Detect', 'CGA', 'MCGA', 'EGA', 'EGA64', 'EGAMono',
-	'RESERVED', 'HercMono', 'ATT400', 'VGA', 'PC3270');
-
 	{ The two text directions available }
 	TextDirect : array[0..1] of string[8] = ('HorizDir', 'VertDir');
 
@@ -126,26 +121,27 @@ CONST
 VAR
 	GraphDriver :	INTEGER;  { The Graphics device driver }
 	GraphMode   :	INTEGER;  { The Graphics mode value }
-	Error			:	INTEGER;
-	MaxX, MaxY  : word;     { The maximum resolution of the screen }
-	HalfX, HalfY: word;
+	Error		:	INTEGER;
+	MaxX, MaxY  :	word;     { The maximum resolution of the screen }
+	HalfX, HalfY:	word;
 	ErrorCode   :	INTEGER;  { Reports any graphics errors }
-	MaxColor    : word;     { The maximum color value available }
-	st          : String;   { Dummy string used with Str() and OutText() }
+	MaxColor    :	word;     { The maximum color value available }
+	st          :	String;   { Dummy string used with Str() and OutText() }
 	xoffset,yoffset,xlength,ylength,xend,yend	:	integer;
-	xfactor, yfactor	:	REAL;
+	xfactor, 
+	yfactor		:	REAL;
 	Ch          : CHAR;
 	skip        : BOOLEAN;
 	empty_zones	:	TP_zone_list;
 
-	pointcount		:  T_mecharray;
+	pointcount						:  T_mecharray;
 	temp_position, stress_position	:  T_mecharray;
-	contour			:  T_contour_reals;
+	contour			:	T_contour_reals;
 	contourmark		:	T_contour_reals;
 
 	LgSNfirst		:	a_real;
-	LgSNlast			:	a_real;
-	LgSNstep			:	a_real;
+	LgSNlast		:	a_real;
+	LgSNstep		:	a_real;
 	Lgt_first, Lgt_last, Lgt_step	:	a_real;
 	sqrt_factor		:	a_real;
 
@@ -175,21 +171,13 @@ VAR
 {---------------------------------------------------------------------------}
 procedure Abort(Msg : string);
 begin
-  Writeln(Msg, 'driver: ', GraphErrorMsg(GraphResult));
+  Writeln(Msg, 'GraphErrorMsg(GraphResult): ', GraphErrorMsg(GraphResult));
   Halt(10);
 end;
 {---------------------------------------------------------------------------}
-PROCEDURE Defaults;
+PROCEDURE BoxDefaults;
 { Select the maximum color in the Palette for the drawing color }
 BEGIN
-{	GraphMode := GetGraphMode;
-	IF ((GraphDriver = HercMono) OR (GraphDriver = EGAMono)) THEN
-			SetColor(MaxColor)
-	ELSE BEGIN
-		SetColor(9 Mod MaxColor);
-		SetBkColor(14 Mod MaxColor);
-	END;
-}
 	SetColor(MaxColor);
 
 	SetTextJustify(LeftText, CenterText);
@@ -197,7 +185,7 @@ BEGIN
 	SetViewPort(0, 0, MaxX, MaxY, ClipOn);
 
 	empty_zones:=NIL;	{	should really DISPOSE of the list first..	}
-END; { Defaults }
+END; { BoxDefaults }
 
 {---------------------------------------------------------------------------}
 Function Max(a,b:Real): Real;
@@ -225,86 +213,57 @@ VAR
 	lo, hi, tw, th: integer;
 	found: boolean;
 CONST
-  Line2 = 'We are now in 800 x 600 x 256 colors!';
+  Line2 = 'We are now in 800 x 600 x 256 colors! - Press [Return] ';
 
 BEGIN
-IF False THEN
-	BEGIN
-	DirectVideo := False;
-
-	IF mode400 THEN
-		BEGIN
-			{ ATT400 not available with fpc
-			GraphDriver:=ATT400; 
-			GraphMode := ATT400Hi; }
-			GraphDriver := Detect;                  { use autodetection }
-			InitGraph(GraphDriver, GraphMode, '');  { activate graphics }
-			ErrorCode:=GraphResult;
-			{ Leave the error visible, don't fix with autodetect..}
-		END
-	ELSE	{	NOT mode400	}
-		IF modeCGA THEN
-			BEGIN
-				GraphDriver:=CGA;
-				GraphMode := CGAHi;
-				InitGraph(GraphDriver, GraphMode, '');  { activate graphics }
-				ErrorCode:=GraphResult;
-			{	error? try auto-detection }
-			{	Leave the error visible, don't fix with autodetect..}
-			END
-		ELSE	{	neither mode400 nor modeCGA	}
-			BEGIN
-				GraphDriver := Detect;                  { use autodetection }
-				InitGraph(GraphDriver, GraphMode, '');  { activate graphics }
-				ErrorCode := GraphResult;               { error? }
-			END;
-			
-	GraphDriver := Detect;                  { use autodetection }
-	InitGraph(GraphDriver, GraphMode, '');  { activate graphics }
-	ErrorCode := GraphResult;               { error? }
-
-	MaxColor := GetMaxColor;  { Get the maximum allowable drawing color }
-	MaxX := GetMaxX;          { Get screen resolution values }
-	MaxY := GetMaxY;
-
-	END; {IF False }
-
-	DirectVideo := False;
-
 	{ We want an 8 bit mode }
 	GraphDriver := D8bit;
-{	GraphMode := GetGraphMode;}
-	GraphMode := m800x600;
-	MaxX := 800;          { Get screen resolution values }
-	MaxY := 600;
-
-	initgraph(GraphDriver,GraphMode,'');
+	GraphMode := m800x600; 	{ 0..599 x 0..799 x 0..255 }
+	
+	Initgraph(GraphDriver,GraphMode,'');
 	{ Make sure you always check graphresult! }
 	IF ErrorCode <> grOk THEN
 		BEGIN
 			CloseGraph;
-			writeln('800x600x256 is not supported!');
+			Writeln('800x600x256 is not supported!');
 			Writeln('Graphics initialization error: ',
 				GraphErrorMsg(ErrorCode));
 			IF (ErrorCode = grFileNotFound) THEN
 				BEGIN
-					Writeln('=> Ensure that this BGI file is put in the current directory <=');
+					Writeln('=> Ensure that the relevant BGI file is put in the current directory <=');
 				END;
 			Writeln('This program cannot continue.');
 			Finish(6);
 		END;
-IF False THEN
+	MaxX := getMaxX;          { Get screen resolution values only after Initgraph() }
+	MaxY := getMaxY;
+	MaxColor := GetMaxColor;  { Get the maximum allowable drawing color }
+	{DirectVideo := False;}
+
+IF True THEN
+	{-----------------------------------------------------------------------}	
 	BEGIN		
-	{ We are now in 800x600x256 }
+	{ We are now in 800x600x256 ?}
 	setColor(cyan);
-	rectangle(0,0,getmaxx,getmaxy);
+	rectangle(10,10,getMaxX-10,getMaxY-10);
+
 	{ Write a nice message in the center of the screen }
+	setColor(blue);
 	setTextStyle(defaultFont,horizDir,1);
 	tw:=TextWidth(Line2);
 	th:=TextHeight(Line2);
-	outTextXY((getMaxX - TW) div 2,
-			(getMaxY - TH) div 2,Line2);
+	outTextXY((getMaxX - tw) div 2,
+			(getMaxY - th) div 2,Line2);
+
+	setColor(cyan);
+	Str(MaxColor:8,st);
+	st := 'MaxColor: '+st;
+	outTextXY((getMaxX - tw) div 2,
+			((getMaxY - th) div 2)+2*th,st);
+
+	readln();
 	END; {IF False }
+	{-----------------------------------------------------------------------}	
 
 	Randomize;                { init random number generator }
 	HalfX := Round(MaxX);
@@ -433,7 +392,7 @@ END;	{	ClearTextSpace	}
 {---------------------------------------------------------------------------}
 PROCEDURE OurOutTextXY(x,y: INTEGER; s: String);
 	{	This is to intercept plotting instructions such
-		that we can write HPGL and PIC files.	}
+		that we can write HPGL and PIC files in a future extension.	}
 VAR
 	xx, yy	:	integer;
 BEGIN
@@ -478,7 +437,7 @@ var
 
 BEGIN
 	SetGraphMode(GraphMode);
-	Defaults;
+	BoxDefaults;
 
 { --------- Draw  Box ----------}
 
@@ -1794,7 +1753,7 @@ var
 
 BEGIN
 	SetGraphMode(GraphMode);
-	Defaults;
+	BoxDefaults;
 
 { --------- Draw  Box ----------}
 

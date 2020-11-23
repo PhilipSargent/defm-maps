@@ -1,5 +1,5 @@
 { DFM2020.pas }
-{ PMS 22 Nov 2020 20:07 }
+{ PMS 23 Nov 2020 15:26 }
 
 Program DFM2020(input,output);
 {---------------------------------------------------------------------------}
@@ -33,8 +33,7 @@ Program DFM2020(input,output);
 	emulation.
 	22-November-2020 17:30 PMS
 }
-{.$M 16384, 0, 655360}	{	stacksize, heapmin, heapmax	}
-{$M 8000, 0, 655360}	{	stacksize, heapmin, heapmax	}
+{$M 8000, 0, 655360}	{	stacksize, heapmin, heapmax	-  still valid in fpc} 
 
 Uses
   Crt,

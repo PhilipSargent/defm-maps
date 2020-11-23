@@ -1,5 +1,5 @@
 { DfmGlbls.pas	}
-{ PMS 22 Nov 2020 20:07 }
+{ PMS 23 Nov 2020 15:32 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -26,13 +26,12 @@
 {$IFDEF  detail}
 {$DEFINE  debug}
 {$ENDIF}
-{      	All these options set in command line when we run the compiler, 
-			and are NOT set here (hence the dots).	}
-{.$R+}	{Range checking on}
-{.$B+}	{Boolean complete evaluation on}
-{.$S+}	{Stack checking on}
-{.$I+}	{I/O checking on}
-{.$N+}	{Use numeric coprocessor}
+
+{$R+}	{Range checking on}
+{$B+}	{Boolean complete evaluation on}
+{$S+}	{Stack checking on}
+{$I+}	{I/O checking on}
+{$N+}	{Use numeric coprocessor}
 {.$E+}	{Include copy of 8087 Emulator - default anyway}
 
 Unit Dfmglbls;
@@ -40,7 +39,7 @@ Unit Dfmglbls;
 Interface
 Uses
 	Crt,
-	Cp437;
+	Cp437; { seems to have no effect on Crt extended ascii symbols }
 
 CONST
 	copyright = '(C) Copyright 1980,1993 P.M.Sargent & M.F.Ashby; 2020 P.M.Sargent';
@@ -55,10 +54,11 @@ CONST
 	pi						= 3.141592654;
 	Ln10					= 2.302585093;
 	numberofparameters	= 23;
-	numberofvariables		= 14;
+	numberofvariables	= 14;
 	numberofmechanisms	= 10;		{	keep consistent with E_mech	}
 	parfilename			=	'matlpars.dat';
 	reffilename			=	'matlrefs.dat';
+	dbgfilename			=	'dfmdebug.txt';
 
 	matl_name_length	=	9;
 	parm_name_length	=	6;
@@ -78,7 +78,8 @@ CONST
 	list_max				= 150;
 
 	Gamcrit		 		= 0.9;
-{	fpc does not use the extended character set #128-#255 }
+
+{	fpc does not use the extended character set #128-#255 but cp437 should do }
 	CtrlC				= #3;
 	Esc					= #27;
 	TLC					= '+'; {#218;}
@@ -165,13 +166,13 @@ TYPE
 	R_refs				= 0..ref_buflength;
 	R_lines				= 0..reflines;
 
-	lblstring			=	array[1..lbllength] of char;
+	lblstring			= array[1..lbllength] of char;
 	chararray			= array[1..12] of char;
 	datastring			= string[datalabellength];
 	timer_string		= string[12];
-	pararray				= array[R_pars] of a_real;
-	vblarray				= array[R_vbls] of a_real;
-	refarray				= array[R_refs] of char;
+	pararray			= array[R_pars] of a_real;
+	vblarray			= array[R_vbls] of a_real;
+	refarray			= array[R_refs] of char;
 
 CONST	{	Typed constant, i.e. variables with a default	}
 	xoffset			:  integer = DF;
@@ -181,9 +182,9 @@ CONST	{	Typed constant, i.e. variables with a default	}
 	pointnumber		:  integer = DF;
 	contournumber	:  integer = DF;
 	Tcntr_number	:  integer = DF;
-	steps				:  integer = DF;
+	steps			:  integer = DF;
 	linenumber		:  integer = DF;
-	numberofpoints :  integer = DF;
+	numberofpoints	:  integer = DF;
 
 	tmelt				:  a_real = DF;
 	tobst				:  a_real = DF;
@@ -225,7 +226,7 @@ CONST	{	Typed constant, i.e. variables with a default	}
 	S_force2			:  a_real = DF;
 	SNeff				:  a_real = DF;
 	SN_T				:  a_real = DF;
-	SN_crp			:  a_real = DF;
+	SN_crp				:  a_real = DF;
 VAR
 	imc				:	T_imc_classes;
 	mechID			:	T_mechID;
@@ -250,12 +251,12 @@ VAR
 	modethpg			:  BOOLEAN;
 	modetemp			:  BOOLEAN;
 	modestrate		:  BOOLEAN;
-	modelist			:  BOOLEAN;
+	modelist		:  BOOLEAN;
 	modelistfile	:  BOOLEAN;
 	modeconcern		:  BOOLEAN;
 	mode400			:  BOOLEAN;
 	modeCGA			:	BOOLEAN;
-	modemono			:  BOOLEAN;
+	modemono		:  BOOLEAN;
 
 	choice			:  char;
 	answer			:  char;
@@ -281,9 +282,7 @@ VAR
 	phpgfilename	:  filestring;
 	thpgfilename	:  filestring;
 	compiler_opts	:	String;
-{$IFDEF debug}
-	db					:	TEXT;		{	debug file	}
-{$ENDIF}
+	db				:	TEXT;		{	debug file	}
 
 PROCEDURE MyExitProc;
 { Provides a procedure which intercepts the system exit for unplanned exit	}
@@ -361,9 +360,8 @@ PROCEDURE Finish(h: Byte);
 	we do not then switch it off after this procedure by accident.}
 BEGIN
 	ExitProc := OldExitProc; { Restore exit PROCEDURE address }
-{$IFDEF debug}
+
 	Close (db);
-{$ENDIF}
 	Halt(h);
 END;	{	Finish	}
 {---------------------------------------------------------------------------}
@@ -411,14 +409,11 @@ BEGIN
 			END;	{	Case	}
 			WriteLn(s);
 {			Writeln('   at (decimal): ',ad.seg:5,':',ad.ofs:5);}	{DECIMAL!}
-{$IFDEF  debug}
+
 			Writeln(db,Version,' detected:');
 			WriteLn(db,s);
-{$ENDIF}
 		END;
-{$IFDEF  debug}
 	Close (db);
-{$ENDIF}
 
 END; { MyExitProc }
 {-------------------------------------------------------------------}
@@ -1024,10 +1019,10 @@ BEGIN
 			COPYING;
 			HELP_1;
 		END;
-	if answer = CtrlC THEN	{	cannot use Finish(0), debug file not open }
+	if answer = CtrlC THEN
 		BEGIN
 			ExitProc := OldExitProc;
-			Halt(0);
+			Finish(0);
 		END;
 
 END;   {INTRODUCTION.     }
@@ -1157,24 +1152,20 @@ BEGIN
 	WriteLn(MemAvail:8,' bytes (total) available, above this program');
 	WriteLn(MaxAvail/1024:5:0,'    K     (largest contiguous block) available');
 }
-	Delay(500);
+	Delay(1500);
 	{ ----- Open DEBUG file	----- }
-{$IFDEF  debug}
-		IF CannotOpen('debug.txt') THEN
+		IF CannotOpen(dbgfilename) THEN
 			BEGIN
 				Writeln(' *** Cannot Open Debug File ***');
 				Halt(4); 
 			END
 		ELSE
 			BEGIN
-				Assign(db,'debug.txt');
+				Assign(db,dbgfilename);
 				Rewrite(db);
-				{Reset(db);}
 				Writeln(db,Version,' v',Release,' (',VersionDate,')');
 				Writeln(db,'(Compiler options:',compiler_opts,')');
-				Writeln(db,copyright);
 			END;
-{$ENDIF}
 
 	{ ----- Check for DATA files	----- }
 	IF FileNotThere (parfilename) THEN

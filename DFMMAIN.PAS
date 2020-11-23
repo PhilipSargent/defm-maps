@@ -1,5 +1,5 @@
 Unit Dfmmain;
-{ PMS 22 Nov 2020 20:07 }
+{ PMS 23 Nov 2020 15:26 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -27,13 +27,12 @@ Unit Dfmmain;
 {$IFDEF  detail}
 {$DEFINE  debug}
 {$ENDIF}
-{.$R+}    {Range checking on }
-{.$B+}    {Boolean complete evaluation on}
-{.$S+}    {Stack checking on}
-{.$I+}    {I/O checking on}
-{.$N+}    {Use numeric coprocessor}
+{$R+}    {Range checking on }
+{$B+}    {Boolean complete evaluation on}
+{$S+}    {Stack checking on}
+{$I+}    {I/O checking on}
+{$N+}    {Use numeric coprocessor}
 {.$E+}	 {Include copy of 8087 Emulator - default anyway}
-{$INFO This was coded on a rainy day by Bugs Bunny}
 
 Interface
 
@@ -57,24 +56,24 @@ Uses
 	Dfmplots;
 
 VAR
-	index	:	INTEGER;
+	index			:	INTEGER;
 	pathfilelength	:	INTEGER;
-	s	:	String[1];
-	ch	:	CHAR;
-	hrdcopy	:  char;
+	s		:	String[1];
+	ch		:	CHAR;
+	hrdcopy	:	char;
 
 {---------------------------------------------------------------------------}
 PROCEDURE GiveExitCodes;
 BEGIN
 	WRITELN;
-	WRITELN('Exit codes are:');
+	WRITELN('DFM Exit codes are:');
 	WRITELN('0       Everything ran OK');
 	WRITELN('1       Help or exit codes information only');
 	WRITELN('2       Ran but input data gives a DATA CHECK message');
 	WRITELN('4       Failed to write all output files correctly');
 	WRITELN('6       Failed to open an input file');
 	WRITELN('7       Error in command line options');
-	WRITELN('8       Internal error, telephone +44 (223) 332627');
+	WRITELN('8       Internal error, email philip.sargent@gmail.com');
 END;	{	GiveExitCodes	}
 
 {---------------------------------------------------------------------------}
@@ -675,7 +674,7 @@ BEGIN
 	OldExitProc := ExitProc;                { save previous exit proc }
 	ExitProc := @MyExitProc;                { insert our exit proc in chain }
 	HANDLE_OPTIONS;
-	Delay(1500);
+	Delay(2500);
 
 	stash_index := 0;
 	matl_ok := FALSE;
