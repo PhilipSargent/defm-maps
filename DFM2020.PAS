@@ -22,12 +22,7 @@ Program DFM2020(input,output);
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{	Be careful, the source code for these Units does not
-	specify whether the 80x87 is to be used or not; so you
-	have to make sure that you Build (not Make) the entire
-	system and that you specify $N+ and $E+ for each unit.
-	15-December-1989 02:17 PMS
-}
+
 {	Renamed from DFM290 to DFM2020 when porting from TurboPascal 7
 	under DOSBOX to fpc runnig natively on Windows10 with TP 
 	emulation.

@@ -452,11 +452,8 @@ BEGIN
 	modetpic:=FALSE;
 	modephpg:=FALSE;
 	modethpg:=FALSE;
-	modelist:=FALSE;
 	modelistfile:=FALSE;
 	modeconcern:=FALSE;
-	mode400:=FALSE;
-	modeCGA:=FALSE;
 	matlname:='';
 	listfilename:='';
 	phpgfilename:='';
@@ -482,11 +479,6 @@ BEGIN
 									answer := ReadKey;
 									Writeln;
 									Writeln('contact: Philip Sargent     e-mail: philip.sargent@gmail.com (formerly pms1@uk.ac.cam.phx) ');
-									{Writeln('or:');}
-									{Writeln('         Engineering Dept., Trumpington St.,');}
-									{Writeln('         CAMBRIDGE CB2 1PZ, England');}
-									{riteln('         tel. +44 (223) 332627');}
-									{Writeln('         fax. +44 (223) 332662');}
 									Finish(1);
 								END;
 					'e','E': BEGIN
@@ -495,21 +487,9 @@ BEGIN
 								END;
 					'f','F': modefast:=TRUE;
 					'd','D': modedemo:=TRUE;
-					{
-					'o','O': mode400 :=TRUE;
-					'c','C': modeCGA :=TRUE;	}
-					{	if both /o and /c are set, it tries ATT first, then CGA	}
+					
 					't','T': HANDLE_TEMPERATURE_PLOT_OPTIONS;
 					's','S': HANDLE_STRAIN_RATES_PLOT_OPTIONS;
-					{
-					'l','L': BEGIN
-									modelist:=TRUE;
-									stuf := ParamStr(index);
-									IF (Length(stuf)=4) THEN
-										hrdcopy:= stuf[4];
-									IF NOT (hrdcopy IN ['o','O','e','E','l','L']) THEN
-										hrdcopy := 'O';	
-								END;}
 					'w','W': BEGIN
 									pathfilelength:=Length(ParamStr(index))-3;
 									IF pathfilelength>0 THEN
@@ -541,21 +521,7 @@ BEGIN
 			WRITELN('The PIC file and HPGL file options are not yet written.');
 			Finish(7);
 		END;
-{
-	WRITELN('  modenamed:=FALSE ',modenamed);
-	WRITELN('  matlname ',matlname);
-	WRITELN('  modefast:=FALSE ',modefast);
-	WRITELN('  modetemp:=TRUE ',modetemp);
-	WRITELN('  modestrate:=TRUE ',modestrate);
-	WRITELN('  modeppic:=FALSE ',modeppic);
-	WRITELN('  modetpic:=FALSE ',modetpic);
-	WRITELN('  modephpg:=FALSE ',modephpg);
-	WRITELN('  modethpg:=FALSE ',modethpg);
-	WRITELN('  modelist:=FALSE ',modelist);
-	WRITELN('  modelistfile:=FALSE ',modelistfile);
 
-	Finish(7);
-}
 	SetError:=FALSE;
 	IF modelistfile THEN
 		IF CannotOpen(listfilename) THEN
@@ -601,61 +567,7 @@ BEGIN
 END;	{	HANDLE_OPTIONS	}
 
 {---------------------------------------------------------------------------}
-PROCEDURE HARDCOPY_OPTIONS (VAR option: CHAR);
-BEGIN
-	CLEAN_WINDOW;
-	textbackground(C_back);
-	gotoXY(1,2);
-	write  ('                                                             ');
-	gotoXY(1,2);
-	write(' ',Version,'    Immediate printout for    ',matlname,'  ',date_string);
 
-	gotoXY(1,6);
-	WRITELN('             SELECT TYPE OF PRINTOUT                        ');
-	write  ('             '); UnderLine(23);        writeln('            ');
-	WRITELN;
-
-	WRITE('      Press  ');  Textcolor(C_bright);
-	WRITE('N'); Textcolor(C_text);
-	WRITE('  No Listing.    ');
-	WRITELN;  WRITELN; WRITELN;
-
-	WRITE('      Press  ');  Textcolor(C_bright);
-	WRITE('O'); Textcolor(C_text);
-	WRITE('  an Ordinary listing.               ');
-	WRITELN;  WRITELN;
-
-	WRITE('      Press  ');  Textcolor(C_bright);
-	WRITE('E'); Textcolor(C_text);
-	WRITE('  an Epson dot-matrix REDUCED SIZE listing.');
-	WRITELN;  WRITELN;
-
-	WRITE('      Press  ');  Textcolor(C_bright);
-	WRITE('L'); Textcolor(C_text);
-	WRITE('  a Laser-printer REDUCED SIZE listing.');
-
-	gotoXY(1,24);
-	WRITE('                                                             ');
-	gotoXY(1,24);  textcolor(C_bright);
-	WRITE('             Press appropriate key  (N/O/E/L) ');
-	REPEAT
-		option:=Readkey;
-		IF option=CtrlC THEN
-			Finish(0);
-	UNTIL option in ['y','Y','n','N','o','O','e','E','l','L'];
-	textcolor(C_text);
-	gotoXY(1,24); textbackground(C_screen);
-	WRITE('                                                             ');
-
-	IF option in ['n','N'] THEN
-			modelist:=FALSE
-	ELSE
-			modelist:=TRUE;
-			
-
-END;	{	HARDCOPY_OPTIONS	}
-
-{---------------------------------------------------------------------------}
 PROCEDURE MAIN_PROCEDURE;
 
 CONST
@@ -663,7 +575,7 @@ CONST
 VAR
 	comptime	:	a_real;
 	name		:	String;
-	dud_steps: INTEGER;
+	dud_steps	: INTEGER;
 	dud_TN, dud_K: a_real;
 
 BEGIN
@@ -713,10 +625,9 @@ BEGIN
 				IF NOT (choice in ['s','S','c','C']) THEN	{	Same material	}
  					READ_MATL_DATA;
 			END;
-{$IFDEF debug}
+
 		Writeln(db, matlname);
 		Writeln(db);
-{$ENDIF}
 
 		IF modefast THEN
 			BEGIN
@@ -742,7 +653,6 @@ BEGIN
 						but do the editing directly, not from the INTERPRET_
 						procedures.	}
 					BEGIN
-						modelist := FALSE;	{ cancel any /L setting	}
 						CLEAN_WINDOW;
 						EDIT_PARAMETERS;
 						LIMIT_VARIABLES;
@@ -758,23 +668,10 @@ BEGIN
 						choice := 'S';	{	for safe editing or stuff in memory	}
 					END;	{	choice can only be C, R or S	}
 
-	{ ----- Offer hardcopy of parameters, variables and data ----- }
-	{ LST special printer filename not avaialble in fpc
-				IF NOT modelist THEN
-					HARDCOPY_OPTIONS (hrdcopy);
-	}
 				CHECK_PARAMETERS(Screen);	{ which cannot involve listing	}
 
 	{ ----- State the computation time and offer rerun ----- }
 				SpeedValue := 0.0233;
-	
-	{			This is not implemented in fpc and is not necessary now. 
-	{			System.Test8087 > 0 means there is an 8087 chip	}
-	{			IF (System.Test8087 > 0) THEN	
-					SpeedValue := 0.0233
-				ELSE
-					SpeedValue := 0.0974;}
-
 				comptime  := vbl[1]*vbl[1]*SpeedValue; WRITELN; WRITELN;
 				gotoXY(1,21);
 				WRITELN('    The RUN-TIME for this map is ROUGHLY  ',
@@ -795,26 +692,13 @@ BEGIN
 
 
 		Dfmmodls.DEFINE_UNITS(dud_steps, dud_TN, dud_K);
-{$IFDEF debug}
+
 		IF (dud_steps > 0) THEN
 			DUD_TEMP_TO_DEBUG (dud_steps, dud_TN, dud_K);
-{$ENDIF}
-
-		IF (modelist) THEN
-			BEGIN
-				gotoXY(1,24);
-				WRITE('          PRINTING OUTPUT NOW                          ');
-				OPEN_PRINTER (hrdcopy);
-				INPUT_DATA_TO_PRINTER;
-				IF (dud_steps > 0) THEN
-					DUD_TEMP_TO_PRINTER (dud_steps, dud_TN, dud_K);
-				{	Note that printer is still 'open'	}
-			END;
 
 	{ ----- Put copy of data into a file if required. Must be written before
 				check_parameters because it rewrites the file, check_parameters
 				just appends to the output text file . ----- }
-
 		IF (modelistfile) THEN
 			BEGIN
 				gotoXY(1,24);
@@ -822,17 +706,7 @@ BEGIN
 				INPUT_DATA_TO_FILE;
 				IF (dud_steps > 0) THEN
 					DUD_TEMP_TO_FILE (dud_steps, dud_TN, dud_K);
-			END;
-
-	{ ----- A bit tricky to ensure that we don't get two copies of each,
-				and that we don't send characters to a printer which may
-				not be there	}
-
-		IF (modelistfile OR modelist) THEN
-			BEGIN
-				{	Note that printer is still 'open'	}
 				CHECK_PARAMETERS(NOT Screen);	{ which may involve more listing	}
-				IF modelist THEN CLOSE_PRINTER (hrdcopy);
 			END;
 
 		gotoXY(1,24);
@@ -841,11 +715,7 @@ BEGIN
 		Window(1,1,80,25);
 		textbackground(C_screen);   ClrScr;
 		textcolor(C_text);
-		INITIALIZE;		{	graphics display	}
-
-
-		{ when using Crt and graphics, turn off Crt's memory-mapped writes }
-		DirectVideo := False;
+		Initialize;		{	graphics display	}
 
 {$IFDEF indent}
 { should not use modestrate, should make a new mode, "modeindt", so that
@@ -883,9 +753,8 @@ BEGIN
 		it) and revert to Text mode, also closes debug file	}
 		MyExitProc;
 	{	Now reopen the debug file in append mode..}
-{$IFDEF  debug}
 		Append(db);
-{$ENDIF}
+
 
 	{ ----- REPEAT the program UNTIL Q (quit) is input ----- }
 
@@ -918,6 +787,5 @@ BEGIN
 
 END;  {main_PROCEDURE}
 {---------------------------------------------------------------------------}
-{ Unit Initialization }
-{	BEGIN	}
+
 END.  { Unit dfmMAIN }

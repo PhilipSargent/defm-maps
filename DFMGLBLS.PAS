@@ -1,5 +1,5 @@
 { DfmGlbls.pas	}
-{ PMS 23 Nov 2020 15:32 }
+{ PMS 23 Nov 2020 16:53 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -26,6 +26,8 @@
 {$IFDEF  detail}
 {$DEFINE  debug}
 {$ENDIF}
+
+{$DEFINE  debug} {	always on, pending removal of directive	}
 
 {$R+}	{Range checking on}
 {$B+}	{Boolean complete evaluation on}
@@ -251,12 +253,8 @@ VAR
 	modethpg			:  BOOLEAN;
 	modetemp			:  BOOLEAN;
 	modestrate		:  BOOLEAN;
-	modelist		:  BOOLEAN;
 	modelistfile	:  BOOLEAN;
 	modeconcern		:  BOOLEAN;
-	mode400			:  BOOLEAN;
-	modeCGA			:	BOOLEAN;
-	modemono		:  BOOLEAN;
 
 	choice			:  char;
 	answer			:  char;
@@ -390,9 +388,7 @@ BEGIN
 	Textcolor(white);
 	IF (ErrorAddr <> NIL) THEN 	{	run-time error	}
 		BEGIN
-{ incompatible with fpc running under turbo pascal mode -Mtp 
-			ad := T_PtrRec(ErrorAddr); 
-}
+
 			Writeln(Version,' detected:');
 			CASE ExitCode OF
 				4:	s:='Too many open files: CONFIG.SYS FILES=? is too small';
@@ -408,8 +404,6 @@ BEGIN
 				ELSE	s:='Contact Philip Sargent, or see Turbo Pascal 5.5 Reference manual pp467-472';
 			END;	{	Case	}
 			WriteLn(s);
-{			Writeln('   at (decimal): ',ad.seg:5,':',ad.ofs:5);}	{DECIMAL!}
-
 			Writeln(db,Version,' detected:');
 			WriteLn(db,s);
 		END;
@@ -581,7 +575,7 @@ VAR
 
 BEGIN
 	window(1,1,80,25);     textbackground(C_screen);    clrscr;
-	window(10,4,70,22);    textbackground(C_back);    clrscr;
+	window(10,4,70,22);    textbackground(C_back);    	clrscr;
 
 	window(10,1,70,25);
 	textbackground(C_back);
@@ -591,46 +585,43 @@ BEGIN
 	gotoXY(1,24);
 	write  ('                                                             ');
 
-{	IF modemono THEN	}
+	textbackground(C_screen);
+	window(1,1,80,25);
+
+	FOR i:=2 TO 24 DO
 		BEGIN
-			textbackground(C_screen);
-			window(1,1,80,25);
-
-			FOR i:=2 TO 24 DO
-				BEGIN
-					gotoXY(9,i);
-					write(Vert);
-					gotoXY(71,i);
-					write(Vert);
-				END;
-
-			gotoXY(9,3);
-			write(MLC);
-			gotoXY(71,3);
-			write(MRC);
-			gotoXY(9,23);
-			write(MLC);
-			gotoXY(71,23);
-			write(MRC);
-
-			gotoXY(9,1);
-			write(TLC);
-			gotoXY(71,1);
-			write(TRC);
-			gotoXY(9,25);
-			write(BLC);
-			gotoXY(71,25);
-			write(BRC);
-
-			gotoXY(10,3);
-			FOR i:=10 TO 70 DO write(Horiz);
-			gotoXY(10,23);
-			FOR i:=10 TO 70 DO write(Horiz);
-			gotoXY(10,1);
-			FOR i:=10 TO 70 DO write(Horiz);
-			gotoXY(10,25);
-			FOR i:=10 TO 70 DO write(Horiz);
+			gotoXY(9,i);
+			write(Vert);
+			gotoXY(71,i);
+			write(Vert);
 		END;
+
+	gotoXY(9,3);
+	write(MLC);
+	gotoXY(71,3);
+	write(MRC);
+	gotoXY(9,23);
+	write(MLC);
+	gotoXY(71,23);
+	write(MRC);
+
+	gotoXY(9,1);
+	write(TLC);
+	gotoXY(71,1);
+	write(TRC);
+	gotoXY(9,25);
+	write(BLC);
+	gotoXY(71,25);
+	write(BRC);
+
+	gotoXY(10,3);
+	FOR i:=10 TO 70 DO write(Horiz);
+	gotoXY(10,23);
+	FOR i:=10 TO 70 DO write(Horiz);
+	gotoXY(10,1);
+	FOR i:=10 TO 70 DO write(Horiz);
+	gotoXY(10,25);
+	FOR i:=10 TO 70 DO write(Horiz);
 
 	window(10,1,70,25);
 	textbackground(C_back);
@@ -648,21 +639,16 @@ BEGIN
 	WRITELN;
 	WRITELN(' /h /?   help and information only');
 	WRITELN(' /f      fast option, no interaction with user');
-{	WRITELN(' /d      demonstration; as /f but waits 10s between plots');
-}
+	WRITELN(' /d      demonstration; as /f but waits 10s between plots');
+
 	WRITELN(' /e      display exit codes only');
 	WRITELN(' /s      options for strain-rate map:');
-{	WRITELN(' /sl:<fn>  produce Lotus PIC files of the strain-rate map plot');
-	WRITELN(' /sg:<fn>  produce HPGL Hewlett-Packard Graphics Language plot');
+{	WRITELN(' /sg:<fn>  produce HPGL Hewlett-Packard Graphics Language plot');
 	WRITELN('         (<fn> denotes full path & filename):');
 }
 	WRITELN('           /s+  produce, /s- don''t produce, a strain-rate map');
 	WRITELN(' /t      options for temperature map (as for /s)');
-	WRITELN(' /l:<p>  write a listing to the printer');
-	WRITELN('         (<p> is O, E or L, for Ordinary, Epson or Laser)');
 	WRITELN(' /w:<fn> write a listing to a file, <fn> is a full filename');
-	WRITELN(' /o      attempts an Olivetti (AT&T, Compaq) 640x400 plot');
-	WRITELN(' /c      produces a CGA 640x200 plot - easy screen printing');
 {	WRITELN;
 	WRITELN(' In case of conflict between options,');
 	WRITELN(' e.g. "/s- /sg:cuplot.hpg",');
@@ -743,38 +729,6 @@ BEGIN
 	writeln('  program steps.  Choose  15  for a quick look,  100  for   ');
 	writeln('  a really accurate map (it may take some time).            ');
 	writeln('                                                            ');
-	gotoXY(1,24);   textcolor(C_bright);
-	write  ('                PRESS ANY KEY TO CONTINUE                    ');
-	textcolor(C_text);
-	repeat until keypressed;
-	Ch:=ReadKey;
-	If Ch=CtrlC THEN Finish(0);
-	textcolor(C_text);
-
-	CLEAN_WINDOW;
-	textcolor(C_subdued);
-
-	gotoXY(1,2);
-	writeln('                    HELP  SCREEN  1:3                        ');
-	gotoXY(1,5);
-	write('                PRINTING PLOTS ON A PRINTER                  ');
-	write('                '); UnderLine(27); writeln('                 ');
-	writeln('                                                            ');
-	writeln('     Remember: run GRAPHICS before running ',Version,' if   ');
-	writeln('  you want to dump the plot to a dot-matrix printer.        ');
-	writeln('     Do this by running the program GRAPHICS.COM            ');
-	writeln('  supplied with the MS-DOS operating system which came with ');
-	writeln('  your computer, or try the copy on this disc.              ');
-	writeln('                                                            ');
-	writeln('     You can get a hard copy of the screen by pressing the  ');
-	writeln('  <PRT SCR> key when the plot has finished and is labelled  ');
-	writeln('  on the screen.  This key may require the SHIFT key to be  ');
-	writeln('  pressed to be effective.                                  ');
-	writeln('                                                            ');
-	writeln('     Many users who do not regularly do graphical screen-   ');
-	writeln('  dumps will need to find out how to configure their        ');
-	writeln('  computer systems in order to do it.                       ');
-	writeln('     The documentation supplied discusses it in detail.     ');
 	gotoXY(1,24);   textcolor(C_bright);
 	write  ('                PRESS ANY KEY TO CONTINUE                    ');
 	textcolor(C_text);
@@ -914,14 +868,14 @@ BEGIN
 	write('               CREATING AND READING DATA SETS                ');
 	write('               '); UnderLine(30);    writeln('               ');
 	write('                                                             ');
-	write('     To be legal, a material name must have one through nine ');
+	write('     To be valid, a material name must have one through nine ');
 	write('  characters (either letters of the alphabet or numbers      ');
 	write('  0 through 9), and the special characters % - () $ & # !.   ');
 	write('  Thus                                                       ');
 	write('                                                             ');
 	write('     COPPER     MARBLE-5     TUNGSTEN    and    PMMA#1       ');
 	write('                                                             ');
-	write('  are all legal names.   Do not add an "extension" (such as  ');
+	write('  are all valid names.   Do not add an "extension" (such as  ');
 	write('  ".dat"). The data sets are all stored in the same file     ');
 	write('  "matlpars.dat".  This file can be edited using any plain-  ');
 	write('  text editor or most word-processors in non-document" mode. ');
@@ -1144,15 +1098,11 @@ BEGIN
 {$IFDEF  indent}
 	compiler_opts := compiler_opts+'+Indent';
 {$ENDIF}
+{
 	Writeln(Version,' v',Release,' ',VersionDate,' Compiler options:',compiler_opts);
 	Writeln('       ',copyright);
-{ MemAvail incompatible with fpc running under turbo pascal mode -Mtp 
-	https://www.freepascal.org/docs-html/current/prog/progse37.html#x224-2380008.7
-	
-	WriteLn(MemAvail:8,' bytes (total) available, above this program');
-	WriteLn(MaxAvail/1024:5:0,'    K     (largest contiguous block) available');
-}
 	Delay(1500);
+}
 	{ ----- Open DEBUG file	----- }
 		IF CannotOpen(dbgfilename) THEN
 			BEGIN
@@ -1164,7 +1114,8 @@ BEGIN
 				Assign(db,dbgfilename);
 				Rewrite(db);
 				Writeln(db,Version,' v',Release,' (',VersionDate,')');
-				Writeln(db,'(Compiler options:',compiler_opts,')');
+				Writeln(db,'       ',copyright);
+				Writeln(db,'(DFM-specific Compiler options:',compiler_opts,')');
 			END;
 
 	{ ----- Check for DATA files	----- }

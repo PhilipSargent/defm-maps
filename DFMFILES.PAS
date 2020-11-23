@@ -1,5 +1,5 @@
 Unit dfmfiles;
-{ PMS 21 November 2020 20:13 }
+{ PMS 23 Nov 2020 16:53 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -26,11 +26,11 @@ Unit dfmfiles;
 {$IFDEF  detail}
 {$DEFINE  debug}
 {$ENDIF}
-{.$R+}    {Range checking on}
-{.$B+}    {Boolean complete evaluation on}
-{.$S+}    {Stack checking on}
-{.$I+}    {I/O checking on}
-{.$N+}    {Use numeric coprocessor}
+{$R+}    {Range checking on}
+{$B+}    {Boolean complete evaluation on}
+{$S+}    {Stack checking on}
+{$I+}    {I/O checking on}
+{$N+}    {Use numeric coprocessor}
 {.$E+}		{Include copy of 8087 Emulator - default anyway}
 
 Interface
@@ -61,18 +61,9 @@ PROCEDURE SAVE_MATL_REFERENCES;
 
 PROCEDURE CHECK_PARAMETERS (Screen: BOOLEAN);
 { -------- Checks input data against limits -------- }
-
-PROCEDURE INPUT_DATA_TO_PRINTER;
-PROCEDURE OPEN_PRINTER (hrdcopy: CHAR);
-PROCEDURE CLOSE_PRINTER (hrdcopy: CHAR);
-
 PROCEDURE INPUT_DATA_TO_FILE;
 
-{$IFDEF debug}
 PROCEDURE DUD_TEMP_TO_DEBUG (dud_steps: INTEGER; dud_TN, dud_K: a_real);
-{$ENDIF}
-
-PROCEDURE DUD_TEMP_TO_PRINTER (dud_steps: INTEGER; dud_TN, dud_K: a_real);
 PROCEDURE DUD_TEMP_TO_FILE (dud_steps: INTEGER; dud_TN, dud_K: a_real);
 {===================================================================}
 
@@ -750,13 +741,6 @@ BEGIN
 					END
 				ELSE	{	NOT Screen	}
 					BEGIN
-						IF modelist THEN
-							BEGIN
-								writeln(lst,'       PARAMETER',parnumber:3,' OUTSIDE EXPECTED RANGE.');
-								writeln(lst,'       ',d,'=  ',s,'  ',u);
-								writeln(lst,'       Anticipated  Range          =',s_lo,' to ',s_hi,'  ',u);
-								writeln(lst);
-							END;
 						IF modelistfile THEN
 							BEGIN
 								Assign(lf,listfilename);
@@ -801,13 +785,6 @@ BEGIN
 						END
 					ELSE	{	NOT Screen	}
 						BEGIN
-							IF modelist THEN
-								BEGIN
-									writeln(lst,'       VARIABLE ',vblnumber:3,' OUTSIDE EXPECTED RANGE.');
-									writeln(lst,'       ',d,'=  ',s,'  ',u);
-									writeln(lst,'       Anticipated  Range          =  ',s_lo,' to ',s_hi,'  ',u);
-									writeln(lst);
-								END;
 							IF modelistfile THEN
 								BEGIN
 									Assign(lf,listfilename);
@@ -834,110 +811,6 @@ BEGIN
 
 END;  {CHECK_PARAMETERS.     }
 
-{-------------------------------------------------------------------}
-PROCEDURE OPEN_PRINTER (hrdcopy: CHAR);
-
-BEGIN
-	IF (hrdcopy in ['e','E']) THEN		{	reduced print Epson	}
-		BEGIN
-			write(lst,Esc,'@');		{	reset	}
-	   	write(lst,#15); 			{ condensed printing }
-			write(lst,Esc,'0');		{	1/8" lines	}
-			write(lst,Esc,'C',#86);	{	86 lines per page	}
-		END
-	ELSE IF (hrdcopy in ['l','L']) THEN		{	reduced print HP laser	}
-		BEGIN
-			write(lst,Esc,'E');		{	reset	}
-			write(lst,Esc,'&k2S');	{	condensed	}
-			WRITE(Lst,Esc,'&18D'); 	{	1/8" lines	}
-		END;
-END;
-{-------------------------------------------------------------------}
-PROCEDURE INPUT_DATA_TO_PRINTER;
-
-VAR
-	s	:	STRING;
-	r	:	REAL;
-	line		:	String;
-	buf		:	String[refchars];
-	i,index	:	R_refs;
-	lines		:	R_lines;
-BEGIN
-	DATE_AND_TIME;
-	Writeln(lst,'      ',Version,' v',Release,' (',VersionDate,')');
-	Writeln(lst,'      (Compiler options:',compiler_opts,')');
-	Writeln(lst,'      ',copyright);
-	writeln(lst,'      ',weekday,' ',Date_string,' ',time_string);
-	writeln(lst);
-	writeln(lst,'      =============================================================');
-	writeln(lst,'      ',Version,'     INPUT  PARAMETERS for  ',matlname);
-	writeln(lst,'      =============================================================');
-	writeln(lst);
-
-	get_imc_string (imc,s);
-	writeln (lst,
-		'          0  Isomechanical Class                  ',s);
-
-	for parnumber := 1 to numberofparameters do
-		BEGIN
-			r := par[parnumber];	{	in case a_real is DOUBLE	}
-			convert_number (r, s, -1);
-			LABELS_FOR_PARAMETERS;
-
-			writeln (lst,'        ',parnumber:3,'  ', d, u,' =  ', s);
-		END;
-	writeln(lst);
-	writeln(lst,'      =============================================================');
-	writeln(lst);  writeln(lst);  writeln(lst);  writeln(lst);
-
-	writeln(lst,'      =============================================================');
-	writeln(lst,'      ',Version,'     INPUT  VARIABLES for  ',matlname);
-	writeln(lst,'      =============================================================');
-	writeln(lst);
-	for vblnumber := 1 to numberofvariables do
-		BEGIN
-			r := vbl[vblnumber];	{	in case a_real is DOUBLE	}
-			convert_number (r, s, -1);
-			LABELS_FOR_VARIABLES;
-
-			writeln (lst,'        ',vblnumber:3,'  ', d, u,' =  ',s);
-		END;
-	writeln(lst);
-	writeln(lst,'      =============================================================');
-	writeln(lst);  writeln(lst);  writeln(lst);  writeln(lst);
-
-{ ------- Print out Reference Text ------- }
-
-	writeln(lst,'      ',Version,'  REFERENCE DESCRIPTION FOR ',matlname);
-	writeln(lst,'      =============================================================');
-	writeln(lst);
-
-	FOR lines := 0 TO ref_written_lines DO
-		BEGIN
-			buf[0] := Chr(refchars);
-			FOR i:= 1 TO refchars DO
-				buf[i] := ref[lines*refchars+i];
-			IF (Length(buf) > 0) THEN
-				Writeln(lst,'      ',buf);
-		END;
-	writeln(lst,'      =============================================================');
-
-END; {OPEN_INPUT_DATA_TO_PRINTER.    }
-{-------------------------------------------------------------------}
-PROCEDURE CLOSE_PRINTER (hrdcopy: CHAR);
-BEGIN
-	write(lst,#12);		{	page throw	}
-
-	IF (hrdcopy in ['e','E']) THEN		{	reduced print Epson	}
-		BEGIN
-			write(lst,Esc,'@');		{	reset	}
-		END
-	ELSE IF (hrdcopy in ['l','L']) THEN		{	reduced print HP laser	}
-		BEGIN
-			write(lst,Esc,'E');		{	reset	}
-		END;
-
-END; {CLOSE_INPUT_DATA_TO_PRINTER.    }
 {-------------------------------------------------------------------}
 PROCEDURE INPUT_DATA_TO_FILE;
 
@@ -1018,7 +891,6 @@ BEGIN
 
 END; {INPUT_DATA_TO_FILE.    }
 {---------------------------------------------------------------------------}
-{$IFDEF debug}
 PROCEDURE DUD_TEMP_TO_DEBUG (dud_steps: INTEGER;
 									dud_TN, dud_K: a_real);
 BEGIN
@@ -1034,23 +906,7 @@ BEGIN
 				dud_K:6:0,' degrees K.');
 	writeln(db,' Number of bad temperature steps is: ',dud_steps);
 END;	{	DUD_TEMP_TO_DEBUG	}
-{$ENDIF}
-{---------------------------------------------------------------------------}
-PROCEDURE DUD_TEMP_TO_PRINTER (dud_steps: INTEGER;
-									dud_TN, dud_K: a_real);
-BEGIN
-	writeln(lst);
-	writeln(lst,'   ========================================');
-	writeln(lst,'   LOW TEMPERATURE CUTTOFF for  ',matlname);
-	writeln(lst,'   ========================================');
-	writeln(lst);
-	writeln(lst,'   Due to floating-point inaccuracies,',
-				'the diffusion rates');
-	writeln(lst,'   can only be calculated properly above ',
-				dud_TN:6:3,' Tm');
-	writeln(lst,'   i.e., above ',
-				dud_K:6:0,' degrees K.');
-END;	{	DUD_TEMP_TO_PRINTER	}
+
 {---------------------------------------------------------------------------}
 PROCEDURE DUD_TEMP_TO_FILE (dud_steps: INTEGER;
 									dud_TN, dud_K: a_real);
