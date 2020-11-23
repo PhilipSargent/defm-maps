@@ -70,6 +70,10 @@ Uses
 CONST
 	C_num_cntrs			=	maxcontournumber+1;
 	C_num_bndrys		=	numberofmechanisms*2;	{	estimate	}
+
+	xVGA = 640;	{	x width  of original Turbo Pascal graphics device }
+	yVGA = 200; {	y height of original Turbo Pascal graphics device }
+
 TYPE
 	TP_zone_list	=	^T_zone_list;
 	T_zone_list		=	RECORD
@@ -101,8 +105,11 @@ TYPE
 	T_field_ids		=	ARRAY [E_n_stress] OF T_field_stress;
 
 CONST
-	MaxX  :	word = 800;     { The maximum resolution of the device m800x600 }
-	MaxY  :	word = 600;     { The maximum resolution of the device m800x600 }
+
+	xfac0	: a_real	= 0.125196; { x-axis origin }
+	yfac0	: a_real	= 0.050251; { y-axis origin } 
+	xfacN	: a_real	= 0.782473; { x-axis limit }
+	yfacN	: a_real	= 0.904523; { y-axis limit }
 
 	{ The two text directions available }
 	TextDirect : array[0..1] of string[8] = ('HorizDir', 'VertDir');
@@ -123,6 +130,8 @@ VAR
 	GraphDriver :	INTEGER;  { The Graphics device driver }
 	GraphMode   :	INTEGER;  { The Graphics mode value }
 	Error		:	INTEGER;
+	MaxX  		:	word;     { The maximum resolution of the device m800x600 }
+	MaxY  		:	word;     { The maximum resolution of the device m800x600 }
 	HalfX, HalfY:	word;
 	ErrorCode   :	INTEGER;  { Reports any graphics errors }
 	MaxColor    :	word;     { The maximum color value available }
@@ -130,8 +139,8 @@ VAR
 	xoffset,yoffset,xlength,ylength,xend,yend	:	integer;
 	xfactor, 
 	yfactor		:	REAL;
-	Ch          : CHAR;
-	skip        : BOOLEAN;
+	Ch          :	CHAR;
+	skip        :	BOOLEAN;
 	empty_zones	:	TP_zone_list;
 
 	pointcount						:  T_mecharray;
@@ -297,10 +306,10 @@ BEGIN
 	HalfX := Round(MaxX);
 	HalfY := Round(MaxY);
 
-	xoffset     := Round(0.125196 * MaxX);
-	yoffset     := Round(0.050251 * MaxY);
-	xlength     := Round(0.782473 * MaxX);
-	ylength     := Round(0.904523 * MaxY);
+	xoffset     := Round(xfac0 * MaxX);
+	yoffset     := Round(yfac0 * MaxY);
+	xlength     := Round(xfacN * MaxX);
+	ylength     := Round(yfacN * MaxY);
 	xend        := xoffset+xlength;
 	yend        := yoffset+ylength;
 	xfactor		:= MaxX/(MaxX-1);
@@ -343,14 +352,16 @@ VAR
 	vp			:	ViewPortType;
 	ErrorStr	:	String;
 	z			:	TP_zone_list;
+	oldcol		:	ColorType;
 
 BEGIN
 	WRITELN(db,'Entering ClearTextSpace');
-
-	xx1:= Round(xfactor*x1);
-	yy1:= Round(yfactor*y1);
-	xx2:= Round(xfactor*x2);
-	yy2:= Round(yfactor*y2);
+	oldcol := GetColor;
+	SetColor(green);
+	xx1:= Round(xfactor*x1*MaxX/xVGA);
+	yy1:= Round(yfactor*y1*MaxY/yVGA);
+	xx2:= Round(xfactor*x2*MaxX/xVGA);
+	yy2:= Round(yfactor*y2*MaxY/yVGA);
 
 {	Check that we are inside GRAPH plotting area, not full screen.	}
 	IF yy2 > yend-1 THEN
@@ -370,6 +381,7 @@ BEGIN
 		yy2:=yoffset+1;
 	IF xx2 < xoffset+1 THEN
 		xx2:=xoffset+1;
+	
 	myLine(xx1,yy1,xx1,yy2);
 	myLine(xx1,yy1,xx2,yy1);
 	myLine(xx2,yy2,xx2,yy1);
@@ -377,7 +389,7 @@ BEGIN
 
 {	Now add the cleared zone to (the front of) the global list
 	of empty zones, but FIRST we SHOULD really check whether we
-	are clearing an already-cleard zone! i.e. a label which overlaps
+	are clearing an already-cleared zone! i.e. a label which overlaps
 	with the info box in the top left of the graph in the case of TIN.
 	If we get an overlap then we should abort - but how do we then stop
 	the string being written there anyway ??? PMS 4-February-1988 11:15
@@ -392,45 +404,36 @@ BEGIN
 	SetViewPort(xx1,yy1,xx2,yy2,ClipOn);
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
-
-	IF ErrorCode <> grOk THEN
-		BEGIN
-			SetViewPort(0,0,MaxX,MaxY,ClipOn);
-			Str(xx2,ErrorStr);
-			ErrorStr:='Graphics SetViewPort error: '+GraphErrorMsg(ErrorCode);
-			GetViewSettings(vp);
-			myLine(vp.x1,vp.y1,vp.x1,vp.y2);
-			myLine(vp.x1,vp.y1,vp.x2,vp.y1);
-			myLine(vp.x2,vp.y2,vp.x2,vp.y1);
-			myLine(vp.x2,vp.y2,vp.x1,vp.y2);
-
-			REPEAT UNTIL keypressed; Ch:=ReadKey;
-			CloseGraph;
-			WRITELN(ErrorStr);
-			WRITELN(db,ErrorStr);
-			WRITELN(x1,'|',xfactor*x1);
-			WRITELN(xx1,' ',yy1,' ',xx2,' ',yy2);
-			REPEAT UNTIL keypressed; Ch:=ReadKey;
-			Initialize;
-
-		END
-	ELSE
-		BEGIN
- 			ClearViewPort;
-		END;
+	
+	ClearViewPort;
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+	
 	SetViewPort(0,0,MaxX,MaxY,ClipOn);
-	WRITELN(db,'Exiting ClearTextSpace');
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+	
+	SetColor(red);
+	Rectangle(xx1,yy1,xx2,yy2);
+
+
+	SetColor(oldcol);
+
+	WRITELN(db,'Exiting ClearTextSpace',' ',round(x1),' ',round(y1),' ',round(x2),' ',round(y2));
 
 END;	{	ClearTextSpace	}
 {---------------------------------------------------------------------------}
 PROCEDURE OurOutTextXY(x,y: INTEGER; s: String);
+	{	Thi converts 640x200 original coords to current pixel x/y coordinates }
+
 	{	This is to intercept plotting instructions such
 		that we can write HPGL and PIC files in a future extension.	}
 VAR
 	xx, yy	:	integer;
+	
 BEGIN
-	xx:= Round(xfactor*x);
-	yy:= Round(yfactor*y);
+	xx:= Round(xfactor*x*MaxX/xVGA);
+	yy:= Round(yfactor*y*MaxY/yVGA);
 	Graph.OutTextXY(xx,yy,s);
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
@@ -446,12 +449,7 @@ VAR
 
 BEGIN
 	SetTextStyle(DefaultFont, VertDir, 1);
-	OurOutTextXY(xstart,ystart+lbllength,lbl);
-
-	FOR i:= 0 to lbllength-1 DO
-		BEGIN
-			OurOutTextXY(xstart,ystart+i*(TextHeight('M')+1),copy(lbl,i+1,1));
-		END;
+	OurOutTextXY(xstart,Round(ystart+ 0.5*lbllength),lbl);
 
 	SetTextStyle(DefaultFont, HorizDir, 1); 
 END;
@@ -460,9 +458,6 @@ END;
 PROCEDURE PLOT_STRAIN_RATES_BOX (LgSNfirst, LgSNlast: real);
 
 { ----- Constructs box for temperature DFM-map and labels the axes ----- }
-
-const
-	msgLine = 'Why do the lines not appear?';
 
 var
 	xscale, yscale   :	INTEGER;
@@ -554,7 +549,7 @@ BEGIN
 { --------- Put on NORMALIZED TEMPERATURE scale ---------- }
 
 	xscale  := round((TNlast - TNfirst)*100);
-
+	SetColor(yellow);
 	FOR scale := (round(TNfirst*100)) to (round(TNfirst*100) + xscale - 1) DO
 		BEGIN
 			xmark :=  xoffset +
@@ -571,7 +566,7 @@ BEGIN
 	T         := -400;
 	Tinterval := 100;
 	IF round((TNlast - TNfirst)*tmelt/200) > 10 THEN Tinterval := 200;
-
+	SetColor(yellow);
 	repeat
 		T  := T + Tinterval;
 		Tnormalised := (T + 273)/tmelt;
@@ -590,7 +585,7 @@ BEGIN
 	Str(TNfirst:4:2,st);
 	OurOutTextXY(70,196,st);
 	Str(TNlast:4:2,st);
-	OurOutTextXY(559,196,st);
+	OurOutTextXY(569,196,st);
 
 	Str(round(T - Tinterval):6,st);
 	OurOutTextXY(511,5,st);
@@ -599,37 +594,42 @@ BEGIN
 
 	OurOutTextXY(200,196,' NORMALISED TEMPERATURE T/Tm');
 	OurOutTextXY(216,5,'     TEMPERATURE  (C)     ');
-	vertical_text(56,32,'NORM SHEARSTRESS');
-	vertical_text(599,32,'STRESS   (MPa)  ');
+	vertical_text(56,100,'NORM SHEARSTRESS');
+	vertical_text(599,100,'STRESS   (MPa)  ');
 
 END;   {PLOT_STRAIN_RATES_BOX.    }
 
 {---------------------------------------------------------------------------}
 PROCEDURE PLOT_STRAIN_RATES_INFO;
 
-{ ----- Label horizontal and vertical axes of graph window ----- }
+{ ----- Information box in top-right corner ----- }
 VAR
 	xof,yof,xl,yl	:	REAL;
 	delta_x			:	REAL;
 	delta_y			:	REAL;
 
 BEGIN
+
 	DATE_AND_TIME;
 
-	xof    := 0.125196 * MaxX;
-	yof    := 0.050251 * MaxY;
-	xl     := 0.782473 * MaxX;
-	yl     := 0.904523 * MaxY;
+	xof    := xfac0 * MaxX;
+	yof    := yfac0 * MaxY;
+	xl     := xfacN * MaxX;
+	yl     := yfacN * MaxY;
 
 	delta_x := 6/xfactor;										{ avoid axes marks }
 	delta_y := 6/yfactor;										{ avoid axes marks }
-	ClearTextSpace(xof+3*xl/4,yof+delta_y,xof+xl-delta_x,yof+yl/4);
 
+	SetColor(white);
+
+	{ these calls to myLine use actual pixels in the viewport}
 	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
 		xoffset+xlength,yoffset+round(ylength/4));
 	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
 		xoffset+round(3*xlength/4),yoffset);
 
+	{ these calls to ClearTextSpace and OurOutTextXY use 'notional 640x200 scaled pixels'}
+	ClearTextSpace(456,12,630,55);
 	OurOutTextXY(465,16,matlname);
 	IF (Gsize*1.0e6 < 0.1) THEN	{	less than 0.1 microns, do in nm	}
 		BEGIN
@@ -685,8 +685,8 @@ PROCEDURE IDENTIFY_CONTOURS;
 
 BEGIN
 
-	ClearTextSpace(96,156,257,183);
-	OurOutTextXY(96,162,'    CONTOURS     ');
+	ClearTextSpace(96,159,257,183);
+	OurOutTextXY(96,165,'    CONTOURS     ');
 	IF ((contour[1] < 99999 ) AND ( contour[1] >= 1 )) THEN
 		Str(contour[1]:7:0,st)
 	ELSE
@@ -724,12 +724,13 @@ BEGIN
 	lines to the screen, even though it was general with respect to
 	the number of graphics pixels on the screen.
 }
-	xoffset	:=	0.125196*(MaxX-1);
-	yoffset	:=	0.050251*(MaxY-1);
-	xend	:=	xoffset + 0.782473*(MaxX-1);
-	yend	:=	yoffset + 0.904523*(MaxY-1);
+	xoffset	:=	xfac0*(MaxX-1);
+	yoffset	:=	yfac0*(MaxY-1);
+	xend	:=	xoffset + xfacN*(MaxX-1);
+	yend	:=	yoffset + yfacN*(MaxY-1);
 
 { ----- Position and print the remaining field labels ----- }
+	SetColor(brown);
 
 	FOR mech := null TO rel_drag DO
 		IF (pointcount[mech] > (steps*steps/100)) and (pointcount[mech] > 4) THEN
@@ -1675,7 +1676,8 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 
 	PLOT_STRAIN_RATES_BOX (LgSNfirst, LgSnlast);
 
-	PLOT_STRAIN_RATES_INFO;
+{	PLOT_STRAIN_RATES_INFO;  }
+	SetColor(white);
 
 	SetViewPort(xoffset, yoffset, xend, yend, ClipOn);
 
@@ -1909,8 +1911,8 @@ BEGIN
 
 	OurOutTextXY(216,5,'          TIME   (s)      ');
 	OurOutTextXY(200,196,'       Ln(TIME)  (s)      ');
-	vertical_text(56,32,'NORM. HARDNESS  ');
-	vertical_text(599,32,'HARDNESS (MPa)  ');
+	vertical_text(56,100,'NORM. HARDNESS  ');
+	vertical_text(599,100,'HARDNESS (MPa)  ');
 
 END;   {PLOT_Indentation_BOX.    }
 
@@ -1926,10 +1928,10 @@ VAR
 BEGIN
 	DATE_AND_TIME;
 
-	xof    := 0.125196 * MaxX;
-	yof    := 0.050251 * MaxY;
-	xl     := 0.782473 * MaxX;
-	yl     := 0.904523 * MaxY;
+	xof    := xfac0 * MaxX;
+	yof    := yfac0 * MaxY;
+	xl     := xfacN * MaxX;
+	yl     := yfacN * MaxY;
 
 	delta_x := 6/xfactor;										{ avoid axes marks }
 	delta_y := 6/yfactor;										{ avoid axes marks }
@@ -1939,6 +1941,7 @@ BEGIN
 		xoffset+xlength,yoffset+round(ylength/4));
 	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
 		xoffset+round(3*xlength/4),yoffset);
+	SetColor(white);
 
 	OurOutTextXY(96,20,'Indentation Creep Trajectories');
 	OurOutTextXY(465,16,matlname);
@@ -2150,7 +2153,8 @@ BEGIN	{Calc_Indentation_Map	}
 
 	PLOT_Indentation_BOX (t_first, t_last, LgHNfirst, LgHNlast);
 
-	PLOT_Indentation_INFO;
+{	PLOT_Indentation_INFO;}
+	SetColor(white);
 
 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
 
