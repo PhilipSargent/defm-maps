@@ -1,1 +1,0 @@
-pkarc -f dfmwork.arc
