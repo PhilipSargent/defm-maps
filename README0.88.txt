@@ -2,7 +2,7 @@ File README.TXT supplied with DFM290
 ====================================
 
 Version 0.88
-26-May-1990 01:54 
+12-June-1993 06:32 
 
 THIS IS A PRE-RELEASE VERSION, CURRENTLY BEING DEBUGGED
 
@@ -181,12 +181,12 @@ These can be detected by MS-DOS batch files and are:
 7       Error in command line options
 >=8     Internal error, telephone +44 (223) 332627
 
- Philip Sargent                                   e-mail: pms1@uk.ac.cam.phx
+ Philip Sargent                                   e-mail: pms@eng.cam.ac.uk
 
  Engineering Dept., Trumpington St.,
  CAMBRIDGE CB2 1PZ, England
  tel. +44 (223) 332627
- fax. +44 (223) 3326662
+ fax. +44 (223) 332662
 
 <end of readme.txt>
 
