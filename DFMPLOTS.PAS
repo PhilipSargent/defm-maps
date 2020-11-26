@@ -1,5 +1,5 @@
 Unit DfmPlots;
-{ PMS 23 Nov 2020 20:42 }
+{ PMS 26 Nov 2020 19:00 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -28,12 +28,10 @@ Unit DfmPlots;
 {$DEFINE  debug}
 {$ENDIF}
 
-{$R+}    {Range checking on}  
-{$B+}    {Boolean complete evaluation on}
-{$S+}    {Stack checking on}
-{$I+}    {I/O checking on}
-{$N+}    {Use numeric coprocessor}
-{.$E+}	 {Include copy of 8087 Emulator - default anyway}
+{$R+}	{Range checking on}
+{$B+}	{Boolean complete evaluation on}
+{$S+}	{Stack checking on}
+{$I+}	{I/O checking on}
 
 Interface
 
@@ -50,9 +48,7 @@ PROCEDURE IDENTIFY_FIELDS;
 
 PROCEDURE CALC_STRAIN_RATES_MAP;
 
-{$IFDEF indent}
 PROCEDURE CALC_Indentation_MAP;
-{$ENDIF}
 
 {===========================================================================}
 
@@ -120,11 +116,9 @@ CONST
 	{ The vertical text justifications available }
 	VertJust   : array[0..2] of string[10] = ('BottomText', 'CenterText', 'TopText');
 
-{$IFDEF indent}
 	C_1 = 0.193;	{	1/(3.sqrt(3))	}
 	C_2 = 1;
 	C_3 = 25.504;	{	Vickers indenters	}
-{$ENDIF}
 
 VAR
 	GraphDriver :	INTEGER;  { The Graphics device driver }
@@ -684,6 +678,7 @@ PROCEDURE IDENTIFY_CONTOURS;
 { ----- Identify the time contours and add the date ----- }
 
 BEGIN
+	Flush(db);
 
 	ClearTextSpace(96,159,257,183);
 	OurOutTextXY(96,165,'    CONTOURS     ');
@@ -724,6 +719,8 @@ BEGIN
 	lines to the screen, even though it was general with respect to
 	the number of graphics pixels on the screen.
 }
+	Flush(db);
+
 	xoffset	:=	xfac0*(MaxX-1);
 	yoffset	:=	yfac0*(MaxY-1);
 	xend	:=	xoffset + xfacN*(MaxX-1);
@@ -894,11 +891,10 @@ BEGIN		{	Iterate_One_Contour	}
 		IF (RateRatio < 1) THEN
 			RateRatio := 1/RateRatio;
 		Inc(n);
-{$IFDEF detail}
 		Flush(db);
-		WriteLn(db);
-{$ENDIF}
+
 {$IFDEF contour}
+		WriteLn(db);
 		WriteLn(db,
 			' c =',c:2,
 			' Rates:   ',previous_rate:12,'->',field_ids[c].rate:12,' ->',strain_rate:12,
@@ -1733,9 +1729,8 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 			BEGIN
 				last_contour[c] := contourmark[c];
 			END;
-{$IFDEF debug}
+
 		Flush(db);
-{$ENDIF}
 		DETECT_SKIP;
 
 		i:=i+1;
@@ -1759,7 +1754,6 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 
 END;       {CALC_STRAIN_RATES_MAP.   }
 {---------------------------------------------------------------------------}
-{$IFDEF indent}
 PROCEDURE 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high: a_real; trajnumber:integer);
 
 VAR
@@ -1767,6 +1761,7 @@ VAR
 { ----- Identify the trajectories and add the date ----- }
 
 BEGIN
+	Flush(db);
 
 	ClearTextSpace(96,156,260,183);
 	Str((trajnumber):3,st);
@@ -2095,6 +2090,7 @@ BEGIN	{Calc_Indentation_Map	}
 	t := t_first;
 	Load := 1;	{	in N, 1kgf. is 9.81 N, so 1 N is about 100gf.	}
 	BaseRate := 1e-4;
+	Writeln(db,'Calc_Indentation_Map ');
 	Writeln(db,'BaseRate ',BaseRate:15);
 	Writeln(db,'Load     ', Load:15:4);
 	{	shmod is at 300 K	}
@@ -2118,7 +2114,9 @@ BEGIN	{Calc_Indentation_Map	}
 	prev_eps := 0;
 	epsilon := 0;
 	home_in := 1.05;
+	Writeln(db,' Iterate to find strain rate for Stress in middle of range ');
 	Writeln(db,' Stress Begin count   Rate      LgSN     epsilon');
+	Flush(db);
 	REPEAT
 		count:= count + 1;
 		STRAIN_RATES (TN, LgSN, Rate, field, hint_stress);
@@ -2139,6 +2137,7 @@ BEGIN	{Calc_Indentation_Map	}
 		DETECT_SKIP;
 	UNTIL (( epsilon < 1.1) AND ( epsilon > 0.9)) OR skip;
 	Writeln(db,'Finished TN=0.5 getting Rate = 1e-4 ',Rate:8);
+	Flush(db);
 
 { ----- "Zero" field id counters ----- }
 
@@ -2150,10 +2149,13 @@ BEGIN	{Calc_Indentation_Map	}
 		END;
 
 { ----- Draw the Indentation box ----- }
+	Writeln(db,' call PLOT_Indentation_BOX');
+	Flush(db);
 
 	PLOT_Indentation_BOX (t_first, t_last, LgHNfirst, LgHNlast);
+	Flush(db);
 
-{	PLOT_Indentation_INFO;}
+	PLOT_Indentation_INFO;
 	SetColor(white);
 
 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
@@ -2196,7 +2198,6 @@ BEGIN	{Calc_Indentation_Map	}
 
 END;       {CALC_INDENTATION_MAP.   }
 { =========================================================================== }
-{$ENDIF}	{ indent }
 {---------------------------------------------------------------------------}
 { Unit Initialization }
 BEGIN

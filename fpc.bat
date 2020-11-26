@@ -10,6 +10,6 @@ rem - standard graph unit in graph
 rem should use a make utility as this will not recompile units
 del *.o
 del *.ppu
-
-REM -dCONTOUR OR -dDETAIL sets DEBUG on, which then crashes when it tries to open debug.txt
+REM -dDEBUG is always on, set in the code.
+REM -dCONTOUR and/or-dDETAIL and/or-dCNTRFIX (alternative contour algorithm)
 C:\FPC\3.2.0\bin\i386-win32\ppcrossx64 -Mtp dfm2020

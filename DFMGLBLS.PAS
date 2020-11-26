@@ -1,5 +1,5 @@
 { DfmGlbls.pas	}
-{ PMS 23 Nov 2020 16:53 }
+{ PMS 26 Nov 2020 19:00 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,7 +20,7 @@
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{$IFDEF  contour}		{	ensure compiler directives are consistent	}
+{$IFDEF contour}		{	ensure compiler directives are consistent	}
 {$DEFINE  debug}
 {$ENDIF}
 {$IFDEF  detail}
@@ -33,8 +33,6 @@
 {$B+}	{Boolean complete evaluation on}
 {$S+}	{Stack checking on}
 {$I+}	{I/O checking on}
-{$N+}	{Use numeric coprocessor}
-{.$E+}	{Include copy of 8087 Emulator - default anyway}
 
 Unit Dfmglbls;
 
@@ -249,6 +247,7 @@ VAR
 	modedemo		:  BOOLEAN;
 	modetemp		:  BOOLEAN;
 	modestrate		:  BOOLEAN;
+	modeindt		:  BOOLEAN;
 	modelistfile	:  BOOLEAN;
 	modeconcern		:  BOOLEAN;
 
@@ -628,12 +627,13 @@ BEGIN
 	WRITELN(' /f      fast option, no interaction with user');
 	WRITELN(' /d      demonstration; as /f but waits 10s between plots');
 
-	WRITELN(' /e      display exit codes only');
+	WRITELN(' /e      display exit codes and command line options only');
 	WRITELN(' /s      options for strain-rate map:');
-
 	WRITELN('           /s+  produce, /s- don''t produce, a strain-rate map');
 	WRITELN(' /t      options for temperature map (as for /s)');
 	WRITELN('           /t+  produce, /t- don''t produce, a temperature map');
+	WRITELN(' /i      options for temperature map (as for /s)');
+	WRITELN('           /i+  produce, /i- don''t produce, a temperature map');
 	WRITELN(' /w:<fn> write a listing to a file, <fn> is a full filename');
 	WRITELN;
 
@@ -1077,9 +1077,6 @@ BEGIN
 {$ENDIF}
 {$IFDEF  detail}
 	compiler_opts := compiler_opts+'+Detail';
-{$ENDIF}
-{$IFDEF  indent}
-	compiler_opts := compiler_opts+'+Indent';
 {$ENDIF}
 {
 	Writeln(Version,' v',Release,' ',VersionDate,' Compiler options:',compiler_opts);
