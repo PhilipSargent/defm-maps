@@ -358,39 +358,13 @@ END;	{	GET_FILENAME	}
 {---------------------------------------------------------------------------}
 PROCEDURE HANDLE_TEMPERATURE_PLOT_OPTIONS;
 {	Identify the type of map by the variable used for the CONTOURS	}
+{	/t+ or /t- or /tL:output.hpg }
 BEGIN
 	s :=Copy(ParamStr(index),3,1);
 	ch:=s[1];
 
 	CASE ch OF
 			'-': 		modetemp:=FALSE;
-			'l','L': BEGIN
-							pathfilelength:=
-								Length(ParamStr(index))-4;
-							IF (pathfilelength > 0) AND
-								(pathfilelength <= pathlength) THEN
-									BEGIN
-										ppicfilename:=
-											Copy(ParamStr(index),5,pathfilelength);
-										modeppic:=TRUE;
-									END
-							ELSE
-								PathError(ParamStr(index));
-						END;
-
-			'g','G': BEGIN
-							pathfilelength:=
-								Length(ParamStr(index))-4;
-							IF (pathfilelength>0) AND
-								(pathfilelength <= pathlength) THEN
-									BEGIN
-										phpgfilename:=
-											Copy(ParamStr(index),5,pathfilelength);
-										modephpg:=TRUE;
-									END
-							ELSE
-								PathError(ParamStr(index));
-						END;
 
 		END;	{	Case	}
 
@@ -399,38 +373,12 @@ END;	{	HANDLE_TEMPERATURE_PLOT_OPTIONS	}
 {---------------------------------------------------------------------------}
 PROCEDURE HANDLE_STRAIN_RATES_PLOT_OPTIONS;
 {	Identify the type of map by the variable used for the CONTOURS	}
+{	st+ or st- or /sL:output.hpg }
 BEGIN
 	s :=Copy(ParamStr(index),3,1);
 	ch:=s[1];
 	CASE ch OF
 			'-': 		modestrate:=FALSE;
-			'l','L': BEGIN
-							pathfilelength:=
-								Length(ParamStr(index))-4;
-							IF (pathfilelength>0) AND
-								(pathfilelength <= pathlength) THEN
-									BEGIN
-										tpicfilename:=
-											Copy(ParamStr(index),5,pathfilelength);
-										modetpic:=TRUE;
-									END
-							ELSE
-								PathError(ParamStr(index));
-						END;
-
-			'g','G': BEGIN
-							pathfilelength:=
-								Length(ParamStr(index))-4;
-							IF (pathfilelength>0) AND
-								(pathfilelength <= pathlength) THEN
-									BEGIN
-										thpgfilename:=
-											Copy(ParamStr(index),5,pathfilelength);
-										modethpg:=TRUE;
-									END
-							ELSE
-								PathError(ParamStr(index));
-						END;
 
 		END;	{	Case	}
 
@@ -448,18 +396,10 @@ BEGIN
 	modedemo:=FALSE;
 	modetemp:=TRUE;
 	modestrate:=TRUE;
-	modeppic:=FALSE;
-	modetpic:=FALSE;
-	modephpg:=FALSE;
-	modethpg:=FALSE;
 	modelistfile:=FALSE;
 	modeconcern:=FALSE;
 	matlname:='';
 	listfilename:='';
-	phpgfilename:='';
-	thpgfilename:='';
-	ppicfilename:='';
-	tpicfilename:='';
 
 	IF ParamCount<>0 THEN
 	FOR index:=1 TO ParamCount DO
@@ -490,7 +430,7 @@ BEGIN
 					
 					't','T': HANDLE_TEMPERATURE_PLOT_OPTIONS;
 					's','S': HANDLE_STRAIN_RATES_PLOT_OPTIONS;
-					'w','W': BEGIN
+					'w','W': BEGIN	{ write a listing file }
 									pathfilelength:=Length(ParamStr(index))-3;
 									IF pathfilelength>0 THEN
 										IF pathfilelength <= pathlength THEN
@@ -516,49 +456,17 @@ BEGIN
 				END;
 			END;	{ For loop along options	}
 
-	IF (modephpg OR modeppic) OR  (modethpg OR modetpic) THEN
-		BEGIN
-			WRITELN('The PIC file and HPGL file options are not yet written.');
-			Finish(7);
-		END;
-
 	SetError:=FALSE;
 	IF modelistfile THEN
 		IF CannotOpen(listfilename) THEN
 			SetError:=TRUE;
 
-{	IF modephpg THEN
-		IF CannotOpen(phpgfilename) THEN
-			SetError:=TRUE;
-
-	IF modethpg THEN
-		IF CannotOpen(thpgfilename) THEN
-			SetError:=TRUE;
-
-	IF modeppic THEN
-		IF CannotOpen(ppicfilename) THEN
-			SetError:=TRUE;
-
-	IF modetpic THEN
-		IF CannotOpen(tpicfilename) THEN
-			SetError:=TRUE;
-}
 	IF SetError THEN
 		BEGIN
 			WRITELN('ERROR: Cannot open one of these Output Files');
 			WRITELN('   /l:  listfilename:=',listfilename);
-{			WRITELN('   /pg: phpgfilename:=',phpgfilename);
-			WRITELN('   /tg: thpgfilename:=',thpgfilename);
-			WRITELN('   /pl: ppicfilename:=',ppicfilename);
-			WRITELN('   /tg: tpicfilename:=',tpicfilename);}
-			{ Finish(4); }
+			Finish(4); 
 		END;
-
-	IF modethpg OR modetpic THEN
-		modestrate:=TRUE;
-
-	IF modephpg OR modeppic THEN
-		modetemp:=TRUE;
 
 	IF modedemo THEN
 		modefast:=TRUE;

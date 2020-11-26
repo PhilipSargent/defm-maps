@@ -245,13 +245,9 @@ VAR
 
 	OldExitProc		:  Pointer;  { Saves exit procedure address }
 	modenamed		:  BOOLEAN;
-	modefast			:  BOOLEAN;
-	modedemo			:  BOOLEAN;
-	modeppic			:  BOOLEAN;
-	modephpg			:  BOOLEAN;
-	modetpic			:  BOOLEAN;
-	modethpg			:  BOOLEAN;
-	modetemp			:  BOOLEAN;
+	modefast		:  BOOLEAN;
+	modedemo		:  BOOLEAN;
+	modetemp		:  BOOLEAN;
 	modestrate		:  BOOLEAN;
 	modelistfile	:  BOOLEAN;
 	modeconcern		:  BOOLEAN;
@@ -259,9 +255,9 @@ VAR
 	choice			:  char;
 	answer			:  char;
 
-	d					:  T_descstring;
-	u					:  T_unitstring;
-	id					:	T_id_string;
+	d				:	T_descstring;
+	u				: 	T_unitstring;
+	id				:	T_id_string;
 	par				:  pararray;
 	vbl				:  vblarray;
 	ref				:  refarray;
@@ -270,15 +266,11 @@ VAR
 	ref_written_lines	:	R_lines;
 	matlname			:  filestring;
 	listfilename	:  filestring;
-	ppicfilename	:  filestring;
-	tpicfilename	:  filestring;
 	time_string		:  timer_string;
 	date_string		:  timer_string;
 	weekday			:	timer_string;
 	datalabel		:  datastring;
 	datafilename	:  filestring;
-	phpgfilename	:  filestring;
-	thpgfilename	:  filestring;
 	compiler_opts	:	String;
 	db				:	TEXT;		{	debug file	}
 
@@ -629,8 +621,7 @@ PROCEDURE GiveCommandLineHelp;
 
 BEGIN
 	WRITELN(' usage:  ',version,' <dataname> <options>');
-{	WRITELN(' e.g.    ',version,' copper /f /w:\op\copper.lst /s- /tl:cut.pic');
-}
+
 	WRITELN(' e.g.    ',version,' copper /f /w:\op\copper.lst /s-');
 	WRITELN;
 	WRITELN(' /h /?   help and information only');
@@ -639,18 +630,14 @@ BEGIN
 
 	WRITELN(' /e      display exit codes only');
 	WRITELN(' /s      options for strain-rate map:');
-{	WRITELN(' /sg:<fn>  produce HPGL Hewlett-Packard Graphics Language plot');
-	WRITELN('         (<fn> denotes full path & filename):');
-}
+
 	WRITELN('           /s+  produce, /s- don''t produce, a strain-rate map');
 	WRITELN(' /t      options for temperature map (as for /s)');
+	WRITELN('           /t+  produce, /t- don''t produce, a temperature map');
 	WRITELN(' /w:<fn> write a listing to a file, <fn> is a full filename');
-{	WRITELN;
-	WRITELN(' In case of conflict between options,');
-	WRITELN(' e.g. "/s- /sg:cuplot.hpg",');
-	WRITELN(' the default is for action rather than inaction,');
-	WRITELN('  so /s- would be ignored.');
-}
+	WRITELN;
+
+
 END;	{	GiveCommandLineHelp	}
 {-------------------------------------------------------------------}
 PROCEDURE UnderLine (n:Byte);
