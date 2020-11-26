@@ -1,5 +1,5 @@
 Unit Dfmmain;
-{ PMS 23 Nov 2020 20:42 }
+{ PMS 26 Nov 2020 19:00 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -27,12 +27,10 @@ Unit Dfmmain;
 {$IFDEF  detail}
 {$DEFINE  debug}
 {$ENDIF}
-{$R+}    {Range checking on }
-{$B+}    {Boolean complete evaluation on}
-{$S+}    {Stack checking on}
-{$I+}    {I/O checking on}
-{$N+}    {Use numeric coprocessor}
-{.$E+}	 {Include copy of 8087 Emulator - default anyway}
+{$R+}	{Range checking on}
+{$B+}	{Boolean complete evaluation on}
+{$S+}	{Stack checking on}
+{$I+}	{I/O checking on}
 
 Interface
 
@@ -373,7 +371,7 @@ END;	{	HANDLE_TEMPERATURE_PLOT_OPTIONS	}
 {---------------------------------------------------------------------------}
 PROCEDURE HANDLE_STRAIN_RATES_PLOT_OPTIONS;
 {	Identify the type of map by the variable used for the CONTOURS	}
-{	st+ or st- or /sL:output.hpg }
+{	s+ or s- or /sL:output.hpg }
 BEGIN
 	s :=Copy(ParamStr(index),3,1);
 	ch:=s[1];
@@ -385,6 +383,20 @@ BEGIN
 END;	{	HANDLE_STRAIN_RATES_PLOT_OPTIONS	}
 
 {---------------------------------------------------------------------------}
+PROCEDURE HANDLE_Indentation_PLOT_OPTIONS;
+{	Identify the type of map by the variable used for the CONTOURS	}
+{	i+ or i- or /iL:output.hpg }
+BEGIN
+	s :=Copy(ParamStr(index),3,1);
+	ch:=s[1];
+	CASE ch OF
+			'-': 		modeindt:=FALSE;
+
+		END;	{	Case	}
+
+END;	{	HANDLE_Indentation_PLOT_OPTIONS	}
+
+{---------------------------------------------------------------------------}
 PROCEDURE HANDLE_OPTIONS;
 
 VAR
@@ -394,8 +406,9 @@ BEGIN
 	modenamed:=FALSE;
 	modefast:=FALSE;
 	modedemo:=FALSE;
-	modetemp:=TRUE;
+	modetemp:=FALSE;
 	modestrate:=TRUE;
+	modeindt:=FALSE;
 	modelistfile:=FALSE;
 	modeconcern:=FALSE;
 	matlname:='';
@@ -418,11 +431,12 @@ BEGIN
 									REPEAT UNTIL KeyPressed;
 									answer := ReadKey;
 									Writeln;
-									Writeln('contact: Philip Sargent     e-mail: philip.sargent@gmail.com (formerly pms1@uk.ac.cam.phx) ');
+									Writeln('contact: Philip Sargent     e-mail: philip.sargent@gmail.com ');
 									Finish(1);
 								END;
 					'e','E': BEGIN
 									GiveExitCodes;
+									GiveCommandLineHelp;
 									Finish(1);
 								END;
 					'f','F': modefast:=TRUE;
@@ -430,6 +444,7 @@ BEGIN
 					
 					't','T': HANDLE_TEMPERATURE_PLOT_OPTIONS;
 					's','S': HANDLE_STRAIN_RATES_PLOT_OPTIONS;
+					'i','I': HANDLE_Indentation_PLOT_OPTIONS;
 					'w','W': BEGIN	{ write a listing file }
 									pathfilelength:=Length(ParamStr(index))-3;
 									IF pathfilelength>0 THEN
@@ -624,25 +639,9 @@ BEGIN
 		textbackground(C_screen);   ClrScr;
 		textcolor(C_text);
 
-{$IFDEF indent}
-{ should not use modestrate, should make a new mode, "modeindt", so that
-	indentation maps could always be run by playing with the commandline
-	arguments. PMS 17-January-1990 15:28 }
-		Initialize;		{	graphics display	}
-{		IF modeindt THEN		}
-		BEGIN
-			  CALC_Indentation_MAP;
-
-			IF modedemo THEN Delay(20000);
-
-			IF NOT modefast THEN
-				BEGIN
-					REPEAT UNTIL keypressed;
-				   answer:=Readkey;
-				END;
-		END;
-{$ENDIF}	{ indent }
-
+		Writeln(db, 'modestrate: ', modestrate);
+		Writeln(db, 'modeindt:   ', modeindt);
+		Writeln(db, 'modetemp:   ', modeindt);
 		IF modestrate THEN
 			BEGIN
 				Initialize;		{	graphics display	}
@@ -658,6 +657,20 @@ BEGIN
 				CloseGraph;              { Shut down the graphics system }
 			END;
 
+		IF modeindt THEN		
+			BEGIN
+				Initialize;		{	graphics display	}
+				CALC_Indentation_MAP;
+
+				IF modedemo THEN Delay(20000);
+
+				IF NOT modefast THEN
+					BEGIN
+						REPEAT UNTIL keypressed;
+					   answer:=Readkey;
+					END;
+				CloseGraph;              { Shut down the graphics system }
+			END;
 
 	{ ----- REPEAT the program UNTIL Q (quit) is input ----- }
 
@@ -683,7 +696,8 @@ BEGIN
 			clrscr;
 		END;
 
-	IF modeconcern THEN	{	use Halt because debug file & Exitproc OK now }
+{	use Halt because debug file & Exitproc OK now }
+	IF modeconcern THEN	{ grain size unusual so give an error code }
 		Halt(2)
 	ELSE
 		Halt(0);

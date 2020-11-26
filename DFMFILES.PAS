@@ -1,5 +1,5 @@
 Unit dfmfiles;
-{ PMS 23 Nov 2020 16:53 }
+{ PMS 26 Nov 2020 19:56 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -26,12 +26,10 @@ Unit dfmfiles;
 {$IFDEF  detail}
 {$DEFINE  debug}
 {$ENDIF}
-{$R+}    {Range checking on}
-{$B+}    {Boolean complete evaluation on}
-{$S+}    {Stack checking on}
-{$I+}    {I/O checking on}
-{$N+}    {Use numeric coprocessor}
-{.$E+}		{Include copy of 8087 Emulator - default anyway}
+{$R+}	{Range checking on}
+{$B+}	{Boolean complete evaluation on}
+{$S+}	{Stack checking on}
+{$I+}	{I/O checking on}
 
 Interface
 
@@ -725,7 +723,7 @@ BEGIN
 			convert_number (r_hi, s_hi, -1);
 
 			if (par[parnumber] < L1) or (par[parnumber] > L3) then BEGIN
-				modeconcern:=TRUE;
+				modeconcern:=TRUE; { only sets flag for exit error (warning) code }
 				IF Screen THEN
 					BEGIN
 						writeln ('    ',d,'  outside expected range');

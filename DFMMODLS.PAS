@@ -1,5 +1,5 @@
  Unit DfmModls;
-{ PMS 22 Nov 2020 20:07 }
+{ PMS 26 Nov 2020 19:00 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -27,14 +27,10 @@
 {$IFDEF  detail}
 {$DEFINE  debug}
 {$ENDIF}
-{      	All these options set in command line when we run the compiler,
-			and are NOT set here (hence the dots).	}
-{.$R+}    {Range checking on}
-{.$B+}    {Boolean complete evaluation on}
-{.$S+}    {Stack checking on}
-{.$I+}    {I/O checking on}
-{.$N+}    {Use numeric coprocessor if present}
-{.$E+}	 {Include copy of 8087 Emulator - default anyway}
+{$R+}	{Range checking on}
+{$B+}	{Boolean complete evaluation on}
+{$S+}	{Stack checking on}
+{$I+}	{I/O checking on}
 
 Interface
 
@@ -474,8 +470,8 @@ BEGIN
 		END;	{	IF TN <> 0 clause	}
 
 {$IFDEF debug}
-		Writeln(' Writing to db file');
 		Writeln(db);
+		Writeln(db,' DIFFUSION RATES  ');
 		Writeln(db,' Normalised Temperature  ',TN:8:4);
 		Writeln(db, ' diffusion2=',diffusion2:9,' diffusion1=',diffusion1:9);
 		Writeln(db, ' diffusion4=',diffusion4:9,' diffusion3=',diffusion3:9);

@@ -1,5 +1,5 @@
 { DFM2020.pas }
-{ PMS 23 Nov 2020 15:26 }
+{ PMS 26 Nov 2020 19:00 }
 
 Program DFM2020(input,output);
 {---------------------------------------------------------------------------}
@@ -29,7 +29,10 @@ Program DFM2020(input,output);
 	22-November-2020 17:30 PMS
 }
 {$M 8000, 0, 655360}	{	stacksize, heapmin, heapmax	-  still valid in fpc} 
-
+{$R+}	{Range checking on}
+{$B+}	{Boolean complete evaluation on}
+{$S+}	{Stack checking on}
+{$I+}	{I/O checking on}
 Uses
   Crt,
   Dos,

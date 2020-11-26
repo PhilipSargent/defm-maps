@@ -1,5 +1,5 @@
 Unit DfmEdits;
-{ PMS 23 Nov 2020 20:42 }
+{ PMS 26 Nov 2020 19:00 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -26,14 +26,10 @@ Unit DfmEdits;
 {$IFDEF  detail}
 {$DEFINE  debug}
 {$ENDIF}
-{      	All these options set in command line when we run the compiler, 
-			and are NOT set here (hence the dots).	}
-{$R+}    {Range checking on}
-{$B+}    {Boolean complete evaluation on}
-{$S+}    {Stack checking on}
-{$I+}    {I/O checking on}
-{$N+}    {Use numeric coprocessor}
-{.$E+}	 {Include copy of 8087 Emulator - default anyway}
+{$R+}	{Range checking on}
+{$B+}	{Boolean complete evaluation on}
+{$S+}	{Stack checking on}
+{$I+}	{I/O checking on}
 
 Interface
 
