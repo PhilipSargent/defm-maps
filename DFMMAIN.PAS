@@ -1,5 +1,5 @@
 Unit Dfmmain;
-{ PMS 27 Nov 2020 21:00 }
+{ PMS 27 Nov 2020 23:24 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -603,7 +603,7 @@ BEGIN
 
 		Writeln(db, 'modestrate: ', modestrate);
 		Writeln(db, 'modeindt:   ', modeindt);
-		Writeln(db, 'modetemp:   ', modeindt);
+		Writeln(db, 'modetemp:   ', modetemp);
 		IF modestrate THEN
 			BEGIN
 				Initialize;		{	graphics display	}

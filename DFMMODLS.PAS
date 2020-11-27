@@ -42,9 +42,8 @@ PROCEDURE STRAIN_RATES (TN, LgSN: a_real;
 								VAR field: E_mech;
 								VAR hint_stress : a_real);
 { ----- Calculate the strain rates due to each mechanism ----- }
-{$IFDEF  debug}
+
 PROCEDURE WRITE_FIELDNAME (field: E_mech);
-{$ENDIF}
 
 {===========================================================================}
 
@@ -185,7 +184,7 @@ BEGIN
 	burgv		:=par[17];
 	atvol		:=par[18];
 	phonon			:= par[19];
-	electron			:= par[20];
+	electron		:= par[20];
 	beta_breakdown	:= par[21];
 	arzt_cuttoff	:= par[22];
 	phase_change	:= par[23];
@@ -263,7 +262,7 @@ BEGIN
 	{ ----- Set up default sets for use with mechanism conjunction ----- }
 
 	M_diffusion := [b_diff, v_diff];		{	maximum, sum	}
-	M_plc			:= [plc_ht, plc_lt];		{	maximum, sum	}
+	M_plc		:= [plc_ht, plc_lt];		{	maximum, sum	}
 	M_glide		:= [o_glide, S_plc];		{	maximum, max	}
 	M_drag		:= [pls_drag, phn_drag, rel_drag];	{	minimum, min	}
 
@@ -873,17 +872,16 @@ BEGIN
 
 END;   {STRAIN_RATES.  }
 {---------------------------------------------------------------------------}
-{$IFDEF debug}
 PROCEDURE WRITE_FIELDNAME (field: E_mech);
 BEGIN
 	CASE field OF
 		null		:	Write(db,'NULL    ');
 		re_cryst	:	Write(db,'re_cryst');
-		b_diff	:	Write(db,'b_diff  ');
-		v_diff	:	Write(db,'v_diff  ');
-		plc_ht	:	Write(db,'plc_ht  ');
-		plc_lt	:	Write(db,'plc_lt  ');
-		o_glide	:	Write(db,'o_glide ');
+		b_diff		:	Write(db,'b_diff  ');
+		v_diff		:	Write(db,'v_diff  ');
+		plc_ht		:	Write(db,'plc_ht  ');
+		plc_lt		:	Write(db,'plc_lt  ');
+		o_glide		:	Write(db,'o_glide ');
 		pls_drag	:	Write(db,'pls_drag');
 		phn_drag	:	Write(db,'phn_drag');
 		rel_drag	:	Write(db,'rel_drag');
@@ -891,21 +889,10 @@ BEGIN
 						Write(db,'+error+ ');
 	END;	{	Case	}
 END;
-{$ENDIF}
 {---------------------------------------------------------------------------}
 { Unit Initialization }
 BEGIN
-{	no coprocessor present, using emulator,
-	but this does NOT affect limits now.. so commented out.}
-
-{	IF (System.Test8087=0) THEN
-		BEGIN
-			exp_limit		:=	87.0;
-			high_exp_limit	:=	6.0760e37;
-			low_exp_limit	:=	1.6458e-38;
-		END
-	ELSE
-}
+{ All processors now have math coprocesor so these could be CONST }
 		BEGIN
 			exp_limit		:=	227.0;
 			high_exp_limit	:=	3.84457e98;

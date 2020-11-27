@@ -1,5 +1,5 @@
 { DfmGlbls.pas	}
-{ PMS 27 Nov 2020 20:59 }
+{ PMS 28 Nov 2020 00:17 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -26,6 +26,8 @@
 {$B+}	{Boolean complete evaluation on}
 {$S+}	{Stack checking on}
 {$I+}	{I/O checking on}
+
+{$IEEEERRORS ON} { turns on IEEE (floating point) error checking for constants in fpc }
 
 Unit Dfmglbls;
 
@@ -369,14 +371,15 @@ BEGIN
 	IF (ErrorAddr <> NIL) THEN 	{	run-time error	}
 		BEGIN
 
+			WriteLn('MyExitProc - exit code intercepted.  See https://www.freepascal.org/docs-html/user/userap4.html#x191-198000D');
 			Writeln(Version,' detected:');
 			CASE ExitCode OF
 				4:	s:='Too many open files: CONFIG.SYS FILES=? is too small';
 				200:	s:='Division by zero';
-				201:	s:='Range Check error, re-boot computer';
-				202:	s:='Stack Overflow error, Contact Philip Sargent';
-				205:	s:='Floating point OVERflow error, re-boot computer';
-				207:	s:='Floating point invalid operation, re-boot computer';
+				201:	s:='Range Check error';
+				202:	s:='Stack Overflow error';
+				205:	s:='Floating point OVERflow error';
+				207:	s:='Floating point invalid operation';
 				100..106:	s:='File read/write error';
 				150..158:	s:='Critical File i/o error';
 				159:		s:='Printer out of paper';
@@ -384,8 +387,10 @@ BEGIN
 				ELSE	s:='Contact Philip Sargent, or see Turbo Pascal 5.5 Reference manual pp467-472';
 			END;	{	Case	}
 			WriteLn(s);
-			Writeln(db,Version,' detected:');
-			WriteLn(db,s);
+			Writeln(db);
+			WriteLn(db, 'MyExitProc - exit code intercepted. See https://www.freepascal.org/docs-html/user/userap4.html#x191-198000D');
+			Writeln(db,'Version: ',Version);
+			WriteLn(db,ExitCode, ' ', s);
 		END;
 	Close (db);
 

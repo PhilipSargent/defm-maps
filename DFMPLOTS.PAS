@@ -1,5 +1,5 @@
 Unit DfmPlots;
-{ PMS 27 Nov 2020 19:50 }
+{ PMS 28 Nov 2020 00:17 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -186,9 +186,29 @@ begin
 
 end;
 {---------------------------------------------------------------------------}
-procedure 	myLine(xx1,yy1,xx2,yy2: Word);
+procedure 	myLine(xx1,yy1,xx2,yy2: Integer);
 { Procedure in the original TurboPascal but unaccountably not documented in fpc }
 begin
+	IF xx1 < 0 THEN 
+		BEGIN
+			WriteLn(db,'xx1 less than zero! ',xx1);
+			xx1 := 0;
+		END;
+	IF xx2 < 0 THEN 
+		BEGIN
+			WriteLn(db,'xx2 less than zero! ',xx2);
+			xx2 := 0;
+		END;
+	IF yy1 < 0 THEN 
+		BEGIN
+			WriteLn(db,'yy1 less than zero! ',yy1);
+			yy1 := 0;
+		END;
+	IF yy2 < 0 THEN 
+		BEGIN
+			WriteLn(db,'yy2 less than zero! ',yy2);
+			yy2 := 0;
+		END;
 	MoveTo(xx1,yy1);
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
@@ -807,7 +827,6 @@ VAR
 	prev_stress, prev_rate	:	a_real;
 
 	{------------------------------------------------------------------------}
-{$IFDEF contour}
 PROCEDURE Contours_debug;
 VAR
 	c	:	E_n_stress;
@@ -836,7 +855,6 @@ BEGIN
 		END;	{	For loop & With block	}
 	WriteLn(db);
 END;	{	Contours_debug	}
-{$ENDIF}
 	{------------------------------------------------------------------------}
 PROCEDURE Iterate_One_Contour(previous_stress, previous_rate, LgSN: a_real; 
 																				c: E_n_stress);
@@ -1023,12 +1041,17 @@ PROCEDURE Finish_Contours;
 VAR
 	c	:	E_n_stress;
 BEGIN
+	Writeln(db,'Finish_Contours called.');
+
 	FOR c := contournumber DOWNTO 1 DO
+		Writeln(db,'contournumber: ',c);
+		Writeln(db,'contournumber: ',c, 'fields_id: ',field_ids[c].id);
 		contourmark[c] := (field_ids[c].stress - LgSNfirst)/(LgSNlast - LgSNfirst);
 {$IFDEF detail}
 	Writeln(db,'Final values for this call to Contours_Loop');
 	Contours_debug;
 {$ENDIF}
+	Writeln(db,'Finish_Contours ended.');
 END;	{	Finish_Contours	}
 	{------------------------------------------------------------------------}
 BEGIN	{	Procedure Contours_Loop	}
@@ -1042,18 +1065,18 @@ BEGIN	{	Procedure Contours_Loop	}
 	field_ids[n_actual].id     := field;
 	field_ids[n_actual].rate   := Rate;
 	max_rate_on_plot := Rate;
-{$IFDEF detail}
+
 	Writeln(db);
-{$ENDIF}
+
 
 	STRAIN_RATES (TN, LgSNfirst, Rate, field, hint_stress);
 	field_ids[0].stress := LgSNfirst;
 	field_ids[0].id     := field;
 	field_ids[0].rate   := Rate;
 	min_rate_on_plot := Rate;
-{$IFDEF detail}
+
 	Writeln(db);
-{$ENDIF}
+
 {$IFDEF contour}
 	Writeln(db);
 	Writeln(db,'Values with LIMITS overwritten');
@@ -1064,11 +1087,11 @@ BEGIN	{	Procedure Contours_Loop	}
 		BEGIN
 
 			STRAIN_RATES (TN, (LgSNfirst+LgSNlast)/2, Rate, field, hint_stress);
-{$IFDEF detail}
+
 	Writeln(db);
 	Writeln(db,'  <- 0 K HINT CALC');
 	Writeln(db,'TN=',TN:8:3,'  (0 K) hint stress is',hint_stress:8:3);
-{$ENDIF}
+
 			FOR c := 1 TO contournumber DO
 				BEGIN
 					field_ids[c].stress := hint_stress;		{	Obst or Peierls stress	}
@@ -1779,15 +1802,15 @@ PROCEDURE PLOT_Indentation_BOX (t_first,t_last,LgHNfirst, LgHNlast: a_real);
 { ----- Constructs box for Indentation creep map and labels the axes ----- }
 
 var
-	xscale, yscale   :	INTEGER;
-	Tinterval        :	REAL;
-	t						:	REAL;
-	xmark, ymark     :	INTEGER;
-	scale					:	INTEGER;
+	xscale, yscale	:	INTEGER;
+	Tinterval		:	REAL;
+	t				:	REAL;
+	xmark, ymark	:	INTEGER;
+	scale			:	INTEGER;
 	H, HNfirst, HNlast	:	a_real;
 	Hfirst, Hlast		:	a_real;
 	LgHfirst, LgHlast	:	a_real;
-	minor					:	Byte;	{	The number of minor marks between big marks }
+	minor				:	Byte;	{	The number of minor marks between big marks }
 
 BEGIN
 	{SetGraphMode(GraphMode);}
@@ -1817,7 +1840,8 @@ BEGIN
 
 { --------- Put on ABSOLUTE STRESS scale ---------- }
 	{	in Mpa, but shmod is in GPa so multiply by 1000	}
-
+	HNfirst := exp(LgHNfirst);
+	HNlast := exp(LgHNlast);
 	Hfirst	:=	shmod*HNfirst*1.0e3;	{	shmod is at 300 K	}
 	Hlast 	:=	shmod*HNlast *1.0e3;	{	shmod is at 300 K	}
 	LgHfirst	:=	Ln(Hfirst)/Ln10;
@@ -1826,7 +1850,7 @@ BEGIN
 	IF (Hfirst <= 1.0e-9) THEN
 		BEGIN
 			WriteLn(db,'Error, low hardness limit too low!');
-			WriteLn(db,Hfirst,shmod,HNfirst );
+			WriteLn(db,'Hfirst: ', Hfirst,'shmod: ', shmod,'HNfirst: ', HNfirst );
 			OurOutTextXY(xoffset+2,100,'Error, low hardness limit too low!');
 			Str(Hfirst:4:1,st);
 			OurOutTextXY(xoffset+2,106,st);
@@ -1834,6 +1858,9 @@ BEGIN
 			OurOutTextXY(xoffset+2,112,st);
 			Str(HNfirst:4:1,st);
 			OurOutTextXY(xoffset+2,118,st);
+			
+			{ ERROR detection... wait for a moment..}
+			repeat until keypressed;
 		END;
 	H	:=	1.0e-9;
 	REPEAT
@@ -1951,19 +1978,22 @@ VAR
 	SN		:	a_real;
 
 BEGIN
+	t := t + dt; { t increases each iteration }
+	
 {	Area of indentation A is in sq.mm, Load is in N, so H is MPa	}
-	t := t + dt;
 	A_dot := Rate * C_2 * C_3 * 0.5 /A;
 
 {	We want dt to be such that the change in A is < 100%	}
 	IF (A_dot*dt > {0.1*} A) THEN
 		dt := 0.1*A/A_dot
 	ELSE
-		dt := dt * 2;
+		dt := dt * 2; {default is to double dt each iteration }
 	A := A + A_dot*dt;
 	H := Load/A;				{	MPa	}
 {	shear_mod is in GPa, so convert H to GPa before dividing	}
 	lgHN := Ln(H * 1.0e-3 /shear_mod)/Ln10;
+	Writeln(db,'< CreepCalc. T=',t:8,' dt=',dt:8,' LgHN=', LgHN:8:3,' A=', A:8,' A_dot=',A_dot:8);
+	Flush(db);
 
 	Stress := C_1 * H;		{	MPa	}
 {	shear_mod is in GPa, so convert Stress to GPa before dividing	}
@@ -1978,7 +2008,7 @@ BEGIN
 			LgSN := Ln(SN)/Ln10;
 			STRAIN_RATES (TN, LgSN, Rate, field, hint_stress);
 		END;
-	Write(db,'CreepCalc ',t:8,' ',dt:8,' ', LgHN:8:3,' ', A:8,' ',A_dot:8,' ');
+	Writeln(db,'> CreepCalc. T=',t:8,' dt=',dt:8,' LgHN=', LgHN:8:3,' A=', A:8,' A_dot=',A_dot:8);
 	Flush(db);
 END;	{	Creep_Calc	}
 {---------------------------------------------------------------------------}
@@ -2001,36 +2031,37 @@ BEGIN
 	y2 := yoffset;
 	field2 := null;
 	skip := FALSE;
-{$IFDEF debug}
+
+	Writeln(db,'++Trajectory begin.');
 	Writeln(db,'TN= ',TN:5:2,'  t(s)       dt(s)      LgHN',
 		'        A(mm^2)   A_dot(mm^2)');
-{$ENDIF}
+
 	REPEAT
 		x1 := x2;
 		y1 := y2;
 		field1 := field2;
+		Writeln(db, 'calling Creep_Calc...');
 		Creep_Calc(field2);
 		Lgt := Ln(t)/Ln10;
 		x2 := round(xlength*(Lgt - Lgt_first)/(Lgt_last - Lgt_first));
 		y2 := round(ylength*(LgHNlast - LgHN)/(LgHNlast - LgHNfirst));
 
-{$IFDEF debug}
+		Write(db,'|');
 		WRITE_FIELDNAME (field2);
-{$ENDIF}
+		Write(db,'|');
+		Writeln(db);
 
 	{ ----- Draw the contours ----- }
 		IF (Lgt <= Lgt_first) THEN
-{$IFDEF debug}
-			Writeln(db)
-{$ENDIF}
+			Writeln(db, 'Lgt <= Lgt_first')
 		ELSE
 			BEGIN
+				Write(db,'+ x1:', x1,' y1:',y1,' x2:',x2,' y2:',y2);
 				myLine(x1,y1,x2,y2);
-{$IFDEF debug}
 				Writeln(db,' *');
-{$ENDIF}
 				IF (field1 <> field2) THEN
 					BEGIN
+						Write(db,'^');
 						x := round((x1+x2)/2);
 						y := round((y1+y2)/2);
 						myLine(x-s1, y, x+s1,y);
@@ -2039,6 +2070,7 @@ BEGIN
 			END;
 		DETECT_SKIP;
 	UNTIL (Lgt > Lgt_last) OR skip;
+	Writeln(db,'++Trajectory end.');
 
 END;	{	Trajectory	}
 {---------------------------------------------------------------------------}
@@ -2068,7 +2100,7 @@ VAR
 BEGIN	{Calc_Indentation_Map	}
 
 	LgHNfirst	:= -7;
-	LgHNlast		:= -1;
+	LgHNlast	:= -1;
 
 	Load := 0.1;	{	MN	}
 	t_first := 0.005;
