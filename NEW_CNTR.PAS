@@ -1,5 +1,5 @@
 Unit DfmPlots;
-{ PMS 26 Nov 2020 19:00 }
+{ PMS 27 Nov 2020 21:21 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,6 +20,8 @@ Unit DfmPlots;
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
+{$DEFINE  debug} {	always on, pending removal of directive	}
+
 {$IFDEF cntrfix }
 {$I \dfmap\old_cntr.pas	}
 {$ELSE}

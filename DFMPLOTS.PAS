@@ -1,5 +1,5 @@
 Unit DfmPlots;
-{ PMS 26 Nov 2020 19:00 }
+{ PMS 27 Nov 2020 19:50 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,13 +20,7 @@ Unit DfmPlots;
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{	ensure compiler directives are consistent	}
-{$IFDEF  detail}
-{$DEFINE  debug}
-{$ENDIF}
-{$IFDEF  contour}
-{$DEFINE  debug}
-{$ENDIF}
+{$DEFINE  debug} {	always on, pending removal of directive	}
 
 {$R+}	{Range checking on}
 {$B+}	{Boolean complete evaluation on}
@@ -349,7 +343,6 @@ VAR
 	oldcol		:	ColorType;
 
 BEGIN
-	WRITELN(db,'Entering ClearTextSpace');
 	oldcol := GetColor;
 	SetColor(green);
 	xx1:= Round(xfactor*x1*MaxX/xVGA);
@@ -413,15 +406,15 @@ BEGIN
 
 	SetColor(oldcol);
 
-	WRITELN(db,'Exiting ClearTextSpace',' ',round(x1),' ',round(y1),' ',round(x2),' ',round(y2));
+	WRITELN(db,'Exiting ClearTextSpace: ',round(x1),' ',round(y1),' ',round(x2),' ',round(y2));
 
 END;	{	ClearTextSpace	}
 {---------------------------------------------------------------------------}
 PROCEDURE OurOutTextXY(x,y: INTEGER; s: String);
-	{	Thi converts 640x200 original coords to current pixel x/y coordinates }
+	{	This converts 640x200 original coords to current pixel x/y coordinates }
 
 	{	This is to intercept plotting instructions such
-		that we can write HPGL and PIC files in a future extension.	}
+		that we can write HPGL files in a future extension.	}
 VAR
 	xx, yy	:	integer;
 	
@@ -1832,11 +1825,15 @@ BEGIN
 
 	IF (Hfirst <= 1.0e-9) THEN
 		BEGIN
+			WriteLn(db,'Error, low hardness limit too low!');
+			WriteLn(db,Hfirst,shmod,HNfirst );
 			OurOutTextXY(xoffset+2,100,'Error, low hardness limit too low!');
 			Str(Hfirst:4:1,st);
-			OurOutTextXY(xoffset+2,105,st);
-			IF NOT modefast THEN
-				Repeat Until Keypressed;
+			OurOutTextXY(xoffset+2,106,st);
+			Str(shmod:4:1,st);
+			OurOutTextXY(xoffset+2,112,st);
+			Str(HNfirst:4:1,st);
+			OurOutTextXY(xoffset+2,118,st);
 		END;
 	H	:=	1.0e-9;
 	REPEAT

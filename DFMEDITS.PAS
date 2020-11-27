@@ -1,5 +1,5 @@
 Unit DfmEdits;
-{ PMS 27 Nov 2020 19:50 }
+{ PMS 27 Nov 2020 21:21 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,12 +20,8 @@ Unit DfmEdits;
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{$IFDEF  contour}		{	ensure compiler directives are consistent	}
-{$DEFINE  detail}
-{$ENDIF}
-{$IFDEF  detail}
-{$DEFINE  debug}
-{$ENDIF}
+{$DEFINE  debug} {	always on, pending removal of directive	}
+
 {$R+}	{Range checking on}
 {$B+}	{Boolean complete evaluation on}
 {$S+}	{Stack checking on}
@@ -972,7 +968,7 @@ BEGIN
 			IF (ref[linenumber*r61+i] <> ' ') THEN
 				text_present := TRUE;
 	UNTIL (linenumber <= 0) OR text_present;
-	ref_written_lines := linenumber;
+	ref_written := linenumber;
 
 END;	{	TEXT_EDIT_REFERENCE	}
 {-------------------------------------------------------------------}

@@ -1,5 +1,5 @@
 { DfmGlbls.pas	}
-{ PMS 27 Nov 2020 19:50 }
+{ PMS 27 Nov 2020 20:59 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,13 +20,6 @@
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{$IFDEF contour}		{	ensure compiler directives are consistent	}
-{$DEFINE  debug}
-{$ENDIF}
-{$IFDEF  detail}
-{$DEFINE  debug}
-{$ENDIF}
-
 {$DEFINE  debug} {	always on, pending removal of directive	}
 
 {$R+}	{Range checking on}
@@ -42,17 +35,17 @@ Uses
 	Cp437; { seems to have no effect on Crt extended ascii symbols }
 
 CONST
-	copyright = '(C) Copyright 1980,1993 P.M.Sargent & M.F.Ashby; 2020 P.M.Sargent';
-	VersionDate			= '22 Nov 2020';
+	copyright			= '(C) Copyright 1980,1993 P.M.Sargent & M.F.Ashby; 2020 P.M.Sargent';
+	VersionDate			= '27 Nov 2020';
 	Version				= 'DFM2020';
-	Release				= '0.91';
-	DF						= -32768;		{	Default.. for floats, longint, int	}
+	Release				= '0.92';
+	DF					= -32768;		{	Default.. for floats, longint, int	}
 
-	avogadro				= 6.022045e23;
-	boltz					= 1.380662e-23;
-	R						= 8.314408694;
-	pi						= 3.141592654;
-	Ln10					= 2.302585093;
+	avogadro			= 6.022045e23;
+	boltz				= 1.380662e-23;
+	R					= 8.314408694;
+	pi					= 3.141592654;
+	Ln10				= 2.302585093;
 	numberofparameters	= 23;
 	numberofvariables	= 14;
 	numberofmechanisms	= 10;		{	keep consistent with E_mech	}
@@ -75,7 +68,7 @@ CONST
 	max_steps			= 300;
 	stash_max			= 150;
 	stash_width			= 85;
-	list_max				= 150;
+	list_max			= 150;
 
 	Gamcrit		 		= 0.9;
 
@@ -112,15 +105,15 @@ CONST
 	C_subdued			= LightGray;
 	C_warn				= red;
 
-	max_real				= 1.0e308;
-	min_real				= 1.0e-324;
-	max_mult				= 1.0e100;
+	max_real			= 1.0e308;
+	min_real			= 1.0e-324;
+	max_mult			= 1.0e100;
 
 TYPE
 	a_real				=	double;
 	E_dominance			=	(max_op, min_op);
 	E_overall			=	(add_op, dom_op, mean_op);
-	T_ops					=	RECORD
+	T_ops				=	RECORD
 									dom : E_dominance;
 									all : E_overall;
 								END;
@@ -186,26 +179,26 @@ CONST	{	Typed constant, i.e. variables with a default	}
 	linenumber		:  integer = DF;
 	numberofpoints	:  integer = DF;
 
-	tmelt				:  a_real = DF;
-	tobst				:  a_real = DF;
-	shmod				:  a_real = DF;
-	shtmp				:  a_real = DF;
-	tprls				:  a_real = DF;
-	delFl				:  a_real = DF;
-	delFo				:  a_real = DF;
-	atvol				:  a_real = DF;
-	dovol				:  a_real = DF;
-	dlbdy				:  a_real = DF;
-	qvolm				:  a_real = DF;
-	qbdry				:  a_real = DF;
-	acdoc				:  a_real = DF;
-	qcore				:  a_real = DF;
-	n_crp				:  a_real = DF;
-	S_crp				:  a_real = DF;
-	q_crp				:  a_real = DF;
-	burgv				:  a_real = DF;
+	tmelt			:  a_real = DF;
+	tobst			:  a_real = DF;
+	shmod			:  a_real = DF;
+	shtmp			:  a_real = DF;
+	tprls			:  a_real = DF;
+	delFl			:  a_real = DF;
+	delFo			:  a_real = DF;
+	atvol			:  a_real = DF;
+	dovol			:  a_real = DF;
+	dlbdy			:  a_real = DF;
+	qvolm			:  a_real = DF;
+	qbdry			:  a_real = DF;
+	acdoc			:  a_real = DF;
+	qcore			:  a_real = DF;
+	n_crp			:  a_real = DF;
+	S_crp			:  a_real = DF;
+	q_crp			:  a_real = DF;
+	burgv			:  a_real = DF;
 
-	Gsize				:  a_real = DF;
+	Gsize			:  a_real = DF;
 	SNlast			:  a_real = DF;
 	SNfirst			:  a_real = DF;
 	TN				:  a_real = DF;
@@ -213,20 +206,20 @@ CONST	{	Typed constant, i.e. variables with a default	}
 	TNlast			:  a_real = DF;
 	cntrfirst		:  a_real = DF;
 	cntrfactor		:  a_real = DF;
-	RNbottom			:  a_real = DF;
-	RNtop				:  a_real = DF;
+	RNbottom		:  a_real = DF;
+	RNtop			:  a_real = DF;
 	Tcntr_high		:  a_real = DF;
 	Tcntr_diff		:  a_real = DF;
 
 	LowRate			:	a_real = DF;
-	LgSN				:	a_real = DF;
+	LgSN			:	a_real = DF;
 
-{	P					:  a_real = DF;	}
-	P_force2			:  a_real = DF;
-	S_force2			:  a_real = DF;
-	SNeff				:  a_real = DF;
-	SN_T				:  a_real = DF;
-	SN_crp				:  a_real = DF;
+{	P				:  a_real = DF;	}
+	P_force2		:  a_real = DF;
+	S_force2		:  a_real = DF;
+	SNeff			:  a_real = DF;
+	SN_T			:  a_real = DF;
+	SN_crp			:  a_real = DF;
 VAR
 	imc				:	T_imc_classes;
 	mechID			:	T_mechID;
@@ -262,7 +255,7 @@ VAR
 	ref				:  refarray;
 	parnumber		:  R_pars;
 	vblnumber		:  R_vbls;
-	ref_written_lines	:	R_lines;
+	ref_written	:	R_lines;
 	matlname			:  filestring;
 	listfilename	:  filestring;
 	time_string		:  timer_string;
@@ -1078,11 +1071,7 @@ BEGIN
 {$IFDEF  detail}
 	compiler_opts := compiler_opts+'+Detail';
 {$ENDIF}
-{
-	Writeln(Version,' v',Release,' ',VersionDate,' Compiler options:',compiler_opts);
-	Writeln('       ',copyright);
-	Delay(1500);
-}
+
 	{ ----- Open DEBUG file	----- }
 		IF CannotOpen(dbgfilename) THEN
 			BEGIN
@@ -1095,6 +1084,7 @@ BEGIN
 				Rewrite(db);
 				Writeln(db,Version,' v',Release,' (',VersionDate,')');
 				Writeln(db,'       ',copyright);
+
 				Writeln(db,'(DFM-specific Compiler options:',compiler_opts,')');
 			END;
 

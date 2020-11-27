@@ -1,5 +1,5 @@
 Unit dfmfiles;
-{ PMS 26 Nov 2020 19:56 }
+{ PMS 27 Nov 2020 21:21 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,12 +20,8 @@ Unit dfmfiles;
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{$IFDEF  contour}		{	ensure compiler directives are consistent	}
-{$DEFINE  detail}
-{$ENDIF}
-{$IFDEF  detail}
-{$DEFINE  debug}
-{$ENDIF}
+{$DEFINE  debug} {	always on, pending removal of directive	}
+
 {$R+}	{Range checking on}
 {$B+}	{Boolean complete evaluation on}
 {$S+}	{Stack checking on}
@@ -344,7 +340,7 @@ VAR
 BEGIN
 {$IFDEF debug}
 	Writeln(db,Esc,matlname);
-	FOR lines := 0 TO ref_written_lines DO
+	FOR lines := 0 TO ref_written DO
 		BEGIN
 			s[0] := Chr(refchars);
 			FOR i:= 1 TO refchars DO
@@ -392,7 +388,7 @@ BEGIN
 	Writeln(file_out,Esc,matlname);
 
 {	Write out ref.	}
-	FOR lines := 0 TO ref_written_lines DO
+	FOR lines := 0 TO ref_written DO
 		BEGIN
 			s[0] := Chr(refchars);
 			FOR i:= 1 TO refchars DO
@@ -540,19 +536,19 @@ BEGIN
 				BEGIN
                buf:=' ';
 					index := 1;
-					ref_written_lines := 0;
+					ref_written := 0;
 					WHILE NOT ((Eof(file_ref))
 					OR (buf[1] = Esc)
 					OR (index >= ref_buflength)) DO
 						BEGIN
 							{	find how many non-blank lines there are	}
-							Inc(ref_written_lines);
+							Inc(ref_written);
 							READLN(file_ref, buf);
 							IF (index + refchars <= ref_buflength)
 							AND (buf[1] <> Esc) THEN
 								pad_ref_line;
 						END;
-					Dec(ref_written_lines);
+					Dec(ref_written);
 				END;
 			Close(file_ref);
 		END;
@@ -876,7 +872,7 @@ BEGIN
 	writeln(lf,'      =============================================================');
 	writeln(lf);
 
-	FOR lines := 0 TO ref_written_lines DO
+	FOR lines := 0 TO ref_written DO
 		BEGIN
 			buf[0] := Chr(refchars);
 			FOR i:= 1 TO refchars DO

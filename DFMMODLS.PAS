@@ -1,5 +1,5 @@
  Unit DfmModls;
-{ PMS 26 Nov 2020 19:00 }
+{ PMS 27 Nov 2020 19:50 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,13 +20,8 @@
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{	ensure compiler directives are consistent	}
-{$IFDEF  contour}
-{$DEFINE  debug}
-{$ENDIF}
-{$IFDEF  detail}
-{$DEFINE  debug}
-{$ENDIF}
+{$DEFINE  debug} {	always on, pending removal of directive	}
+
 {$R+}	{Range checking on}
 {$B+}	{Boolean complete evaluation on}
 {$S+}	{Stack checking on}

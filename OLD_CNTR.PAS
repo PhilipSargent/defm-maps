@@ -1,5 +1,5 @@
 {	old_cntr.pas	from dfmplots.pas }
-{ PMS 12-June-1993 03:04 }
+{ PMS 27 Nov 2020 21:21 }
 {---------------------------------------------------------------------------}
 { $Revision:   1.1  $
   $Date:   12 Jun 1993  4:13:12  $
@@ -29,6 +29,8 @@
  *    Rev 1.1   12 Jun 1993  4:13:12   PMSargent
  * New headers
  ---------------------------------------------------------------------------}
+{$DEFINE  debug} {	always on, pending removal of directive	}
+
 PROCEDURE Contours_Loop (temp_step: Word);
 CONST
 	fudge	=	0.3;

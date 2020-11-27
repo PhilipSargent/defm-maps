@@ -28,6 +28,8 @@ Program DFM2020(input,output);
 	emulation.
 	22-November-2020 17:30 PMS
 }
+{$DEFINE  debug} {	always on, pending removal of directive	}
+
 {$M 8000, 0, 655360}	{	stacksize, heapmin, heapmax	-  still valid in fpc} 
 {$R+}	{Range checking on}
 {$B+}	{Boolean complete evaluation on}
