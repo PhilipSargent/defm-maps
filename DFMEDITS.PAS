@@ -1,5 +1,5 @@
 Unit DfmEdits;
-{ PMS 26 Nov 2020 19:00 }
+{ PMS 27 Nov 2020 19:50 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -988,7 +988,7 @@ BEGIN
 		BEGIN
 			REPEAT
 				TEXT_EDIT_REFERENCE;
-				LIST_REFERENCES;			{	just in case the display gets worng..}
+				LIST_REFERENCES;			{	just in case the display gets wrong..}
 				Prompt_Finish;
 			UNTIL answer in ['y','Y'];
 

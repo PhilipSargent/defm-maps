@@ -1,5 +1,5 @@
 Unit Dfmmain;
-{ PMS 26 Nov 2020 19:00 }
+{ PMS 27 Nov 2020 19:50 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -354,48 +354,15 @@ BEGIN
 END;	{	GET_FILENAME	}
 
 {---------------------------------------------------------------------------}
-PROCEDURE HANDLE_TEMPERATURE_PLOT_OPTIONS;
-{	Identify the type of map by the variable used for the CONTOURS	}
-{	/t+ or /t- or /tL:output.hpg }
+FUNCTION COMMAND_SWITCH_VALUE: BOOLEAN;
+{	return true or false depeninding on the command line switch value }
 BEGIN
 	s :=Copy(ParamStr(index),3,1);
 	ch:=s[1];
+	IF ch = '-' THEN COMMAND_SWITCH_VALUE:=FALSE;
+	IF ch = '+' THEN COMMAND_SWITCH_VALUE:=TRUE;
 
-	CASE ch OF
-			'-': 		modetemp:=FALSE;
-
-		END;	{	Case	}
-
-END;	{	HANDLE_TEMPERATURE_PLOT_OPTIONS	}
-
-{---------------------------------------------------------------------------}
-PROCEDURE HANDLE_STRAIN_RATES_PLOT_OPTIONS;
-{	Identify the type of map by the variable used for the CONTOURS	}
-{	s+ or s- or /sL:output.hpg }
-BEGIN
-	s :=Copy(ParamStr(index),3,1);
-	ch:=s[1];
-	CASE ch OF
-			'-': 		modestrate:=FALSE;
-
-		END;	{	Case	}
-
-END;	{	HANDLE_STRAIN_RATES_PLOT_OPTIONS	}
-
-{---------------------------------------------------------------------------}
-PROCEDURE HANDLE_Indentation_PLOT_OPTIONS;
-{	Identify the type of map by the variable used for the CONTOURS	}
-{	i+ or i- or /iL:output.hpg }
-BEGIN
-	s :=Copy(ParamStr(index),3,1);
-	ch:=s[1];
-	CASE ch OF
-			'-': 		modeindt:=FALSE;
-
-		END;	{	Case	}
-
-END;	{	HANDLE_Indentation_PLOT_OPTIONS	}
-
+END;	{	COMMAND_SWITCH_VALUE	}
 {---------------------------------------------------------------------------}
 PROCEDURE HANDLE_OPTIONS;
 
@@ -442,9 +409,9 @@ BEGIN
 					'f','F': modefast:=TRUE;
 					'd','D': modedemo:=TRUE;
 					
-					't','T': HANDLE_TEMPERATURE_PLOT_OPTIONS;
-					's','S': HANDLE_STRAIN_RATES_PLOT_OPTIONS;
-					'i','I': HANDLE_Indentation_PLOT_OPTIONS;
+					't','T': modetemp:=COMMAND_SWITCH_VALUE;
+					's','S': modestrate:=COMMAND_SWITCH_VALUE;
+					'i','I': modeindt:=COMMAND_SWITCH_VALUE;
 					'w','W': BEGIN	{ write a listing file }
 									pathfilelength:=Length(ParamStr(index))-3;
 									IF pathfilelength>0 THEN

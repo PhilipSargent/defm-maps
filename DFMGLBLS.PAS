@@ -1,5 +1,5 @@
 { DfmGlbls.pas	}
-{ PMS 26 Nov 2020 19:00 }
+{ PMS 27 Nov 2020 19:50 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -1021,7 +1021,7 @@ BEGIN
 	11 : BEGIN id:='DfmR+ '; d:='Upper limit, StrainRate axis';  u:=' 1/s      'END;
 	12 : BEGIN id:='DfmTn1'; d:='Highest temperature contour ';  u:=' K        'END;
 	13 : BEGIN id:='DfmTnD'; d:='Temperature between contours';  u:=' K        'END;
-	14 : BEGIN id:='DfmTnN'; d:='Number temparature contours ';  u:='          'END;
+	14 : BEGIN id:='DfmTnN'; d:='Number temperature contours ';  u:='          'END;
 	ELSE
 		BEGIN id:='ERROR '; d:='This is unrecognised.       ';  u:='          'END;
 	END;	{	Case	}

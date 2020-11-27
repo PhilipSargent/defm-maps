@@ -1,5 +1,5 @@
 { DFM2020.pas }
-{ PMS 26 Nov 2020 19:00 }
+{ PMS 27 Nov 2020 19:50 }
 
 Program DFM2020(input,output);
 {---------------------------------------------------------------------------}
@@ -24,7 +24,7 @@ Program DFM2020(input,output);
  ---------------------------------------------------------------------------}
 
 {	Renamed from DFM290 to DFM2020 when porting from TurboPascal 7
-	under DOSBOX to fpc runnig natively on Windows10 with TP 
+	under DOSBOX to fpc running natively on Windows10 with TP 
 	emulation.
 	22-November-2020 17:30 PMS
 }
