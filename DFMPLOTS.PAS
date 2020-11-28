@@ -1,5 +1,5 @@
 Unit DfmPlots;
-{ PMS 28 Nov 2020 00:17 }
+{ PMS 28 Nov 2020 18:30 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -39,6 +39,8 @@ PROCEDURE IDENTIFY_CONTOURS;
 { ----- Identify the time contours and add the date ----- }
 
 PROCEDURE IDENTIFY_FIELDS;
+
+PROCEDURE IDENTIFY_FIELDS_Indent;
 
 PROCEDURE CALC_STRAIN_RATES_MAP;
 
@@ -712,15 +714,14 @@ END;    {IDENTIFY_CONTOURS.    }
 {---------------------------------------------------------------------------}
 PROCEDURE IDENTIFY_FIELDS;
 
-
-	
 VAR
 	P1,P2				:	integer;
 	r1,r2				:	a_real;
 	x1,y1,x2,y2			:	a_real;
 	x_shift				:	a_real;
 	y_shift				:	a_real;
-	x0,y0				:	Word;
+	crit				:	integer;
+	x0,y0				:	integer;
 	mech				:	E_mech;
 	
 	{	local versions of these..	}
@@ -732,7 +733,6 @@ BEGIN
 	lines to the screen, even though it was general with respect to
 	the number of graphics pixels on the screen.
 }
-	Flush(db);
 
 	xoffset	:=	xfac0*(MaxX-1);
 	yoffset	:=	yfac0*(MaxY-1);
@@ -742,14 +742,13 @@ BEGIN
 { ----- Position and print the remaining field labels ----- }
 	SetColor(brown);
 
+	writeln(db,'IDENTIFY_FIELDS');
+	crit := round(steps*steps/100);
+	writeln(db,'report the field only if we have more points than this: ', crit);
 	FOR mech := null TO rel_drag DO
-		IF (pointcount[mech] > (steps*steps/100)) and (pointcount[mech] > 4) THEN
+		IF (pointcount[mech] > crit) and (pointcount[mech] > 4) THEN
 			BEGIN
-				r1  := ((temp_position[mech]/steps)/pointcount[mech]*64) + 7;
-				r2  := (1 - stress_position[mech]/(pointcount[mech]*steps))*22 + 2;
-
-{ ----- Don't check for validity here in character co-ords, but in
-			graphics co-ords after conversion. PMS 4-February-1988 10:50 	}
+				writeln(db,'pointcount[',mechId[mech],']',pointcount[mech]:5:0);
 				CASE { mechID[mech] } mech OF
 					null:  		st:='ELASTIC';
 					re_cryst:	st:='RECRYST';
@@ -764,9 +763,12 @@ BEGIN
 					ELSE
 						st:='ERROR';
 				END;	{	Case	}
-{$IFDEF debug}
+
 				writeln(db,st,' ',temp_position[mech]:5:0,stress_position[mech]:5:0,pointcount[mech]:5:0);
-{$ENDIF}
+{ 			----- Don't check for validity here in character co-ords, but in
+				graphics co-ords after conversion. PMS 4-February-1988 10:50 	}			
+				r1  := ((temp_position[mech]/steps)/pointcount[mech]*64) + 7;
+				r2  := (1 - stress_position[mech]/(pointcount[mech]*steps))*22 + 2;
 
 				x1:=(r1-1)*639/80;
 				y1:=(r2-0.7)*199/25;
@@ -789,9 +791,16 @@ BEGIN
 				y0:=Round(r2*199/25 + y_shift);
 				ClearTextSpace(x1+x_shift,y1+y_shift, x2+x_shift,y2+y_shift);
 				OurOutTextXY(x0, y0, st);
-			END;
+			END
+		ELSE
+			writeln(db,st,' not shown as too small',pointcount[mech]:5:0);			
+	Flush(db);
 
 END;    {IDENTIFY_FIELDS.    }
+{---------------------------------------------------------------------------}
+PROCEDURE IDENTIFY_FIELDS_Indent;
+BEGIN
+END;    {IDENTIFY_FIELDS_Indent.    }
 {---------------------------------------------------------------------------}
 PROCEDURE Contours_Init;
 VAR
@@ -859,7 +868,7 @@ END;	{	Contours_debug	}
 PROCEDURE Iterate_One_Contour(previous_stress, previous_rate, LgSN: a_real; 
 																				c: E_n_stress);
 CONST
-	iter_limit	=	13;
+	iter_limit	=	26; { was 13 in ms-dos code }
 VAR
 	RateRatio, SNdiff, strain_rate		:	a_real;
 	step, factor	:	a_real;
@@ -1509,9 +1518,7 @@ BEGIN	{	Fields_Loop	}
 		BEGIN
 			n_bndrys := 1;
 			boundaries_exist := FALSE;
-{$IFDEF debug}
 			Writeln(db, 'No field boundaries at this temperature');
-{$ENDIF}
 			{	Exit;	}	{	Cowards' way out ! Must still check for vertical boundary	}
 		END;
 
@@ -1631,6 +1638,10 @@ BEGIN	{	Fields_Loop	}
 
 END;	{	Fields_Loop	procedure }
 {---------------------------------------------------------------------------}
+PROCEDURE Fields_Loop_Indent (temp_step: Word);
+BEGIN
+END;	{	Fields_Loop_Indent	procedure }
+{---------------------------------------------------------------------------}
 PROCEDURE CALC_STRAIN_RATES_MAP;
 
 VAR
@@ -1704,7 +1715,6 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 { ----- Calculate the diffusion rates at the new Temperature ------- }
 
 		DIFFUSION_RATES;
-
 		Contours_Loop (i);
 		Fields_Loop (i);	
 { ----- Draw the contours ----- }
@@ -1774,10 +1784,11 @@ PROCEDURE 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high: a_real; trajnumber:int
 
 VAR
 	first, last	:	a_real;
-{ ----- Identify the trajectories and add the date ----- }
+{ ----- Identify the trajectories  ----- }
 
 BEGIN
 	Flush(db);
+	SetColor(brown);
 
 	ClearTextSpace(96,156,260,183);
 	Str((trajnumber):3,st);
@@ -1813,11 +1824,9 @@ var
 	minor				:	Byte;	{	The number of minor marks between big marks }
 
 BEGIN
-	{SetGraphMode(GraphMode);}
 	BoxDefaults;
 
 { --------- Draw  Box ----------}
-
 	myLine(xoffset,yoffset,xoffset,yend);
 	myLine(xoffset,yoffset,xend,yoffset);
 	myLine(xend,yend,xoffset,yend);
@@ -1828,6 +1837,7 @@ BEGIN
 
 	yscale  := round(LgHNlast*minor - LgHNfirst*minor);
 
+	SetColor(yellow);
 	FOR scale := (round(LgHNfirst*minor)) to (round(LgHNfirst*minor) + yscale - 1) DO
 		BEGIN
 			ymark := yoffset +
@@ -1956,20 +1966,25 @@ BEGIN
 	delta_y := 6/yfactor;										{ avoid axes marks }
 	ClearTextSpace(xof+3*xl/4,yof+delta_y,xof+xl-delta_x,yof+yl/4);
 
+	SetColor(white);
+
+	{ these calls to myLine use actual pixels in the viewport}
 	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
 		xoffset+xlength,yoffset+round(ylength/4));
 	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
 		xoffset+round(3*xlength/4),yoffset);
-	SetColor(white);
 
-	OurOutTextXY(96,20,'Indentation Creep Trajectories');
+	{ these calls to ClearTextSpace and OurOutTextXY use 'notional 640x200 scaled pixels'}
+	ClearTextSpace(85,122,306,130);
+	OurOutTextXY(96,126,'Indentation Creep Trajectories');
+	
+	ClearTextSpace(456,12,630,55);
 	OurOutTextXY(465,16,matlname);
 	Str((Gsize*1.0e6):4:1,st);
 	OurOutTextXY(465,24,'d = '+st+' um');
 	Str(Load:4:0,st);
 	OurOutTextXY(465,32,'L = '+st+' N');
 	OurOutTextXY(465,48,date_string);
-
 
 END;	{	PLOT_Indentation_INFO	}
 {---------------------------------------------------------------------------}
@@ -1992,7 +2007,7 @@ BEGIN
 	H := Load/A;				{	MPa	}
 {	shear_mod is in GPa, so convert H to GPa before dividing	}
 	lgHN := Ln(H * 1.0e-3 /shear_mod)/Ln10;
-	Writeln(db,'< CreepCalc. T=',t:8,' dt=',dt:8,' LgHN=', LgHN:8:3,' A=', A:8,' A_dot=',A_dot:8);
+{	Writeln(db,'< CreepCalc. T=',t:8,' dt=',dt:8,' LgHN=', LgHN:8:3,' A=', A:8,' A_dot=',A_dot:8);}
 	Flush(db);
 
 	Stress := C_1 * H;		{	MPa	}
@@ -2008,8 +2023,6 @@ BEGIN
 			LgSN := Ln(SN)/Ln10;
 			STRAIN_RATES (TN, LgSN, Rate, field, hint_stress);
 		END;
-	Writeln(db,'> CreepCalc. T=',t:8,' dt=',dt:8,' LgHN=', LgHN:8:3,' A=', A:8,' A_dot=',A_dot:8);
-	Flush(db);
 END;	{	Creep_Calc	}
 {---------------------------------------------------------------------------}
 PROCEDURE Trajectory (LgHNfirst,lgHNlast: a_real);
@@ -2032,29 +2045,26 @@ BEGIN
 	field2 := null;
 	skip := FALSE;
 
-	Writeln(db,'++Trajectory begin.');
+{	Writeln(db,'++Trajectory begin.');
 	Writeln(db,'TN= ',TN:5:2,'  t(s)       dt(s)      LgHN',
-		'        A(mm^2)   A_dot(mm^2)');
+		'        A(mm^2)   A_dot(mm^2)');}
 
 	REPEAT
 		x1 := x2;
 		y1 := y2;
 		field1 := field2;
-		Writeln(db, 'calling Creep_Calc...');
 		Creep_Calc(field2);
 		Lgt := Ln(t)/Ln10;
 		x2 := round(xlength*(Lgt - Lgt_first)/(Lgt_last - Lgt_first));
 		y2 := round(ylength*(LgHNlast - LgHN)/(LgHNlast - LgHNfirst));
 
-		Write(db,'|');
+{		Write(db,'|');
 		WRITE_FIELDNAME (field2);
-		Write(db,'|');
-		Writeln(db);
+		`(db,'|');
+		Writeln(db);}
 
 	{ ----- Draw the contours ----- }
-		IF (Lgt <= Lgt_first) THEN
-			Writeln(db, 'Lgt <= Lgt_first')
-		ELSE
+		IF (Lgt > Lgt_first) THEN
 			BEGIN
 				Write(db,'+ x1:', x1,' y1:',y1,' x2:',x2,' y2:',y2);
 				myLine(x1,y1,x2,y2);
@@ -2070,7 +2080,7 @@ BEGIN
 			END;
 		DETECT_SKIP;
 	UNTIL (Lgt > Lgt_last) OR skip;
-	Writeln(db,'++Trajectory end.');
+{	Writeln(db,'++Trajectory end.');}
 
 END;	{	Trajectory	}
 {---------------------------------------------------------------------------}
@@ -2184,13 +2194,10 @@ BEGIN	{Calc_Indentation_Map	}
 	PLOT_Indentation_BOX (t_first, t_last, LgHNfirst, LgHNlast);
 	Flush(db);
 
-	PLOT_Indentation_INFO;
-	SetColor(white);
-
 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
 
+	SetColor(white);
 	SetViewPort(xoffset, yoffset, xend, yend, ClipOn);
-
 {	Plot the 300K trajectory first	}
 	SetLineStyle(DottedLn,0,NormWidth);
 	Trajectory (LgHNfirst,lgHNlast);
@@ -2203,11 +2210,14 @@ BEGIN	{Calc_Indentation_Map	}
 	REPEAT
 
 { ----- Calculate the diffusion rates at the new Temperature ------- }
-
 		DIFFUSION_RATES;
+
 
 { ----- Calculate and Plot the Hardness/time trajectory ------- }
 		Trajectory (LgHNfirst,lgHNlast);
+
+{ ----- Calculate where the feld boundaries are ------- }
+		Fields_Loop_Indent(i);	{ needs rewriting completely to work for the indentation map }
 
 { ----- Detect <CtrlC> key if pressed  ----- }
 		DETECT_SKIP;
@@ -2220,8 +2230,8 @@ BEGIN	{Calc_Indentation_Map	}
 
 	SetViewPort(0, 0, MaxX, MaxY, ClipOn);
 
-	IDENTIFY_FIELDS;
-
+	IDENTIFY_FIELDS_Indent; { need a different procedure for this for the indentation map }
+	
 	PLOT_Indentation_INFO;	{again, in case it had been overwritten	}
 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
 

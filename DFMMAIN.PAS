@@ -1,5 +1,5 @@
 Unit Dfmmain;
-{ PMS 27 Nov 2020 23:24 }
+{ PMS 28 Nov 2020 18:30 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -629,7 +629,7 @@ BEGIN
 				IF NOT modefast THEN
 					BEGIN
 						REPEAT UNTIL keypressed;
-					   answer:=Readkey;
+					   answer:=Readkey; 	{ throw the answer away, never used }
 					END;
 				CloseGraph;              { Shut down the graphics system }
 			END;
