@@ -1,5 +1,5 @@
 Unit DfmPlots;
-{ PMS 28 Nov 2020 18:30 }
+{ PMS 28 Nov 2020 20:34 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -31,6 +31,8 @@ Interface
 
 PROCEDURE Initialize;
 { Initialize graphics and report any errors that may occur }
+
+PROCEDURE CloseSVG;
 
 PROCEDURE PLOT_STRAIN_RATES_BOX (LgSNfirst, LgSNlast: real);
 { ----- Constructs box for temperature DFM-map and labels the axes ----- }
@@ -183,6 +185,8 @@ begin
 	Writeln(db,'Graphics  error: ',
 		GraphErrorMsg(ErrorCode));
 	CloseGraph;
+	
+	CloseSVG;
 	Close(db);
 	Finish(6);
 
@@ -218,10 +222,12 @@ begin
 	LineTo(xx2,yy2);
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+	
+	writeln(svg,'<line x1="',xx1,'" y1="',yy1,'" x2="',xx2,'" y2="',yy2,'"  style="stroke:#000000;"/>');
+
 end;
 {---------------------------------------------------------------------------}
 PROCEDURE BoxDefaults;
-{ Select the maximum color in the Palette for the drawing color }
 { This is the first time we actually draw graphics on screen }
 VAR
 	vp: ViewPortType;
@@ -278,6 +284,33 @@ BEGIN
 	Graph.OutTextXY(0,0,s);
 END;	{	Range_Check	}
 {---------------------------------------------------------------------------}
+PROCEDURE InitSVG (x,y: integer);
+
+VAR
+	svgfilename:	string;
+BEGIN
+	svgfilename := matlname + '.svg';
+	IF CannotOpen(svgfilename) THEN
+		BEGIN
+			Writeln(' *** Cannot Open SVG File ***');
+			Halt(4); 
+		END;
+
+	Assign(svg,svgfilename);
+	Rewrite(svg);
+	Writeln(svg,'<?xml version="1.0"?>');
+	Writeln(svg,'<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"');
+	Writeln(svg,'    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">');
+	Writeln(svg,'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="',x,'" height="',y,'">');
+END;	{	InitSVG	}
+{---------------------------------------------------------------------------}
+PROCEDURE CloseSVG;
+BEGIN
+	Writeln(svg,'</svg>');
+	Flush(svg);
+	Close(svg);
+END;	{	CloseSVG;	}
+{---------------------------------------------------------------------------}
 PROCEDURE Initialize;
 { Initialize graphics and report any errors that may occur }
 VAR
@@ -325,6 +358,7 @@ BEGIN
 	xfactor		:= MaxX/(MaxX-1);
 	yfactor		:= MaxY/(MaxY-1);
 
+	InitSVG (MaxX+1, MaxY+1); {800x600 not 799x599 }
 	empty_zones:=NIL;
 
 END; { Initialize }
@@ -424,9 +458,11 @@ BEGIN
 	
 	SetColor(red);
 	Rectangle(xx1,yy1,xx2,yy2);
-
-
 	SetColor(oldcol);
+	
+	{SVG equivalent is an opaque white filled, red-edged rectangle}
+	writeln(svg,'<rect x="',xx1,'" y="',yy1,'" width="',xx2-xx1,'" height="',yy2-yy1,'"');
+	writeln(svg,'    style="stroke: #ff0000; fill: #ffffff; fill-opacity: 1.0;" />');
 
 	WRITELN(db,'Exiting ClearTextSpace: ',round(x1),' ',round(y1),' ',round(x2),' ',round(y2));
 
@@ -435,17 +471,22 @@ END;	{	ClearTextSpace	}
 PROCEDURE OurOutTextXY(x,y: INTEGER; s: String);
 	{	This converts 640x200 original coords to current pixel x/y coordinates }
 
-	{	This is to intercept plotting instructions such
-		that we can write HPGL files in a future extension.	}
 VAR
 	xx, yy	:	integer;
-	
+	TextInfo: TextSettingsType; { fpc pascal graphics extenson }
 BEGIN
 	xx:= Round(xfactor*x*MaxX/xVGA);
 	yy:= Round(yfactor*y*MaxY/yVGA);
 	Graph.OutTextXY(xx,yy,s);
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+	
+	GetTextSettings(TextInfo);
+	
+	write(svg,'<text x="',xx,'" y="',yy,'"');
+	IF TextInfo.direction = VertDir THEN
+		write(svg,' transform="rotate(-90 ',xx,' ',yy,')"');
+	writeln(svg,'>',s,'</text>');
 
 END;	{	OurOutTextXY	}
 
@@ -655,7 +696,7 @@ BEGIN
 END;	{	PLOT_STRAIN_RATES_INFO	}
 {---------------------------------------------------------------------------}
 PROCEDURE DRAW_FIELD_BOUNDARY (x,y : Integer);
-
+{ the vertical lines at a specific temperature on the map showing limits to some mechanisms }
 CONST
 	s1  =  2;
 	s2  =  1;
@@ -663,13 +704,15 @@ CONST
 BEGIN
 	{	This is called within the Stress-Loop, within the Temperature-Loop,
 			so the plotting window is already set to the graph axes	}
-
+	SetColor(blue);
 	myLine(x-s1, y, x+s1,y);
 	myLine(x-s1, y+s2, x+s1,y+s2);
+	SetColor(white);
 
 END;   {DRAW_FIELD_BOUNDARY.   }
 {---------------------------------------------------------------------------}
 PROCEDURE DRAW_FIELD_LINE(i, j: E_n_stress);
+{ the boundaries between mechanisms on the map }
 VAR
 	y_last, y_now		:	Integer;
 
@@ -868,7 +911,7 @@ END;	{	Contours_debug	}
 PROCEDURE Iterate_One_Contour(previous_stress, previous_rate, LgSN: a_real; 
 																				c: E_n_stress);
 CONST
-	iter_limit	=	26; { was 13 in ms-dos code }
+	iter_limit	=	13;
 VAR
 	RateRatio, SNdiff, strain_rate		:	a_real;
 	step, factor	:	a_real;
@@ -1699,9 +1742,8 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 
 	PLOT_STRAIN_RATES_BOX (LgSNfirst, LgSnlast);
 
-{	PLOT_STRAIN_RATES_INFO;  }
 	SetColor(white);
-
+	{ This sets the viewport to the data plot area inside the axes }
 	SetViewPort(xoffset, yoffset, xend, yend, ClipOn);
 
 	Contours_Init;
@@ -1713,10 +1755,10 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 		TN         := TNfirst + i*TNstep;
 
 { ----- Calculate the diffusion rates at the new Temperature ------- }
-
 		DIFFUSION_RATES;
+		
 		Contours_Loop (i);
-		Fields_Loop (i);	
+		Fields_Loop (i);	 { which calls DRAW_FIELD_LINE and DRAW_FIELD_BOUNDARY }
 { ----- Draw the contours ----- }
 
 		IF i > 0 THEN
@@ -1740,10 +1782,13 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 		failed to work correctly: if the first condition was false it failed
 		to check the second condition.	}
 {						contourlevels [c, i] := x1;		SAVE SPACE	}
+
+						SetColor(green);
 						IF (x1 < 3*xlength/4) THEN
 							myLine(x1,y1,x2,y2);
 						IF (y1 > ylength/4) THEN
 							myLine(x1,y1,x2,y2);
+						SetColor(white);
 					END;
 {				Writeln(db);	}
 			END;
@@ -1765,6 +1810,7 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 
 { ============ E N D == T H E == T E M P E R A T U R E == L O O P =========== }
 
+	{ reset the viewport to the whole plotting area }
 	SetViewPort(0, 0, MaxX, MaxY, ClipOn);
 
 {$IFDEF debug}
@@ -1776,7 +1822,9 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 
 	IDENTIFY_CONTOURS;
 
-	PLOT_STRAIN_RATES_INFO;	{again, in case it had been overwritten	}
+	PLOT_STRAIN_RATES_INFO;
+	
+	CloseSVG;
 
 END;       {CALC_STRAIN_RATES_MAP.   }
 {---------------------------------------------------------------------------}
@@ -2120,7 +2168,7 @@ BEGIN	{Calc_Indentation_Map	}
 	Lgt_last 	:=	Ln(t_last)/Ln10;
 	Lgt_step		:= (Lgt_last - Lgt_first)/steps;
 
-	trajnumber := 35;
+	trajnumber := 20;
 	TNtraj_low := 0.15;
 	TNtraj_high := 0.95;
 	TNtraj_step		:= (TNtraj_high - TNtraj_low)/trajnumber;   		{Temperature interval}
@@ -2196,12 +2244,15 @@ BEGIN	{Calc_Indentation_Map	}
 
 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
 
-	SetColor(white);
 	SetViewPort(xoffset, yoffset, xend, yend, ClipOn);
+	
 {	Plot the 300K trajectory first	}
-	SetLineStyle(DottedLn,0,NormWidth);
-	Trajectory (LgHNfirst,lgHNlast);
+{	SetColor(white);}
+{	SetLineStyle(DottedLn,0,NormWidth);}
+{	Trajectory (LgHNfirst,lgHNlast);}
+	
 	SetLineStyle(SolidLn,0,NormWidth);
+	SetColor(green);
 
 { ========== S T A R T == T H E == T E M P E R A T U R E == L O O P ========= }
 	skip:=FALSE;
@@ -2228,12 +2279,19 @@ BEGIN	{Calc_Indentation_Map	}
 
 { ============ E N D == T H E == T E M P E R A T U R E == L O O P =========== }
 
+{	Plot the 300K trajectory AGAIN	}
+	TN := 300/tmelt;
+	DIFFUSION_RATES;
+	SetColor(white);
+	Trajectory (LgHNfirst,lgHNlast);
+
 	SetViewPort(0, 0, MaxX, MaxY, ClipOn);
 
 	IDENTIFY_FIELDS_Indent; { need a different procedure for this for the indentation map }
 	
 	PLOT_Indentation_INFO;	{again, in case it had been overwritten	}
 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
+	CloseSVG;
 
 END;       {CALC_INDENTATION_MAP.   }
 { =========================================================================== }

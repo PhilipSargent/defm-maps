@@ -1,5 +1,5 @@
 { DfmGlbls.pas	}
-{ PMS 28 Nov 2020 00:17 }
+{ PMS 28 Nov 2020 20:34 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -267,6 +267,7 @@ VAR
 	datafilename	:  filestring;
 	compiler_opts	:	String;
 	db				:	TEXT;		{	debug file	}
+	svg				:	TEXT;		{	SVG file	}
 
 PROCEDURE MyExitProc;
 { Provides a procedure which intercepts the system exit for unplanned exit	}

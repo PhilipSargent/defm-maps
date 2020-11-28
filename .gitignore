@@ -1,6 +1,8 @@
 *.o
 *.ppu
 *.lst
+*.svg
+*.dbg
 debug.txt
 dfmdebug.txt
 *.exe
