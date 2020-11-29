@@ -1,5 +1,5 @@
  Unit DfmModls;
-{ PMS 27 Nov 2020 19:50 }
+{ PMS 29-November-2020 14:53:24 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -715,8 +715,6 @@ BEGIN
 	StrRate[pls_drag]	:= Peierls(SN);		{	Peierls drag	}
 	StrRate[phn_drag]	:= PhononDrag(SN);	{	Phonon Drag	}
 	StrRate[rel_drag]	:= Relativistic(SN);	{	Relativistic Phonon Drag	}
-{	StrRate[phn_drag]	:= 0.5e6;} {PhononDrag(SN);}	{	Phonon Drag	}
-{	StrRate[rel_drag]	:= 0.7e6;} {Relativistic(SN);}	{	Relativistic Phonon Drag	}
 
 	IF (TN <= 0.0) THEN
 		BEGIN

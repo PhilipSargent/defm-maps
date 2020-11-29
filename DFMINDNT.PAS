@@ -1,5 +1,5 @@
 Unit DfmIndnt;
-{ PMS 29 Nov 2020 14:01 }
+{ PMS 29-November-2020 14:48:18 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -271,7 +271,7 @@ BEGIN
 {	shear_mod is in GPa, so convert H to GPa before dividing	}
 	lgHN := Ln(H * 1.0e-3 /shear_mod)/Ln10;
 {	Writeln(db,'< CreepCalc. T=',t:8,' dt=',dt:8,' LgHN=', LgHN:8:3,' A=', A:8,' A_dot=',A_dot:8);}
-	Flush(db);
+{	Flush(db);}
 
 	Stress := C_1 * H;		{	MPa	}
 {	shear_mod is in GPa, so convert Stress to GPa before dividing	}
