@@ -1,5 +1,5 @@
 Unit DfmIndnt;
-{ PMS 29-November-2020 14:48:18 }
+{ PMS 29-November-2020 21:30:45 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -29,7 +29,7 @@ Unit DfmIndnt;
 
 Interface
 
-PROCEDURE IDENTIFY_FIELDS_Indent;
+PROCEDURE MARK_FIELDS_Indent;
 
 PROCEDURE CALC_Indentation_MAP;
 
@@ -48,7 +48,6 @@ Uses
 	DfmModls;
 
 CONST
-
 	C_1 = 0.193;	{	1/(3.sqrt(3))	}
 	C_2 = 1;
 	C_3 = 25.504;	{	Vickers indenters	}
@@ -62,6 +61,7 @@ VAR
 {---------------------------------------------------------------------------}
 PROCEDURE Fields_Loop_Indent (temp_step: Word);
 BEGIN
+
 END;	{	Fields_Loop_Indent	procedure }
 {---------------------------------------------------------------------------}
 PROCEDURE PLOT_Indentation_BOX (t_first, t_last, LgHNfirst, LgHNlast: a_real);
@@ -100,7 +100,7 @@ BEGIN
 
 	writeln(db,'For loop from ',round(LgHNfirst*minor), ' to ', round(LgHNfirst*minor) + yscale - 1);
 	writeln(db,'ylength, yscale ',ylength,' ', yscale);
-	SetColor(yellow);
+	MySetColor(yellow);
 	FOR scale := (round(LgHNfirst*minor)) to (round(LgHNfirst*minor) + yscale - 1) DO
 		BEGIN
 			writeln(db,'scale:',scale);
@@ -229,7 +229,7 @@ BEGIN
 	delta_x := 6/xfactor;										{ avoid axes marks }
 	delta_y := 6/yfactor;										{ avoid axes marks }
 
-	SetColor(white);
+	MySetColor(white);
 
 	{ these calls to myLine use actual pixels in the viewport}
 	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
@@ -252,6 +252,8 @@ BEGIN
 END;	{	PLOT_Indentation_INFO	}
 {---------------------------------------------------------------------------}
 procedure Creep_Calc (VAR 	field	:	E_mech);
+CONST
+	mult : a_real = 1.3; {increase indentation time by 30% each iteration }
 VAR
 	SN		:	a_real;
 
@@ -265,7 +267,7 @@ BEGIN
 	IF (A_dot*dt > {0.1*} A) THEN
 		dt := 0.1*A/A_dot
 	ELSE
-		dt := dt * 2; {default is to double dt each iteration }
+		dt := dt * mult; 
 	A := A + A_dot*dt;
 	H := Load/A;				{	MPa	}
 {	shear_mod is in GPa, so convert H to GPa before dividing	}
@@ -288,30 +290,77 @@ BEGIN
 		END;
 END;	{	Creep_Calc	}
 {---------------------------------------------------------------------------}
-PROCEDURE Trajectory (LgHNfirst,lgHNlast: a_real);
+PROCEDURE StashBdry (x, y: INTEGER);
+VAR
+	z	:	TP_bdry_list;
+
+BEGIN
+{	Now add the boundary point to (the front of) the global list
+	of boundary points.
+}
+	New(z);
+	z^.next:=bdry_stack;
+	z^.x:=x; z^.y:=y;
+	bdry_stack:=z;
+END;	{	StashBdry	procedure }
+{---------------------------------------------------------------------------}
+PROCEDURE PopBdry (VAR x, y: INTEGER; empty: BOOLEAN);
+VAR
+	b	:	TP_bdry_list;
+
+BEGIN
+	b := bdry_stack;
+	IF (b<>NIL) THEN
+		BEGIN
+			empty := False;
+
+			x := b^.x;
+			y := b^.y;
+			bdry_stack:=b^.next;
+			
+			Dispose(b);
+			
+			IF NOT(bdry_stack<>NIL) THEN {Bug: == not recognised but NOT <> is }
+				BEGIN
+					empty := True;
+					writeln(db,'Reached end of boundary stack');
+				END;
+		END
+	ELSE
+		writeln(db,'UNEXPECTEDLY Reached end of boundary stack');
+END;	{	PopBdry	procedure }
+{---------------------------------------------------------------------------}
+PROCEDURE IndentTrajectory (LgHNfirst,lgHNlast: a_real; plot: BOOLEAN; color: INTEGER);
 {	Plots the line for any given temperature TN and load Load	}
-CONST
-	s1  =  2;
-	s2  =  1;
+
 VAR
 	field1,field2	:	E_mech;
 	x,y,x1,x2,y1,y2	:	Integer;
 	Lgt				:	a_real;
+	d				:	Integer;
+	trjcolor		:	INTEGER;
+	precolor		:	INTEGER;
 
 BEGIN
 	A := 2e-5;		{	mm^2	}
 	dt := 1e-18;	{	s	}
 	t := dt;
 	Rate := 1e6;	{	Maximum strain rate possible	}
+	
+	{ Size of blob marking field boundaries , in pixels}
+	d := 5;
+	
+	
 	x2 := xoffset;
 	y2 := yoffset;
 	field2 := null;
 	skip := FALSE;
+	precolor := MyGetColor;
+	trjcolor := color;
 
 {	Writeln(db,'++Trajectory begin.');
 	Writeln(db,'TN= ',TN:5:2,'  t(s)       dt(s)      LgHN',
 		'        A(mm^2)   A_dot(mm^2)');}
-
 	REPEAT
 		x1 := x2;
 		y1 := y2;
@@ -329,23 +378,28 @@ BEGIN
 	{ ----- Draw the contours ----- }
 		IF (Lgt > Lgt_first) THEN
 			BEGIN
-				Write(db,'+ x1:', x1,' y1:',y1,' x2:',x2,' y2:',y2);
-				myLine(x1,y1,x2,y2);
-				Writeln(db,' *');
+				MySetColor(color);
+				IF plot THEN
+					myLine(x1,y1,x2,y2);
 				IF (field1 <> field2) THEN
 					BEGIN
 						Write(db,'^');
 						x := round((x1+x2)/2);
 						y := round((y1+y2)/2);
-						myLine(x-s1, y, x+s1,y);
-						myLine(x-s1, y+s2, x+s1,y+s2);
+						StashBdry(x,y);
+						MySetColor(blue);
+						myLine(x-d, y, x+d,y);
+						myLine(x-d, y+d, x+d,y+d);
 					END;
+				MySetColor(trjcolor);
 			END;
 		DETECT_SKIP;
 	UNTIL (Lgt > Lgt_last) OR skip;
+	
+	MySetColor(precolor);;
 {	Writeln(db,'++Trajectory end.');}
 
-END;	{	Trajectory	}
+END;	{	IndentTrajectory	}
 {---------------------------------------------------------------------------}
 PROCEDURE 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high: a_real; trajnumber:integer);
 
@@ -355,7 +409,7 @@ VAR
 
 BEGIN
 	Flush(db);
-	SetColor(brown);
+	MySetColor(brown);
 
 	ClearTextSpace(96,156,260,183);
 	Str((trajnumber):3,st);
@@ -375,9 +429,31 @@ BEGIN
 
 END;    {IDENTIFY_TRAJECTORIES.    }
 {---------------------------------------------------------------------------}
-PROCEDURE IDENTIFY_FIELDS_Indent;
+PROCEDURE MARK_FIELDS_Indent;
+VAR
+	x, y	:	INTEGER;
+	empty	:	BOOLEAN;
+	d		:	INTEGER;
+	precolor:	INTEGER;
+	
 BEGIN
-END;    {IDENTIFY_FIELDS_Indent.    }
+	{ Size of blob marking field boundaries , in pixels}
+	d := 7;
+	precolor := MyGetColor;
+	
+	MySetColor(cyan);
+	
+	REPEAT
+		PopBdry(x,y, empty);
+		myLine(x-d, y, x+d,y);
+		myLine(x-d, y+d, x+d,y+d);
+		myLine(x-d, y, x-d,y+d);
+		myLine(x+d, y, x+d,y+d);
+	UNTIL empty;
+	
+	MySetColor(precolor);
+
+END;    { MARK_FIELDS_Indent.    }
 {---------------------------------------------------------------------------}
 PROCEDURE CALC_INDENTATION_MAP;
 
@@ -386,21 +462,22 @@ VAR
 	field				:	E_mech;
 
 	count				:	Integer;
-	i, step			:	Word;
+	i, step				:	Word;
 	c					:	Byte;
 
 	t, t_last, t_first	:	a_real;
-	epsilon					:	a_real;
-	prev_eps					:	a_real;
-	home_in					:	a_real;
+	epsilon				:	a_real;
+	prev_eps			:	a_real;
+	home_in				:	a_real;
 	TNtraj_low			:	a_real;
 	TNtraj_high			:	a_real;
 	TNtraj_step			:	a_real;
-	LgHNfirst 		:	a_real;
+	LgHNfirst 			:	a_real;
 	LgHNlast			:	a_real;
-	lastTN			:	a_real;
+	lastTN				:	a_real;
 	BaseRate			:	a_real;
-	trajnumber		:	Integer;
+	trajnumber			:	Integer;
+	alternate			:	BOOLEAN;
 
 BEGIN	{Calc_Indentation_Map	}
 
@@ -413,9 +490,9 @@ BEGIN	{Calc_Indentation_Map	}
 
 	Lgt_first	:=	Ln(t_first)/Ln10;
 	Lgt_last 	:=	Ln(t_last)/Ln10;
-	Lgt_step		:= (Lgt_last - Lgt_first)/steps;
+	Lgt_step	:= (Lgt_last - Lgt_first)/steps;
 
-	trajnumber := 20;
+	trajnumber := 40;
 	TNtraj_low := 0.15;
 	TNtraj_high := 0.95;
 	TNtraj_step		:= (TNtraj_high - TNtraj_low)/trajnumber;   		{Temperature interval}
@@ -492,17 +569,12 @@ BEGIN	{Calc_Indentation_Map	}
 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
 
 	SetViewPort(xoffset, yoffset, xend, yend, ClipOn);
-	
-{	Plot the 300K trajectory first	}
-{	SetColor(white);}
-{	SetLineStyle(DottedLn,0,NormWidth);}
-{	Trajectory (LgHNfirst,lgHNlast);}
-	
 	SetLineStyle(SolidLn,0,NormWidth);
-	SetColor(green);
 
 { ========== S T A R T == T H E == T E M P E R A T U R E == L O O P ========= }
 	skip:=FALSE;
+	alternate := True;
+
 	i:=0;
 	TN := TNtraj_low;
 	REPEAT
@@ -512,7 +584,9 @@ BEGIN	{Calc_Indentation_Map	}
 
 
 { ----- Calculate and Plot the Hardness/time trajectory ------- }
-		Trajectory (LgHNfirst,lgHNlast);
+		IndentTrajectory (LgHNfirst,lgHNlast, alternate, GREEN);
+		alternate := NOT alternate;
+
 
 { ----- Calculate where the feld boundaries are ------- }
 		Fields_Loop_Indent(i);	{ needs rewriting completely to work for the indentation map }
@@ -526,17 +600,17 @@ BEGIN	{Calc_Indentation_Map	}
 
 { ============ E N D == T H E == T E M P E R A T U R E == L O O P =========== }
 
-{	Plot the 300K trajectory AGAIN	}
+{	Plot the 300K trajectory AGAIN in White	}
 	TN := 300/tmelt;
 	DIFFUSION_RATES;
-	SetColor(white);
-	Trajectory (LgHNfirst,lgHNlast);
+	MySetColor(white);
+	IndentTrajectory (LgHNfirst,lgHNlast, True, WHITE);
+
+	MARK_FIELDS_Indent; { uses a stack of x/y pixel values }
 
 	SetViewPort(0, 0, MaxX, MaxY, ClipOn);
 
-	IDENTIFY_FIELDS_Indent; { need a different procedure for this for the indentation map }
-	
-	PLOT_Indentation_INFO;	{again, in case it had been overwritten	}
+	PLOT_Indentation_INFO;
 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
 	CloseSVG;
 

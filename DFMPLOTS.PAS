@@ -1,5 +1,5 @@
 Unit DfmPlots;
-{ PMS 29-November-2020 13:41:20 }
+{ PMS 29-November-2020 21:10:51 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -47,6 +47,12 @@ PROCEDURE vertical_text(xstart,ystart:integer; lbl:lblstring);
 
 PROCEDURE OurOutTextXY(x,y: INTEGER; s: String);
 
+PROCEDURE MySetColor(color: INTEGER);
+
+FUNCTION MyGetColor:  INTEGER;
+
+FUNCTION MyGetBitColor(color: INTEGER): String;
+
 PROCEDURE DETECT_SKIP;
 
 PROCEDURE PLOT_STRAIN_RATES_BOX (LgSNfirst, LgSNlast: real);
@@ -58,6 +64,13 @@ PROCEDURE IDENTIFY_CONTOURS;
 PROCEDURE IDENTIFY_FIELDS;
 
 PROCEDURE CALC_STRAIN_RATES_MAP;
+
+TYPE
+	TP_bdry_list	=	^T_bdry_list;
+	T_bdry_list		=	RECORD
+							x,y		:	INTEGER;
+							next	:	TP_bdry_list;
+						END;
 
 CONST
 	xfac0	: a_real	= 0.125196; { x-axis origin }
@@ -72,7 +85,9 @@ VAR
 	xend,yend	:	INTEGER;
 	xfactor, 
 	yfactor		:	REAL;
-	
+	lastcolor,
+	nowcolor	:	INTEGER;
+
 	xoffset,
 	yoffset,
 	xlength,
@@ -81,6 +96,9 @@ VAR
 	pointcount,
 	temp_position, 
 	stress_position	:  T_mecharray;	
+	
+	bdry_stack	:	TP_bdry_list;
+
 
 	Rate		:	a_real;
 	Stress		:	a_real;
@@ -158,7 +176,7 @@ VAR
 	MaxColor    :	word;     { The maximum color value available }
 	Ch          :	CHAR;
 	empty_zones	:	TP_zone_list;
-
+	
 	contour			:	T_contour_reals;
 	contourmark		:	T_contour_reals;
 
@@ -206,8 +224,45 @@ begin
 
 end;
 {---------------------------------------------------------------------------}
+PROCEDURE MySetColor(color: INTEGER);
+BEGIN
+	lastcolor := nowcolor;
+	nowcolor := color;
+	SetColor(nowcolor);
+
+END; { MySetColor }
+{---------------------------------------------------------------------------}
+FUNCTION MyGetColor:  INTEGER;
+BEGIN
+	IF GetColor <> nowcolor THEN
+		BEGIN
+			writeln(db,'!nowcolor <> GetColor !');
+			nowcolor := GetColor;
+		END;
+	MyGetColor := nowcolor;
+
+END; { MyGetColor }
+{---------------------------------------------------------------------------}
+FUNCTION MyGetBitColor(color: SmallInt): String;
+VAR
+	RedValue, 
+	GreenValue, 
+	BlueValue	:	SmallInt;
+	r, g, b		:	String;
+
+BEGIN 
+	GetRGBPalette(color, RedValue, GreenValue, BlueValue);
+	Str(RedValue,r);
+	Str(GreenValue,g);
+	Str(BlueValue,b);
+	MyGetBitColor := 'rgb(' + r + ',' + g + ',' + b + ')';
+
+END; { Function MyGetBitColor() }
+{---------------------------------------------------------------------------}
 procedure 	myLine(xx1,yy1,xx2,yy2: Integer);
 { Procedure in the original TurboPascal but unaccountably not documented in fpc }
+VAR
+	rgb:	String;
 begin
 	IF xx1 < 0 THEN 
 		BEGIN
@@ -233,11 +288,16 @@ begin
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 
+	{	using current nowcolor }
 	LineTo(xx2,yy2);
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	
-	writeln(svg,'<line x1="',xx1,'" y1="',yy1,'" x2="',xx2,'" y2="',yy2,'"  style="stroke:#000000;"/>');
+	IF (nowcolor <> white) THEN 
+		rgb := MyGetBitColor(black)
+	ELSE
+		rgb := MyGetBitColor(nowcolor);
+	writeln(svg,'<line x1="',xx1,'" y1="',yy1,'" x2="',xx2,'" y2="',yy2,'"  style="stroke:',rgb,';"/>');
 
 end;
 {---------------------------------------------------------------------------}
@@ -246,7 +306,7 @@ PROCEDURE BoxDefaults;
 VAR
 	vp: ViewPortType;
 BEGIN
-	SetColor(white);
+	MySetColor(white);
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	
@@ -279,8 +339,6 @@ BEGIN
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	Writeln(db,'No obvious ViewPort  errors in BoxDefaults().');
 
-
-	empty_zones:=NIL;	{	should really DISPOSE of the list first..	}
 END; { BoxDefaults }
 
 {---------------------------------------------------------------------------}
@@ -371,10 +429,10 @@ BEGIN
 	yend        := yoffset+ylength;
 	xfactor		:= MaxX/(MaxX-1);
 	yfactor		:= MaxY/(MaxY-1);
+	
+	MySetColor(white);
 
 	InitSVG (MaxX+1, MaxY+1); {800x600 not 799x599 }
-	empty_zones:=NIL;
-
 END; { Initialize }
 {---------------------------------------------------------------------------}
 PROCEDURE DETECT_SKIP;
@@ -411,10 +469,11 @@ VAR
 	ErrorStr	:	String;
 	z			:	TP_zone_list;
 	oldcol		:	ColorType;
+	bitcolor	:	String;
 
 BEGIN
 	oldcol := GetColor;
-	SetColor(green);
+	MySetColor(green);
 	xx1:= Round(xfactor*x1*MaxX/xVGA);
 	yy1:= Round(yfactor*y1*MaxY/yVGA);
 	xx2:= Round(xfactor*x2*MaxX/xVGA);
@@ -470,13 +529,14 @@ BEGIN
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	
-	SetColor(red);
+	MySetColor(red);
 	Rectangle(xx1,yy1,xx2,yy2);
-	SetColor(oldcol);
-	
+	MySetColor(oldcol);
+
 	{SVG equivalent is an opaque white filled, red-edged rectangle}
+	bitcolor := MyGetBitColor(red);
 	writeln(svg,'<rect x="',xx1,'" y="',yy1,'" width="',xx2-xx1,'" height="',yy2-yy1,'"');
-	writeln(svg,'    style="stroke: #ff0000; fill: #ffffff; fill-opacity: 1.0;" />');
+	writeln(svg,'    style="stroke: ',bitcolor,'; fill: #ffffff; fill-opacity: 1.0;" />');
 
 	WRITELN(db,'Exiting ClearTextSpace: ',round(x1),' ',round(y1),' ',round(x2),' ',round(y2));
 
@@ -539,7 +599,7 @@ BEGIN
 	BoxDefaults;
 
 { --------- Draw  Box ----------}
-	SetColor(white);
+	MySetColor(white);
 
 	myLine(xoffset,yoffset,xoffset,yend);
 	myLine(xoffset,yoffset,xend,yoffset);
@@ -551,7 +611,7 @@ BEGIN
 
 	yscale  := round(LgSNlast*minor - LgSNfirst*minor);
 	
-	SetColor(yellow);
+	MySetColor(yellow);
 	FOR scale := (round(LgSNfirst*minor)) to (round(LgSNfirst*minor) + yscale - 1) DO
 		BEGIN
 			ymark := yoffset +
@@ -613,7 +673,7 @@ BEGIN
 { --------- Put on NORMALIZED TEMPERATURE scale ---------- }
 
 	xscale  := round((TNlast - TNfirst)*100);
-	SetColor(yellow);
+	MySetColor(yellow);
 	FOR scale := (round(TNfirst*100)) to (round(TNfirst*100) + xscale - 1) DO
 		BEGIN
 			xmark :=  xoffset +
@@ -630,7 +690,7 @@ BEGIN
 	T         := -400;
 	Tinterval := 100;
 	IF round((TNlast - TNfirst)*tmelt/200) > 10 THEN Tinterval := 200;
-	SetColor(yellow);
+	MySetColor(yellow);
 	repeat
 		T  := T + Tinterval;
 		Tnormalised := (T + 273)/tmelt;
@@ -684,7 +744,7 @@ BEGIN
 	delta_x := 6/xfactor;										{ avoid axes marks }
 	delta_y := 6/yfactor;										{ avoid axes marks }
 
-	SetColor(white);
+	MySetColor(white);
 
 	{ these calls to myLine use actual pixels in the viewport}
 	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
@@ -718,10 +778,10 @@ CONST
 BEGIN
 	{	This is called within the Stress-Loop, within the Temperature-Loop,
 			so the plotting window is already set to the graph axes	}
-	SetColor(blue);
+	MySetColor(blue);
 	myLine(x-s1, y, x+s1,y);
 	myLine(x-s1, y+s2, x+s1,y+s2);
-	SetColor(white);
+	MySetColor(white);
 
 END;   {DRAW_FIELD_BOUNDARY.   }
 {---------------------------------------------------------------------------}
@@ -797,7 +857,7 @@ BEGIN
 	yend	:=	yoffset + yfacN*(MaxY-1);
 
 { ----- Position and print the remaining field labels ----- }
-	SetColor(brown);
+	MySetColor(brown);
 
 	writeln(db,'IDENTIFY_FIELDS');
 	crit := round(steps*steps/100);
@@ -1752,7 +1812,7 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 
 	PLOT_STRAIN_RATES_BOX (LgSNfirst, LgSnlast);
 
-	SetColor(white);
+	MySetColor(white);
 	{ This sets the viewport to the data plot area inside the axes }
 	SetViewPort(xoffset, yoffset, xend, yend, ClipOn);
 
@@ -1793,12 +1853,12 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 		to check the second condition.	}
 {						contourlevels [c, i] := x1;		SAVE SPACE	}
 
-						SetColor(green);
+						MySetColor(green);
 						IF (x1 < 3*xlength/4) THEN
 							myLine(x1,y1,x2,y2);
 						IF (y1 > ylength/4) THEN
 							myLine(x1,y1,x2,y2);
-						SetColor(white);
+						MySetColor(white);
 					END;
 {				Writeln(db);	}
 			END;
@@ -1840,4 +1900,8 @@ END;       {CALC_STRAIN_RATES_MAP.   }
 {---------------------------------------------------------------------------}
 { Unit Initialization }
 BEGIN
+	lastcolor := cyan;
+	nowcolor  := magenta;
+	empty_zones:=NIL;
+	bdry_stack:=NIL;
 End.
