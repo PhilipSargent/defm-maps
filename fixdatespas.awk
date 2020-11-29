@@ -1,5 +1,5 @@
 # Fix the timestamps inside .PAS files
-# PMS 29-November-2020 17:45
+# PMS 29-November-2020 21:02
 
 # Line 2 of .PAS files contains a hand-edited date in a comment:
 # { PMS 2-February-1990 23:15 }
@@ -17,7 +17,6 @@ BEGIN	{
 
 BEGINFILE	{ 	
 		cmd = "touch " FILENAME ".sub"
-		print cmd
 		system(cmd)
 }
 
@@ -59,22 +58,17 @@ BEGINFILE	{
 
 # the end after ALL the files have been read as specified on the awk command line
 ENDFILE	{	
-	print "Endfile " FILENAME
 	if (newcomment != "") {
 		cmd = "touch " FILENAME ".sub -c -d \"" timestamp "\""
-		print cmd
 		system(cmd) 
 		cmd = "mv " FILENAME ".sub " FILENAME
-		print cmd
 		system(cmd) 		
 	} else {
 		print "No timestamp found."
 	}
 }
 
-END	{
-	print "END, last file was " FILENAME
-}
+
 
 
 

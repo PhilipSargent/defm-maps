@@ -14,3 +14,5 @@ REM -dDEBUG is always on, set in the code.
 REM -dCONTOUR and/or-dDETAIL and/or-dCNTRFIX (alternative contour algorithm)
 REM -g debug info for call stack
 C:\FPC\3.2.0\bin\i386-win32\ppcrossx64 -Mtp -g dfm2020
+del *.o
+del *.ppu
