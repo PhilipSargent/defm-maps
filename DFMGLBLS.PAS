@@ -1,5 +1,5 @@
 { DfmGlbls.pas	}
-{ PMS 28 Nov 2020 20:34 }
+{ PMS 29 Nov 2020 12:07 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,7 +20,7 @@
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{$DEFINE  debug} {	always on, pending removal of directive	}
+{$DEFINE	debug} {	always on, pending removal of directive	}
 
 {$R+}	{Range checking on}
 {$B+}	{Boolean complete evaluation on}
@@ -38,7 +38,7 @@ Uses
 
 CONST
 	copyright			= '(C) Copyright 1980,1993 P.M.Sargent & M.F.Ashby; 2020 P.M.Sargent';
-	VersionDate			= '27 Nov 2020';
+	VersionDate			= '29 Nov 2020';
 	Version				= 'DFM2020';
 	Release				= '0.92';
 	DF					= -32768;		{	Default.. for floats, longint, int	}
@@ -169,59 +169,59 @@ TYPE
 	vblarray			= array[R_vbls] of a_real;
 	refarray			= array[R_refs] of char;
 
-CONST	{	Typed constant, i.e. variables with a default	}
-	xoffset			:  integer = DF;
-	xlength			:  integer = DF;
-	yoffset			:  integer = DF;
-	ylength			:  integer = DF;
-	pointnumber		:  integer = DF;
-	contournumber	:  integer = DF;
-	Tcntr_number	:  integer = DF;
-	steps			:  integer = DF;
-	linenumber		:  integer = DF;
-	numberofpoints	:  integer = DF;
+CONST	{	Typed 'constant', i.e. variables with a default	}
+	xoffset			:	integer = DF;
+	xlength			:	integer = DF;
+	yoffset			:	integer = DF;
+	ylength			:	integer = DF;
+	pointnumber		:	integer = DF;
+	contournumber	:	integer = DF;
+	Tcntr_number	:	integer = DF;
+	steps			:	integer = DF;
+	linenumber		:	integer = DF;
+	numberofpoints	:	integer = DF;
 
-	tmelt			:  a_real = DF;
-	tobst			:  a_real = DF;
-	shmod			:  a_real = DF;
-	shtmp			:  a_real = DF;
-	tprls			:  a_real = DF;
-	delFl			:  a_real = DF;
-	delFo			:  a_real = DF;
-	atvol			:  a_real = DF;
-	dovol			:  a_real = DF;
-	dlbdy			:  a_real = DF;
-	qvolm			:  a_real = DF;
-	qbdry			:  a_real = DF;
-	acdoc			:  a_real = DF;
-	qcore			:  a_real = DF;
-	n_crp			:  a_real = DF;
-	S_crp			:  a_real = DF;
-	q_crp			:  a_real = DF;
-	burgv			:  a_real = DF;
+	tmelt			:	a_real = DF;
+	tobst			:	a_real = DF;
+	shmod			:	a_real = DF;
+	shtmp			:	a_real = DF;
+	tprls			:	a_real = DF;
+	delFl			:	a_real = DF;
+	delFo			:	a_real = DF;
+	atvol			:	a_real = DF;
+	dovol			:	a_real = DF;
+	dlbdy			:	a_real = DF;
+	qvolm			:	a_real = DF;
+	qbdry			:	a_real = DF;
+	acdoc			:	a_real = DF;
+	qcore			:	a_real = DF;
+	n_crp			:	a_real = DF;
+	S_crp			:	a_real = DF;
+	q_crp			:	a_real = DF;
+	burgv			:	a_real = DF;
 
-	Gsize			:  a_real = DF;
-	SNlast			:  a_real = DF;
-	SNfirst			:  a_real = DF;
-	TN				:  a_real = DF;
-	TNfirst			:  a_real = DF;
-	TNlast			:  a_real = DF;
-	cntrfirst		:  a_real = DF;
-	cntrfactor		:  a_real = DF;
-	RNbottom		:  a_real = DF;
-	RNtop			:  a_real = DF;
-	Tcntr_high		:  a_real = DF;
-	Tcntr_diff		:  a_real = DF;
+	Gsize			:	a_real = DF;
+	SNlast			:	a_real = DF;
+	SNfirst			:	a_real = DF;
+	TN				:	a_real = DF;
+	TNfirst			:	a_real = DF;
+	TNlast			:	a_real = DF;
+	cntrfirst		:	a_real = DF;
+	cntrfactor		:	a_real = DF;
+	RNbottom		:	a_real = DF;
+	RNtop			:	a_real = DF;
+	Tcntr_high		:	a_real = DF;
+	Tcntr_diff		:	a_real = DF;
 
 	LowRate			:	a_real = DF;
 	LgSN			:	a_real = DF;
 
-{	P				:  a_real = DF;	}
-	P_force2		:  a_real = DF;
-	S_force2		:  a_real = DF;
-	SNeff			:  a_real = DF;
-	SN_T			:  a_real = DF;
-	SN_crp			:  a_real = DF;
+{	P				:	a_real = DF;	}
+	P_force2		:	a_real = DF;
+	S_force2		:	a_real = DF;
+	SNeff			:	a_real = DF;
+	SN_T			:	a_real = DF;
+	SN_crp			:	a_real = DF;
 VAR
 	imc				:	T_imc_classes;
 	mechID			:	T_mechID;
@@ -236,35 +236,35 @@ VAR
 	SpeedValue		:	REAL;
 	SRcount			:	Word;
 
-	OldExitProc		:  Pointer;  { Saves exit procedure address }
-	modenamed		:  BOOLEAN;
-	modefast		:  BOOLEAN;
-	modedemo		:  BOOLEAN;
-	modetemp		:  BOOLEAN;
-	modestrate		:  BOOLEAN;
-	modeindt		:  BOOLEAN;
-	modelistfile	:  BOOLEAN;
-	modeconcern		:  BOOLEAN;
+	OldExitProc		:	Pointer;	{ Saves exit procedure address }
+	modenamed		:	BOOLEAN;
+	modefast		:	BOOLEAN;
+	modedemo		:	BOOLEAN;
+	modetemp		:	BOOLEAN;
+	modestrate		:	BOOLEAN;
+	modeindt		:	BOOLEAN;
+	modelistfile	:	BOOLEAN;
+	modeconcern		:	BOOLEAN;
 
-	choice			:  char;
-	answer			:  char;
+	choice			:	char;
+	answer			:	char;
 
 	d				:	T_descstring;
-	u				: 	T_unitstring;
+	u				:	T_unitstring;
 	id				:	T_id_string;
-	par				:  pararray;
-	vbl				:  vblarray;
-	ref				:  refarray;
-	parnumber		:  R_pars;
-	vblnumber		:  R_vbls;
-	ref_written	:	R_lines;
-	matlname			:  filestring;
-	listfilename	:  filestring;
-	time_string		:  timer_string;
-	date_string		:  timer_string;
+	par				:	pararray;
+	vbl				:	vblarray;
+	ref				:	refarray;
+	parnumber		:	R_pars;
+	vblnumber		:	R_vbls;
+	ref_written		:	R_lines;
+	matlname		:	filestring;
+	listfilename	:	filestring;
+	time_string		:	timer_string;
+	date_string		:	timer_string;
 	weekday			:	timer_string;
-	datalabel		:  datastring;
-	datafilename	:  filestring;
+	datalabel		:	datastring;
+	datafilename	:	filestring;
 	compiler_opts	:	String;
 	db				:	TEXT;		{	debug file	}
 	svg				:	TEXT;		{	SVG file	}
@@ -365,7 +365,6 @@ VAR
 BEGIN
 	ExitProc := OldExitProc; { Restore exit PROCEDURE address }
 	CloseGraph;              { Shut down the graphics system }
-	{DirectVideo := True;}
 	textmode(LastMode);
 	Textbackground(black);
 	Textcolor(white);
@@ -421,12 +420,8 @@ BEGIN
 	
 	{Reset(f); required by fpc if read access required - incmpatibility -
 	https://www.freepascal.org/docs-html/current/rtl/system/rewrite.html }
-	writeln(f,'...Attempting to open file:"',name,'"');
 	Close(f);
 	{$I+}
-	writeln('...Attempting to open file:"',name,'"');
-	writeln('...IOResult:',IOResult);
-	writeln('...NOT ((IOResult=0) AND (name <> '')):',NOT ((IOResult=0) AND (name <> '')));
 	CannotOpen:= NOT ((IOResult=0) AND (name <> ''));
 END;
 {-------------------------------------------------------------------}

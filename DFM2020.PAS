@@ -43,6 +43,7 @@ Uses
   Dfmfiles,
   Dfmmodls,
   Dfmplots,
+  Dfmindnt,
   Dfmmain;
 
 BEGIN

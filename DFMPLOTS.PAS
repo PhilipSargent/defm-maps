@@ -1,5 +1,5 @@
 Unit DfmPlots;
-{ PMS 28 Nov 2020 20:34 }
+{ PMS 29 Nov 2020 12:07 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -29,10 +29,25 @@ Unit DfmPlots;
 
 Interface
 
+Uses
+	DfmGlbls;
+	
+procedure myLine(xx1,yy1,xx2,yy2: Integer);
+
 PROCEDURE Initialize;
 { Initialize graphics and report any errors that may occur }
 
 PROCEDURE CloseSVG;
+
+PROCEDURE BoxDefaults;
+
+PROCEDURE ClearTextSpace(x1,y1,x2,y2: REAL);
+
+PROCEDURE vertical_text(xstart,ystart:integer; lbl:lblstring);
+
+PROCEDURE OurOutTextXY(x,y: INTEGER; s: String);
+
+PROCEDURE DETECT_SKIP;
 
 PROCEDURE PLOT_STRAIN_RATES_BOX (LgSNfirst, LgSNlast: real);
 { ----- Constructs box for temperature DFM-map and labels the axes ----- }
@@ -42,12 +57,39 @@ PROCEDURE IDENTIFY_CONTOURS;
 
 PROCEDURE IDENTIFY_FIELDS;
 
-PROCEDURE IDENTIFY_FIELDS_Indent;
-
 PROCEDURE CALC_STRAIN_RATES_MAP;
 
-PROCEDURE CALC_Indentation_MAP;
+CONST
+	xfac0	: a_real	= 0.125196; { x-axis origin }
+	yfac0	: a_real	= 0.050251; { y-axis origin } 
+	xfacN	: a_real	= 0.782473; { x-axis limit }
+	yfacN	: a_real	= 0.904523; { y-axis limit }
 
+VAR
+	MaxX  		:	word;     { The maximum resolution of the device m800x600 0..699}
+	MaxY  		:	word;     { The maximum resolution of the device m800x600 0..599}
+	st          :	String;   { Dummy string used with Str() and OutText() }
+	xend,yend	:	INTEGER;
+	xfactor, 
+	yfactor		:	REAL;
+	
+	xoffset,
+	yoffset,
+	xlength,
+	ylength		:	INTEGER;
+
+	pointcount,
+	temp_position, 
+	stress_position	:  T_mecharray;	
+
+	Rate		:	a_real;
+	Stress		:	a_real;
+	hint_stress	:	a_real;
+	shear_mod	:	a_real;
+
+	skip        :	BOOLEAN;
+	quit		:	BOOLEAN;
+	
 {===========================================================================}
 
 Implementation
@@ -58,7 +100,6 @@ Uses
 	Printer,
 	Graph,
 	StringIO,
-	DfmGlbls,
 	DfmModls;
 
 CONST
@@ -99,12 +140,6 @@ TYPE
 	T_field_ids		=	ARRAY [E_n_stress] OF T_field_stress;
 
 CONST
-
-	xfac0	: a_real	= 0.125196; { x-axis origin }
-	yfac0	: a_real	= 0.050251; { y-axis origin } 
-	xfacN	: a_real	= 0.782473; { x-axis limit }
-	yfacN	: a_real	= 0.904523; { y-axis limit }
-
 	{ The two text directions available }
 	TextDirect : array[0..1] of string[8] = ('HorizDir', 'VertDir');
 
@@ -114,29 +149,16 @@ CONST
 	{ The vertical text justifications available }
 	VertJust   : array[0..2] of string[10] = ('BottomText', 'CenterText', 'TopText');
 
-	C_1 = 0.193;	{	1/(3.sqrt(3))	}
-	C_2 = 1;
-	C_3 = 25.504;	{	Vickers indenters	}
-
 VAR
 	GraphDriver :	INTEGER;  { The Graphics device driver }
 	GraphMode   :	INTEGER;  { The Graphics mode value }
 	Error		:	INTEGER;
-	MaxX  		:	word;     { The maximum resolution of the device m800x600 }
-	MaxY  		:	word;     { The maximum resolution of the device m800x600 }
 	HalfX, HalfY:	word;
 	ErrorCode   :	INTEGER;  { Reports any graphics errors }
 	MaxColor    :	word;     { The maximum color value available }
-	st          :	String;   { Dummy string used with Str() and OutText() }
-	xoffset,yoffset,xlength,ylength,xend,yend	:	integer;
-	xfactor, 
-	yfactor		:	REAL;
 	Ch          :	CHAR;
-	skip        :	BOOLEAN;
 	empty_zones	:	TP_zone_list;
 
-	pointcount						:  T_mecharray;
-	temp_position, stress_position	:  T_mecharray;
 	contour			:	T_contour_reals;
 	contourmark		:	T_contour_reals;
 
@@ -147,18 +169,10 @@ VAR
 	sqrt_factor		:	a_real;
 
 	last_Rate	:	a_real;
-	Rate			:	a_real;
 	LgS			:	a_real;
-	LgHN			:	a_real;
-	hint_stress	:	a_real;
-	Stress		:	a_real;
 	xr, yr			:	a_real;
-	A, A_dot, Load	:	a_real;
-	H, t, dt			:	a_real;
-	shear_mod		:	a_real;
 
 	code	:	INTEGER;
-	quit	:	BOOLEAN;
 	c		:	Char;
 	s	:	String;
 	f	:	Text;
@@ -197,22 +211,22 @@ procedure 	myLine(xx1,yy1,xx2,yy2: Integer);
 begin
 	IF xx1 < 0 THEN 
 		BEGIN
-			WriteLn(db,'xx1 less than zero! ',xx1);
+			WriteLn(db,'mLine xx1 less than zero! ',xx1);
 			xx1 := 0;
 		END;
 	IF xx2 < 0 THEN 
 		BEGIN
-			WriteLn(db,'xx2 less than zero! ',xx2);
+			WriteLn(db,'mLine xx2 less than zero! ',xx2);
 			xx2 := 0;
 		END;
 	IF yy1 < 0 THEN 
 		BEGIN
-			WriteLn(db,'yy1 less than zero! ',yy1);
+			WriteLn(db,'mLine yy1 less than zero! ',yy1);
 			yy1 := 0;
 		END;
 	IF yy2 < 0 THEN 
 		BEGIN
-			WriteLn(db,'yy2 less than zero! ',yy2);
+			WriteLn(db,'mLine yy2 less than zero! ',yy2);
 			yy2 := 0;
 		END;
 	MoveTo(xx1,yy1);
@@ -315,7 +329,7 @@ PROCEDURE Initialize;
 { Initialize graphics and report any errors that may occur }
 VAR
 	st	:	STRING;
-	newmode	:	integer;
+	newmode	:	INTEGER;
 
 	lo, hi, tw, th: integer;
 	found: boolean;
@@ -472,7 +486,7 @@ PROCEDURE OurOutTextXY(x,y: INTEGER; s: String);
 	{	This converts 640x200 original coords to current pixel x/y coordinates }
 
 VAR
-	xx, yy	:	integer;
+	xx, yy	:	INTEGER;
 	TextInfo: TextSettingsType; { fpc pascal graphics extenson }
 BEGIN
 	xx:= Round(xfactor*x*MaxX/xVGA);
@@ -714,7 +728,7 @@ END;   {DRAW_FIELD_BOUNDARY.   }
 PROCEDURE DRAW_FIELD_LINE(i, j: E_n_stress);
 { the boundaries between mechanisms on the map }
 VAR
-	y_last, y_now		:	Integer;
+	y_last, y_now		:	INTEGER;
 
 BEGIN
 	{	This is called within the Stress-Loop, within the Temperature-Loop,
@@ -758,13 +772,13 @@ END;    {IDENTIFY_CONTOURS.    }
 PROCEDURE IDENTIFY_FIELDS;
 
 VAR
-	P1,P2				:	integer;
+	P1,P2				:	INTEGER;
 	r1,r2				:	a_real;
 	x1,y1,x2,y2			:	a_real;
 	x_shift				:	a_real;
 	y_shift				:	a_real;
-	crit				:	integer;
-	x0,y0				:	integer;
+	crit				:	INTEGER;
+	x0,y0				:	INTEGER;
 	mech				:	E_mech;
 	
 	{	local versions of these..	}
@@ -840,10 +854,6 @@ BEGIN
 	Flush(db);
 
 END;    {IDENTIFY_FIELDS.    }
-{---------------------------------------------------------------------------}
-PROCEDURE IDENTIFY_FIELDS_Indent;
-BEGIN
-END;    {IDENTIFY_FIELDS_Indent.    }
 {---------------------------------------------------------------------------}
 PROCEDURE Contours_Init;
 VAR
@@ -1324,7 +1334,7 @@ VAR
 	top, bot		:	a_real;
 	re_do			:	BOOLEAN;
 	boundaries_exist	:	BOOLEAN;
-	x_half, y_half, y_now:	Integer;
+	x_half, y_half, y_now:	INTEGER;
 	c, i, j	 	:	E_n_stress;
 	k				:	E_n_bndrys;
 	s		:	Word;	{	stress_step	}
@@ -1691,7 +1701,7 @@ VAR
  	mech,
 	field				:	E_mech;
 
-	x1,x2,y1,y2		:	Integer;
+	x1,x2,y1,y2		:	INTEGER;
 	i, step			:	Word;
 	c					:	Byte;
 
@@ -1827,474 +1837,6 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 	CloseSVG;
 
 END;       {CALC_STRAIN_RATES_MAP.   }
-{---------------------------------------------------------------------------}
-PROCEDURE 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high: a_real; trajnumber:integer);
-
-VAR
-	first, last	:	a_real;
-{ ----- Identify the trajectories  ----- }
-
-BEGIN
-	Flush(db);
-	SetColor(brown);
-
-	ClearTextSpace(96,156,260,183);
-	Str((trajnumber):3,st);
-	OurOutTextXY(96,162,st+' TEMPERATURES');
-	first := TNtraj_low*tmelt;
-	last := TNtraj_high*tmelt;
-	IF ((first < 99999 ) AND ( first >= 1 )) THEN
-		Str(first:7:0,st)
-	ELSE
-		Str(first:7:2,st);
-	OurOutTextXY(96,170,' First = '+st+' K');
-	IF ((last < 99999 ) AND ( last >= 1 )) THEN
-		Str(last:7:0,st)
-	ELSE
-		Str(last:7:2,st);
-	OurOutTextXY(96,178,' Last  = '+st+' K');
-
-END;    {IDENTIFY_TRAJECTORIES.    }
-{---------------------------------------------------------------------------}
-PROCEDURE PLOT_Indentation_BOX (t_first,t_last,LgHNfirst, LgHNlast: a_real);
-
-{ ----- Constructs box for Indentation creep map and labels the axes ----- }
-
-var
-	xscale, yscale	:	INTEGER;
-	Tinterval		:	REAL;
-	t				:	REAL;
-	xmark, ymark	:	INTEGER;
-	scale			:	INTEGER;
-	H, HNfirst, HNlast	:	a_real;
-	Hfirst, Hlast		:	a_real;
-	LgHfirst, LgHlast	:	a_real;
-	minor				:	Byte;	{	The number of minor marks between big marks }
-
-BEGIN
-	BoxDefaults;
-
-{ --------- Draw  Box ----------}
-	myLine(xoffset,yoffset,xoffset,yend);
-	myLine(xoffset,yoffset,xend,yoffset);
-	myLine(xend,yend,xoffset,yend);
-	myLine(xend,yend,xend,yoffset);
-
-{ --------- Put on NORMALIZED STRESS scale --------- }
-	minor   := 1;	{	because it's a log axis, so minor marks are not useful }
-
-	yscale  := round(LgHNlast*minor - LgHNfirst*minor);
-
-	SetColor(yellow);
-	FOR scale := (round(LgHNfirst*minor)) to (round(LgHNfirst*minor) + yscale - 1) DO
-		BEGIN
-			ymark := yoffset +
-				ylength - round((scale - round(LgHNfirst*minor))/yscale*ylength);
-			IF (frac(scale/minor) = 0)  THEN
-				myLine(xoffset,ymark,xend,ymark)
-			ELSE
-				myLine(xoffset,ymark,xoffset+3,ymark);
-		END;
-
-{ --------- Put on ABSOLUTE STRESS scale ---------- }
-	{	in Mpa, but shmod is in GPa so multiply by 1000	}
-	HNfirst := exp(LgHNfirst);
-	HNlast := exp(LgHNlast);
-	Hfirst	:=	shmod*HNfirst*1.0e3;	{	shmod is at 300 K	}
-	Hlast 	:=	shmod*HNlast *1.0e3;	{	shmod is at 300 K	}
-	LgHfirst	:=	Ln(Hfirst)/Ln10;
-	LgHlast 	:=	Ln(Hlast)/Ln10;
-
-	IF (Hfirst <= 1.0e-9) THEN
-		BEGIN
-			WriteLn(db,'Error, low hardness limit too low!');
-			WriteLn(db,'Hfirst: ', Hfirst,'shmod: ', shmod,'HNfirst: ', HNfirst );
-			OurOutTextXY(xoffset+2,100,'Error, low hardness limit too low!');
-			Str(Hfirst:4:1,st);
-			OurOutTextXY(xoffset+2,106,st);
-			Str(shmod:4:1,st);
-			OurOutTextXY(xoffset+2,112,st);
-			Str(HNfirst:4:1,st);
-			OurOutTextXY(xoffset+2,118,st);
-			
-			{ ERROR detection... wait for a moment..}
-			repeat until keypressed;
-		END;
-	H	:=	1.0e-9;
-	REPEAT
-		H := H * 10;
-	UNTIL (H >= Hfirst);
-
-	Str(H:4:1,st);
-	IF (H < Hlast) THEN
-		OurOutTextXY (585,189,st);
-
-	ymark		:= 0;
-	REPEAT
-		IF (H > Hfirst) and (H < Hlast) THEN
-			ymark := yoffset +
-				round(ylength*(1 - (Ln(H)/Ln10 - LgHfirst)/
-												(LgHlast - LgHfirst)));
-		IF (ymark >= yoffset) AND (ymark <= yend) THEN
-			myLine(xend,ymark,xend-6,ymark);
-
-{ -----	Nested IFs because of BUG with 8087 chip if IFs too complicated	}
-		Str(H:4:1,st);
-		IF (H >= (Hlast/10)) THEN
-			IF (H <= Hlast) THEN
-				OurOutTextXY (585,10,st);
-		H := H * 10;
-	UNTIL (H  >= Hlast);
-
-{ --------- Put on Log Time x-scale ---------- }
-	t	:=	1.0e-9;
-	REPEAT
-		t := t * 10;
-	UNTIL (t >= t_first);
-
-	Str((Ln(t)/Ln10):4:1,st);
-	IF (t < t_last) THEN
-		OurOutTextXY (75,196,st);
-
-	xmark		:= 0;
-	REPEAT
-		IF (t > t_first) and (t < t_last) THEN
-			xmark := xoffset +
-				round(xlength*(1 - (Ln(t)/Ln10 - Lgt_first)/
-												(Lgt_last - Lgt_first)));
-		IF (xmark >= xoffset) AND (xmark <= xend) THEN
-			myLine(xmark,yend,xmark,yend-6);
-
-{ -----	Nested IFs because of BUG with 8087 chip if IFs too complicated	}
-		Str((Ln(t)/Ln10):4:1,st);
-		IF (t >= (t_last/10)) THEN
-			IF (t <= t_last) THEN
-				OurOutTextXY (554,196,st);
-		t := t * 10;
-	UNTIL (t  >= t_last);
-
-	Str(t_first:4:2,st);
-	OurOutTextXY(75,5,st);
-	Str(t_last:8,st);
-	OurOutTextXY(554,5,st);
-
-{ --------- Label Normalised Hardness Axes           ---------- }
-	Str(LgHNlast:4:2,st);
-	OurOutTextXY(42,10,st);
-	Str(LgHNfirst:4:2,st);
-	OurOutTextXY(42,189,st);
-
-{ ----- Label horizontal and vertical axes of graph window ----- }
-
-	OurOutTextXY(216,5,'          TIME   (s)      ');
-	OurOutTextXY(200,196,'       Ln(TIME)  (s)      ');
-	vertical_text(56,100,'NORM. HARDNESS  ');
-	vertical_text(599,100,'HARDNESS (MPa)  ');
-
-END;   {PLOT_Indentation_BOX.    }
-
-{---------------------------------------------------------------------------}
-PROCEDURE PLOT_Indentation_INFO;
-
-{ ----- Label horizontal and vertical axes of graph window ----- }
-VAR
-	xof,yof,xl,yl	:	REAL;
-	delta_x			:	REAL;
-	delta_y			:	REAL;
-
-BEGIN
-	DATE_AND_TIME;
-
-	xof    := xfac0 * MaxX;
-	yof    := yfac0 * MaxY;
-	xl     := xfacN * MaxX;
-	yl     := yfacN * MaxY;
-
-	delta_x := 6/xfactor;										{ avoid axes marks }
-	delta_y := 6/yfactor;										{ avoid axes marks }
-	ClearTextSpace(xof+3*xl/4,yof+delta_y,xof+xl-delta_x,yof+yl/4);
-
-	SetColor(white);
-
-	{ these calls to myLine use actual pixels in the viewport}
-	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
-		xoffset+xlength,yoffset+round(ylength/4));
-	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
-		xoffset+round(3*xlength/4),yoffset);
-
-	{ these calls to ClearTextSpace and OurOutTextXY use 'notional 640x200 scaled pixels'}
-	ClearTextSpace(85,122,306,130);
-	OurOutTextXY(96,126,'Indentation Creep Trajectories');
-	
-	ClearTextSpace(456,12,630,55);
-	OurOutTextXY(465,16,matlname);
-	Str((Gsize*1.0e6):4:1,st);
-	OurOutTextXY(465,24,'d = '+st+' um');
-	Str(Load:4:0,st);
-	OurOutTextXY(465,32,'L = '+st+' N');
-	OurOutTextXY(465,48,date_string);
-
-END;	{	PLOT_Indentation_INFO	}
-{---------------------------------------------------------------------------}
-procedure Creep_Calc (VAR 	field	:	E_mech);
-VAR
-	SN		:	a_real;
-
-BEGIN
-	t := t + dt; { t increases each iteration }
-	
-{	Area of indentation A is in sq.mm, Load is in N, so H is MPa	}
-	A_dot := Rate * C_2 * C_3 * 0.5 /A;
-
-{	We want dt to be such that the change in A is < 100%	}
-	IF (A_dot*dt > {0.1*} A) THEN
-		dt := 0.1*A/A_dot
-	ELSE
-		dt := dt * 2; {default is to double dt each iteration }
-	A := A + A_dot*dt;
-	H := Load/A;				{	MPa	}
-{	shear_mod is in GPa, so convert H to GPa before dividing	}
-	lgHN := Ln(H * 1.0e-3 /shear_mod)/Ln10;
-{	Writeln(db,'< CreepCalc. T=',t:8,' dt=',dt:8,' LgHN=', LgHN:8:3,' A=', A:8,' A_dot=',A_dot:8);}
-	Flush(db);
-
-	Stress := C_1 * H;		{	MPa	}
-{	shear_mod is in GPa, so convert Stress to GPa before dividing	}
-	SN := Stress * 1.0e-3 /shear_mod;
-	IF (SN >= 1) THEN	{	stress higher than shear modulus	}
-		BEGIN
-			Rate := 1e6;
-			field := phn_drag;
-		END
-	ELSE
-		BEGIN
-			LgSN := Ln(SN)/Ln10;
-			STRAIN_RATES (TN, LgSN, Rate, field, hint_stress);
-		END;
-END;	{	Creep_Calc	}
-{---------------------------------------------------------------------------}
-PROCEDURE Trajectory (LgHNfirst,lgHNlast: a_real);
-{	Plots the line for any given temperature TN and load Load	}
-CONST
-	s1  =  2;
-	s2  =  1;
-VAR
-	field1,field2	:	E_mech;
-	x,y,x1,x2,y1,y2	:	Integer;
-	Lgt				:	a_real;
-
-BEGIN
-	A := 2e-5;		{	mm^2	}
-	dt := 1e-18;	{	s	}
-	t := dt;
-	Rate := 1e6;	{	Maximum strain rate possible	}
-	x2 := xoffset;
-	y2 := yoffset;
-	field2 := null;
-	skip := FALSE;
-
-{	Writeln(db,'++Trajectory begin.');
-	Writeln(db,'TN= ',TN:5:2,'  t(s)       dt(s)      LgHN',
-		'        A(mm^2)   A_dot(mm^2)');}
-
-	REPEAT
-		x1 := x2;
-		y1 := y2;
-		field1 := field2;
-		Creep_Calc(field2);
-		Lgt := Ln(t)/Ln10;
-		x2 := round(xlength*(Lgt - Lgt_first)/(Lgt_last - Lgt_first));
-		y2 := round(ylength*(LgHNlast - LgHN)/(LgHNlast - LgHNfirst));
-
-{		Write(db,'|');
-		WRITE_FIELDNAME (field2);
-		`(db,'|');
-		Writeln(db);}
-
-	{ ----- Draw the contours ----- }
-		IF (Lgt > Lgt_first) THEN
-			BEGIN
-				Write(db,'+ x1:', x1,' y1:',y1,' x2:',x2,' y2:',y2);
-				myLine(x1,y1,x2,y2);
-				Writeln(db,' *');
-				IF (field1 <> field2) THEN
-					BEGIN
-						Write(db,'^');
-						x := round((x1+x2)/2);
-						y := round((y1+y2)/2);
-						myLine(x-s1, y, x+s1,y);
-						myLine(x-s1, y+s2, x+s1,y+s2);
-					END;
-			END;
-		DETECT_SKIP;
-	UNTIL (Lgt > Lgt_last) OR skip;
-{	Writeln(db,'++Trajectory end.');}
-
-END;	{	Trajectory	}
-{---------------------------------------------------------------------------}
-PROCEDURE CALC_INDENTATION_MAP;
-
-VAR
- 	mech,
-	field				:	E_mech;
-
-	count				:	Integer;
-	i, step			:	Word;
-	c					:	Byte;
-
-	t, t_last, t_first	:	a_real;
-	epsilon					:	a_real;
-	prev_eps					:	a_real;
-	home_in					:	a_real;
-	TNtraj_low			:	a_real;
-	TNtraj_high			:	a_real;
-	TNtraj_step			:	a_real;
-	LgHNfirst 		:	a_real;
-	LgHNlast			:	a_real;
-	lastTN			:	a_real;
-	BaseRate			:	a_real;
-	trajnumber		:	Integer;
-
-BEGIN	{Calc_Indentation_Map	}
-
-	LgHNfirst	:= -7;
-	LgHNlast	:= -1;
-
-	Load := 0.1;	{	MN	}
-	t_first := 0.005;
-	t_last := 5e7;
-
-	Lgt_first	:=	Ln(t_first)/Ln10;
-	Lgt_last 	:=	Ln(t_last)/Ln10;
-	Lgt_step		:= (Lgt_last - Lgt_first)/steps;
-
-	trajnumber := 20;
-	TNtraj_low := 0.15;
-	TNtraj_high := 0.95;
-	TNtraj_step		:= (TNtraj_high - TNtraj_low)/trajnumber;   		{Temperature interval}
-
-	quit := FALSE;
-	t := t_first;
-	Load := 1;	{	in N, 1kgf. is 9.81 N, so 1 N is about 100gf.	}
-	BaseRate := 1e-4;
-	Writeln(db,'Calc_Indentation_Map ');
-	Writeln(db,'BaseRate ',BaseRate:15);
-	Writeln(db,'Load     ', Load:15:4);
-	{	shmod is at 300 K	}
-	TN := 300/tmelt;
-	Writeln(db,'TN       ', TN:15:4);
-	Writeln(db,'shtmp          ', shtmp:15);
-	Writeln(db,'shmod  (300K)  ', shmod:15);
-	shear_mod	:= shmod* (1 + shtmp*300/tmelt)*(1 - shtmp*TN);
-	Writeln(db,'shear_mod  (0K)', (shmod* (1 + shtmp*300/tmelt)):15);
-	Writeln(db,'shear_mod  (TN)', shear_mod:15);
-	dt := 1;
-
-{ ----- Calculate strain rate for Stress in middle of range ----- }
-	LgSN := -4;
-	Writeln(db,'LgSN     ', LgSN:15:4);
-
-	DIFFUSION_RATES;
-	Writeln(db);
-	count := 0;
-	skip := FALSE;
-	prev_eps := 0;
-	epsilon := 0;
-	home_in := 1.05;
-	Writeln(db,' Iterate to find strain rate for Stress in middle of range ');
-	Writeln(db,' Stress Begin count   Rate      LgSN     epsilon');
-	Flush(db);
-	REPEAT
-		count:= count + 1;
-		STRAIN_RATES (TN, LgSN, Rate, field, hint_stress);
-		prev_eps := epsilon;
-		epsilon := Rate/BaseRate;
-		Writeln(db,' Stress Begin ',count:4,' ',Rate:8,' ',
-			LgSN:8:3,' ',epsilon:9);
-		IF (Rate > BaseRate) THEN
-			LgSN := LgSN*home_in	{	since LgSN is always -ve	}
-		ELSE
-			LgSN := LgSN/home_in;
-		IF ((prev_eps > 1) AND (epsilon < 1))
-		OR ((prev_eps < 1) AND (epsilon > 1)) THEN	{	over-shot	}
-			home_in := 1+ 0.5*(home_in-1);
-		Flush(db);
-
-{ ----- Detect <CtrlC> key if pressed  ----- }
-		DETECT_SKIP;
-	UNTIL (( epsilon < 1.1) AND ( epsilon > 0.9)) OR skip;
-	Writeln(db,'Finished TN=0.5 getting Rate = 1e-4 ',Rate:8);
-	Flush(db);
-
-{ ----- "Zero" field id counters ----- }
-
-	FOR mech := null TO rel_drag DO
-		BEGIN
-			temp_position[mech]      := 0;
-			stress_position[mech]      := 0;
-			pointcount[mech]  := 0;
-		END;
-
-{ ----- Draw the Indentation box ----- }
-	Writeln(db,' call PLOT_Indentation_BOX');
-	Flush(db);
-
-	PLOT_Indentation_BOX (t_first, t_last, LgHNfirst, LgHNlast);
-	Flush(db);
-
-	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
-
-	SetViewPort(xoffset, yoffset, xend, yend, ClipOn);
-	
-{	Plot the 300K trajectory first	}
-{	SetColor(white);}
-{	SetLineStyle(DottedLn,0,NormWidth);}
-{	Trajectory (LgHNfirst,lgHNlast);}
-	
-	SetLineStyle(SolidLn,0,NormWidth);
-	SetColor(green);
-
-{ ========== S T A R T == T H E == T E M P E R A T U R E == L O O P ========= }
-	skip:=FALSE;
-	i:=0;
-	TN := TNtraj_low;
-	REPEAT
-
-{ ----- Calculate the diffusion rates at the new Temperature ------- }
-		DIFFUSION_RATES;
-
-
-{ ----- Calculate and Plot the Hardness/time trajectory ------- }
-		Trajectory (LgHNfirst,lgHNlast);
-
-{ ----- Calculate where the feld boundaries are ------- }
-		Fields_Loop_Indent(i);	{ needs rewriting completely to work for the indentation map }
-
-{ ----- Detect <CtrlC> key if pressed  ----- }
-		DETECT_SKIP;
-
-		TN := TN + TNtraj_step;
-		i:=i+1;
-	UNTIL (i=trajnumber+1) OR skip;
-
-{ ============ E N D == T H E == T E M P E R A T U R E == L O O P =========== }
-
-{	Plot the 300K trajectory AGAIN	}
-	TN := 300/tmelt;
-	DIFFUSION_RATES;
-	SetColor(white);
-	Trajectory (LgHNfirst,lgHNlast);
-
-	SetViewPort(0, 0, MaxX, MaxY, ClipOn);
-
-	IDENTIFY_FIELDS_Indent; { need a different procedure for this for the indentation map }
-	
-	PLOT_Indentation_INFO;	{again, in case it had been overwritten	}
-	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
-	CloseSVG;
-
-END;       {CALC_INDENTATION_MAP.   }
-{ =========================================================================== }
 {---------------------------------------------------------------------------}
 { Unit Initialization }
 BEGIN

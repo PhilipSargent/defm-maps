@@ -46,7 +46,8 @@ Uses
 	Dfmfiles,
 	Dfmedits,
 	Dfmmodls,
-	Dfmplots;
+	Dfmplots,
+	Dfmindnt;
 
 VAR
 	index			:	INTEGER;
