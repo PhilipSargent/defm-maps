@@ -304,7 +304,7 @@ BEGIN
 	bdry_stack:=z;
 END;	{	StashBdry	procedure }
 {---------------------------------------------------------------------------}
-PROCEDURE PopBdry (VAR x, y: INTEGER; empty: BOOLEAN);
+PROCEDURE PopBdry (VAR x, y: INTEGER; VAR empty: BOOLEAN);
 VAR
 	b	:	TP_bdry_list;
 
@@ -327,7 +327,11 @@ BEGIN
 				END;
 		END
 	ELSE
-		writeln(db,'UNEXPECTEDLY Reached end of boundary stack');
+		BEGIN
+			writeln(db,'UNEXPECTEDLY Reached end of boundary stack');
+			empty := True;
+			Finish(8);
+		END;
 END;	{	PopBdry	procedure }
 {---------------------------------------------------------------------------}
 PROCEDURE IndentTrajectory (LgHNfirst,lgHNlast: a_real; plot: BOOLEAN; color: INTEGER);
