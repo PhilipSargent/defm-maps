@@ -34,6 +34,10 @@ Uses
 	
 procedure myLine(xx1,yy1,xx2,yy2: Integer);
 
+procedure myRectangle(xx1,yy1,xx2,yy2: Integer);
+
+PROCEDURE myCircle(x,y,r: Integer);
+
 PROCEDURE Initialize;
 { Initialize graphics and report any errors that may occur }
 
@@ -294,12 +298,47 @@ begin
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	
 	IF (nowcolor <> white) THEN 
-		rgb := MyGetBitColor(black)
+		rgb := MyGetBitColor(nowcolor)
 	ELSE
-		rgb := MyGetBitColor(nowcolor);
+		rgb := MyGetBitColor(black);
 	writeln(svg,'<line x1="',xx1,'" y1="',yy1,'" x2="',xx2,'" y2="',yy2,'"  style="stroke:',rgb,';"/>');
 
-end;
+end; { MyLine }
+{---------------------------------------------------------------------------}
+PROCEDURE MyRectangle(xx1,yy1,xx2,yy2: Integer);
+VAR
+	rgb:	String;
+
+BEGIN 
+	Rectangle(xx1,yy1,xx2,yy2);
+	
+	IF (nowcolor <> white) THEN 
+		rgb := MyGetBitColor(nowcolor)
+	ELSE
+		rgb := MyGetBitColor(black);
+	{SVG equivalent is an opaque white filled, red-edged rectangle}
+	writeln(svg,'<rect x="',xx1,'" y="',yy1,'" width="',xx2-xx1,'" height="',yy2-yy1,'"');
+	writeln(svg,'    style="stroke: ',rgb,'; fill: #ffffff; fill-opacity: 1.0;" />');
+
+
+END; { MyRectangle }
+{---------------------------------------------------------------------------}
+PROCEDURE MyCircle(x,y,r: Integer);
+VAR
+	rgb:	String;
+
+BEGIN 
+	Circle(x,y,r);
+	
+	IF (nowcolor <> white) THEN 
+		rgb := MyGetBitColor(nowcolor)
+	ELSE
+		rgb := MyGetBitColor(black);
+	{SVG equivalent is an opaque red-filled circle}
+	writeln(svg,'<circle cx="',x,'" cy="',y,'" r="',r,'"');
+	writeln(svg,'    style="fill: ',rgb,'; fill-opacity: 0.5" />');
+
+END; { MyRectangle }
 {---------------------------------------------------------------------------}
 PROCEDURE BoxDefaults;
 { This is the first time we actually draw graphics on screen }
@@ -340,7 +379,6 @@ BEGIN
 	Writeln(db,'No obvious ViewPort  errors in BoxDefaults().');
 
 END; { BoxDefaults }
-
 {---------------------------------------------------------------------------}
 Function Max(a,b:Real): Real;
 begin
@@ -473,7 +511,7 @@ VAR
 
 BEGIN
 	oldcol := GetColor;
-	MySetColor(green);
+
 	xx1:= Round(xfactor*x1*MaxX/xVGA);
 	yy1:= Round(yfactor*y1*MaxY/yVGA);
 	xx2:= Round(xfactor*x2*MaxX/xVGA);
@@ -497,11 +535,9 @@ BEGIN
 		yy2:=yoffset+1;
 	IF xx2 < xoffset+1 THEN
 		xx2:=xoffset+1;
-	
-	myLine(xx1,yy1,xx1,yy2);
-	myLine(xx1,yy1,xx2,yy1);
-	myLine(xx2,yy2,xx2,yy1);
-	myLine(xx2,yy2,xx1,yy2);
+
+	MySetColor(green);
+	MyRectangle(xx1,yy1,xx2,yy2);
 
 {	Now add the cleared zone to (the front of) the global list
 	of empty zones, but FIRST we SHOULD really check whether we
@@ -530,13 +566,8 @@ BEGIN
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	
 	MySetColor(red);
-	Rectangle(xx1,yy1,xx2,yy2);
+	MyRectangle(xx1,yy1,xx2,yy2);
 	MySetColor(oldcol);
-
-	{SVG equivalent is an opaque white filled, red-edged rectangle}
-	bitcolor := MyGetBitColor(red);
-	writeln(svg,'<rect x="',xx1,'" y="',yy1,'" width="',xx2-xx1,'" height="',yy2-yy1,'"');
-	writeln(svg,'    style="stroke: ',bitcolor,'; fill: #ffffff; fill-opacity: 1.0;" />');
 
 	WRITELN(db,'Exiting ClearTextSpace: ',round(x1),' ',round(y1),' ',round(x2),' ',round(y2));
 

@@ -382,20 +382,14 @@ BEGIN
 	{ ----- Draw the contours ----- }
 		IF (Lgt > Lgt_first) THEN
 			BEGIN
-				MySetColor(color);
 				IF plot THEN
 					myLine(x1,y1,x2,y2);
 				IF (field1 <> field2) THEN
 					BEGIN
-						Write(db,'^');
 						x := round((x1+x2)/2);
 						y := round((y1+y2)/2);
 						StashBdry(x,y);
-						MySetColor(blue);
-						myLine(x-d, y, x+d,y);
-						myLine(x-d, y+d, x+d,y+d);
 					END;
-				MySetColor(trjcolor);
 			END;
 		DETECT_SKIP;
 	UNTIL (Lgt > Lgt_last) OR skip;
@@ -441,18 +435,15 @@ VAR
 	precolor:	INTEGER;
 	
 BEGIN
-	{ Size of blob marking field boundaries , in pixels}
-	d := 7;
+	{ Size of blob marking field boundaries , in scaled pixels}
+	d := 4;
 	precolor := MyGetColor;
 	
 	MySetColor(cyan);
 	
 	REPEAT
 		PopBdry(x,y, empty);
-		myLine(x-d, y, x+d,y);
-		myLine(x-d, y+d, x+d,y+d);
-		myLine(x-d, y, x-d,y+d);
-		myLine(x+d, y, x+d,y+d);
+		myCircle(x, y, d);
 	UNTIL empty;
 	
 	MySetColor(precolor);
