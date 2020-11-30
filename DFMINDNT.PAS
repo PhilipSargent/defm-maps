@@ -1,5 +1,5 @@
 Unit DfmIndnt;
-{ PMS 30-November-2020 16:36:28 }
+{ PMS 30-November-2020 18:34:44 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -32,7 +32,6 @@ Interface
 PROCEDURE MARK_FIELDS_Indent;
 
 PROCEDURE CALC_Indentation_MAP;
-
 {===========================================================================}
 
 Implementation
@@ -214,14 +213,13 @@ BEGIN
 
 	OurOutTextXY(216,5,'          TIME   (s)      ');
 	OurOutTextXY(200,196,'       Ln(TIME)  (s)      ');
-	vertical_text(56,100,'NORM. HARDNESS  ');
-	vertical_text(599,100,'HARDNESS (MPa)  ');
-
+	MySetTextDir(Graph.VertDir);
+	OurOutTextXY(56,100,'LG NORM. HARDNESS');
+	OurOutTextXY(599,100,'HARDNESS (MPa)');
+	MySetTextDir(Graph.HorizDir);
 END;   {PLOT_Indentation_BOX.    }
-
 {---------------------------------------------------------------------------}
 PROCEDURE PLOT_Indentation_INFO;
-
 { ----- Label horizontal and vertical axes of graph window ----- }
 VAR
 	xof,yof,xl,yl	:	REAL;
@@ -410,11 +408,9 @@ BEGIN
 END;	{	IndentTrajectory	}
 {---------------------------------------------------------------------------}
 PROCEDURE 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high: a_real; trajnumber:integer);
-
 VAR
 	first, last	:	a_real;
 { ----- Identify the trajectories  ----- }
-
 BEGIN
 	Flush(db);
 	MySetColor(brown);
@@ -457,11 +453,9 @@ BEGIN
 	UNTIL empty;
 	
 	MySetColor(precolor);
-
 END;    { MARK_FIELDS_Indent.    }
 {---------------------------------------------------------------------------}
 PROCEDURE CALC_INDENTATION_MAP;
-
 VAR
  	mech,
 	field				:	E_mech;
@@ -483,7 +477,6 @@ VAR
 	BaseRate			:	a_real;
 	trajnumber			:	Integer;
 	alternate			:	BOOLEAN;
-
 BEGIN	{Calc_Indentation_Map	}
 	plottype := indent;
 	Writeln(db,'**** INDENTATION  Map ****');
@@ -621,7 +614,6 @@ BEGIN	{Calc_Indentation_Map	}
 	PLOT_Indentation_INFO;
 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
 	CloseSVG;
-
 END;       {CALC_INDENTATION_MAP.   }
 { =========================================================================== }
 {---------------------------------------------------------------------------}

@@ -1,5 +1,5 @@
 { DfmGlbls.pas	}
-{ PMS 30-November-2020 16:20:07 }
+{ PMS 30-November-2020 17:42:24 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,8 +20,6 @@
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{$DEFINE	debug} {	always on, pending removal of directive	}
-
 {$R+}	{Range checking on}
 {$B+}	{Boolean complete evaluation on}
 {$S+}	{Stack checking on}
@@ -64,7 +62,6 @@ CONST
 	refchars			= 61;
 
 	pathlength			= 30;
-	lbllength	 		= 16;
 	datalabellength		= 60;
 	maxcontournumber	= 20;
 	max_steps			= 300;
@@ -162,7 +159,6 @@ TYPE
 	R_refs				= 0..ref_buflength;
 	R_lines				= 0..reflines;
 
-	lblstring			= array[1..lbllength] of char;
 	chararray			= array[1..12] of char;
 	datastring			= String[datalabellength];
 	timer_string		= String[12];
@@ -1045,9 +1041,6 @@ END;      {end of get_imc_string procedure}
 { Unit Initialization }
 BEGIN
 	compiler_opts := '';
-{$IFDEF  debug}
-	compiler_opts := compiler_opts+'+Debug';
-{$ENDIF}
 {$IFDEF  contour}	  
 	compiler_opts := compiler_opts+'+Contour';
 {$ENDIF}

@@ -1,5 +1,5 @@
 Unit dfmfiles;
-{ PMS 27-November-2020 21:24:31 }
+{ PMS 30-November-2020 17:18:20 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,8 +20,6 @@ Unit dfmfiles;
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{$DEFINE  debug} {	always on, pending removal of directive	}
-
 {$R+}	{Range checking on}
 {$B+}	{Boolean complete evaluation on}
 {$S+}	{Stack checking on}
@@ -338,7 +336,6 @@ VAR
 	i,index	:	R_refs;
 	lines		:	R_lines;
 BEGIN
-{$IFDEF debug}
 	Writeln(db,Esc,matlname);
 	FOR lines := 0 TO ref_written DO
 		BEGIN
@@ -350,7 +347,6 @@ BEGIN
 				Writeln(db,s);
 		END;
 	Writeln(db,Esc);
-{$ENDIF}
 
 	BEGIN_FILE_SAVE(reffilename);
 

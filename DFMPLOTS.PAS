@@ -1,5 +1,5 @@
 Unit DfmPlots;
-{ PMS 30-November-2020 16:36:13 }
+{ PMS 30-November-2020 18:30:30 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,10 +20,8 @@ Unit DfmPlots;
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{$DEFINE  debug} {	always on, pending removal of directive	}
-
 {$R+}	{Range checking on}
-{$B+}	{Boolean complete evaluation on}
+{$B+}	{BOOLEAN complete evaluation on}
 {$S+}	{Stack checking on}
 {$I+}	{I/O checking on}
 
@@ -78,7 +76,7 @@ CONST
 	C_num_bndrys		=	numberofmechanisms*2;	{	estimate	}
 
 TYPE
-	T_all_contours		= ARRAY [1..maxcontournumber,0..max_steps] OF Integer;
+	T_all_contours		= ARRAY [1..maxcontournumber,0..max_steps] OF INTEGER;
 	T_contour_reals	= ARRAY [0..maxcontournumber] OF a_real;
 
 	E_n_bndrys		=	1..C_num_bndrys;
@@ -161,7 +159,7 @@ var
 	Tinterval        :	REAL;
 	xmark, ymark     :	INTEGER;
 	scale			:	INTEGER;
-	TW, TH			: Integer;
+	TW, TH			: INTEGER;
 	T, Tnormalised		:	Real;
 	S, Sfirst, Slast	:	Real;
 	LgSfirst, LgSlast	:	Real;
@@ -291,8 +289,10 @@ BEGIN
 
 	OurOutTextXY(200,196,' NORMALISED TEMPERATURE T/Tm');
 	OurOutTextXY(216,5,'     TEMPERATURE  (C)     ');
-	vertical_text(56,100,'NORM SHEARSTRESS');
-	vertical_text(599,100,'STRESS   (MPa)  ');
+	MySetTextDir(Graph.VertDir);
+	OurOutTextXY(56,100,'NORM SHEARSTRESS');
+	OurOutTextXY(599,100,'STRESS   (MPa)  ');
+	MySetTextDir(Graph.HorizDir);
 
 END;   {PLOT_STRAIN_RATES_BOX.    }
 
@@ -342,7 +342,7 @@ BEGIN
 
 END;	{	PLOT_STRAIN_RATES_INFO	}
 {---------------------------------------------------------------------------}
-PROCEDURE DRAW_FIELD_BOUNDARY (x,y : Integer);
+PROCEDURE DRAW_FIELD_BOUNDARY (x,y : INTEGER);
 { the vertical lines at a specific temperature on the map showing limits to some mechanisms }
 CONST
 	s1  =  2;
@@ -929,9 +929,7 @@ BEGIN	{	Procedure Contours_Loop	}
 					END
 				ELSE
 					BEGIN
-{$IFDEF debug}
 						Writeln(db,' Should never get here ! In DfmPlots.Contour_Loops');
-{$ENDIF}
 					END;
 				contourmark[c] := (field_ids[c].stress - LgSNfirst)/(LgSNlast - LgSNfirst);
 			END;	{	For c loop	}
@@ -1058,7 +1056,6 @@ BEGIN
 					END;
 		END;
 {$ENDIF}
-{$IFDEF debug}
 	Writeln(db);
 	FOR i := 1 to n_bndrys DO
 		WITH bndry_tabl[i] DO
@@ -1077,7 +1074,6 @@ BEGIN
 					END;
 				Writeln(db);
 			END;
-{$ENDIF}
 
 	{ ----- Draw a thick, dashed line for the field boundary  ----- }
 
@@ -1459,11 +1455,8 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 
 	{ reset the viewport to the whole plotting area }
 	SetViewPort(0, 0, MaxX, MaxY, ClipOn);
-
-{$IFDEF debug}
 	writeln(db);
 	writeln(db,'SRcount =',SRcount);
-{$ENDIF}
 
 	IDENTIFY_FIELDS;
 

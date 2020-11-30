@@ -1,5 +1,5 @@
 Unit DfmGraph;
-{ PMS 30-November-2020 16:34:12 }
+{ PMS 30-November-2020 18:27:54 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -34,11 +34,11 @@ Uses
 
 PROCEDURE GraphicsErrorDump;
 	
-PROCEDURE myLine(xx1,yy1,xx2,yy2: Integer);
+PROCEDURE myLine(xx1,yy1,xx2,yy2: INTEGER);
 
-PROCEDURE myRectangle(xx1,yy1,xx2,yy2: Integer);
+PROCEDURE myRectangle(xx1,yy1,xx2,yy2: INTEGER);
 
-PROCEDURE myCircle(x,y,r: Integer);
+PROCEDURE myCircle(x,y,r: INTEGER);
 
 PROCEDURE Initialize;
 { Initialize graphics and report any errors that may occur }
@@ -49,8 +49,6 @@ PROCEDURE Show_Msg (s:String);
 
 PROCEDURE ClearTextSpace(x1,y1,x2,y2: REAL);
 
-PROCEDURE vertical_text(xstart,ystart:integer; lbl:lblstring);
-
 PROCEDURE OurOutTextXY(x,y: INTEGER; s: String);
 
 PROCEDURE MySetColor(color: INTEGER);
@@ -60,6 +58,9 @@ FUNCTION MyGetColor:  INTEGER;
 FUNCTION MyGetBitColor(color: INTEGER): String;
 
 PROCEDURE BoxDefaults;
+
+PROCEDURE MySetTextDir(direction: INTEGER);
+
 
 
 VAR
@@ -77,6 +78,8 @@ VAR
 	yoffset,
 	xlength,
 	ylength		:	INTEGER;
+	
+	TextDir		:	INTEGER;
 
 
 CONST
@@ -100,15 +103,6 @@ Uses
 CONST
 	xVGA = 640;	{	x width  of original Turbo Pascal graphics device }
 	yVGA = 200; {	y height of original Turbo Pascal graphics device }
-
-	{ The two text directions available }
-	TextDirect : array[0..1] of string[8] = ('HorizDir', 'VertDir');
-
-	{ The Horizontal text justifications available }
-	HorizJust  : array[0..2] of string[10] = ('LeftText', 'CenterText', 'RightText');
-
-	{ The vertical text justifications available }
-	VertJust   : array[0..2] of string[10] = ('BottomText', 'CenterText', 'TopText');
 
 VAR
 	GraphDriver :	INTEGER;  { The Graphics device driver }
@@ -175,7 +169,7 @@ BEGIN
 
 END; { Function MyGetBitColor() }
 {---------------------------------------------------------------------------}
-procedure 	myLine(xx1,yy1,xx2,yy2: Integer);
+procedure 	myLine(xx1,yy1,xx2,yy2: INTEGER);
 { Procedure in the original TurboPascal but unaccountably not documented in fpc }
 VAR
 	rgb:	String;
@@ -217,7 +211,7 @@ begin
 
 end; { MyLine }
 {---------------------------------------------------------------------------}
-PROCEDURE MyRectangle(xx1,yy1,xx2,yy2: Integer);
+PROCEDURE MyRectangle(xx1,yy1,xx2,yy2: INTEGER);
 VAR
 	rgb:	String;
 
@@ -235,7 +229,7 @@ BEGIN
 
 END; { MyRectangle }
 {---------------------------------------------------------------------------}
-PROCEDURE MyCircle(x,y,r: Integer);
+PROCEDURE MyCircle(x,y,r: INTEGER);
 VAR
 	rgb:	String;
 
@@ -271,7 +265,7 @@ BEGIN
 	MySetColor(precolor);
 END;	{	Show_Msg	}
 {---------------------------------------------------------------------------}
-PROCEDURE InitSVG (x,y: integer);
+PROCEDURE InitSVG (x,y: INTEGER);
 VAR
 	svgfilename:	string;
 BEGIN
@@ -309,11 +303,9 @@ VAR
 	st		:	STRING;
 	newmode	:	INTEGER;
 
-	lo, hi, tw, th: INTEGER;
-	found: BOOLEAN;
-CONST
-  Line2 = 'We are now in 800 x 600 x 256 colors! - Press [Return] ';
-
+	lo, hi, 
+	tw, th	: INTEGER;
+	found	: BOOLEAN;
 BEGIN
 	{ We want an 8 bit mode }
 	GraphDriver := D8bit;
@@ -431,22 +423,25 @@ BEGIN
 	GetTextSettings(TextInfo);
 	
 	write(svg,'<text x="',xx,'" y="',yy,'"');
-	IF TextInfo.direction = VertDir THEN
+	IF TextDir = Graph.VertDir THEN
 		write(svg,' transform="rotate(-90 ',xx,' ',yy,')"');
 	writeln(svg,'>',s,'</text>');
 END;	{	OurOutTextXY	}
 
 {---------------------------------------------------------------------------}
-PROCEDURE vertical_text(xstart,ystart:integer; lbl:lblstring);
-{ Writes a string label vertically in graphics}
-VAR
-	i	:	Byte;
-
+PROCEDURE MySetTextDir(direction: INTEGER);
+{ These constants are defined by fpc rtl-graph unit }
 BEGIN
-	SetTextStyle(DefaultFont, VertDir, 1);
-	OurOutTextXY(xstart,Round(ystart+ 0.5*lbllength),lbl);
-
-	SetTextStyle(DefaultFont, HorizDir, 1); 
+	CASE direction OF
+		Graph.VertDir	:		TextDir := Graph.VertDir;
+		Graph.HorizDir	:		TextDir := Graph.VertDir;
+	ELSE
+		BEGIN
+			WriteLn(db,'FAULT in MySetTextDir');
+			Finish(8);
+		END;
+	END; { CASE }
+	SetTextStyle(DefaultFont, direction, 1);
 END;
 {---------------------------------------------------------------------------}
 PROCEDURE BoxDefaults;

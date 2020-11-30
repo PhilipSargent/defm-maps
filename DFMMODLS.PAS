@@ -1,5 +1,5 @@
  Unit DfmModls;
-{ PMS 29-November-2020 14:53:24 }
+{ PMS 30-November-2020 17:19:36 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,8 +20,6 @@
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{$DEFINE  debug} {	always on, pending removal of directive	}
-
 {$R+}	{Range checking on}
 {$B+}	{Boolean complete evaluation on}
 {$S+}	{Stack checking on}
@@ -230,11 +228,8 @@ BEGIN
 {	beta normalised terms of ref_stress instead of in terms of shear_modulus }
 	beta_ref		:= beta_breakdown/ref_const;
 
-{$IFDEF debug}
 	writeln(db,' Normalised Ref.Stress : ',ref_const:7);
 	writeln(db,' Inverted (Brown & Ashby) : ',(1/ref_const):7:3);
-{$ENDIF}
-
 
 {	Different classes of materials appear to have the same mechanisms, but
 	with different interaction behavior between the mechanisms. There is
@@ -340,10 +335,7 @@ BEGIN
 	dud_TN := Low_Temp_Limit;
 	dud_K  := Low_Temp_Limit*Tmelt;
 
-{$IFDEF debug}
 	writeln(db,' Exponential fix number is: ',fix:10:4);
-{$ENDIF}
-
 END;  {DEFINE_UNITS.     }
 {---------------------------------------------------------------------------}
 PROCEDURE DIFFUSION_RATES;
@@ -463,14 +455,12 @@ BEGIN
 
 		END;	{	IF TN <> 0 clause	}
 
-{$IFDEF debug}
 		Writeln(db);
 		Writeln(db,' DIFFUSION RATES  ');
 		Writeln(db,' Normalised Temperature  ',TN:8:4);
 		Writeln(db, ' diffusion2=',diffusion2:9,' diffusion1=',diffusion1:9);
 		Writeln(db, ' diffusion4=',diffusion4:9,' diffusion3=',diffusion3:9);
 		Writeln(db, ' dorn      =',dorn:9,      ' dornLT1   =',dornLT1:9,'  dornLT2   =',dornLT2:9);
-{$ENDIF}
 {$IFDEF detail}
 		Write(db,'Stress&SN                 b_diff    v_diff    plc_ht    ');
 		Write(db,'plc_lt    S_plc');
