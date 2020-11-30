@@ -1,5 +1,5 @@
 Unit Dfmmain;
-{ PMS 29-November-2020 11:48:13 }
+{ PMS 30-November-2020 15:42:41 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -46,6 +46,7 @@ Uses
 	Dfmfiles,
 	Dfmedits,
 	Dfmmodls,
+	DfmGraph,
 	Dfmplots,
 	Dfmindnt;
 

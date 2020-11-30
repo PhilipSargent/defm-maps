@@ -1,5 +1,5 @@
 Unit DfmIndnt;
-{ PMS 29-November-2020 21:30:45 }
+{ PMS 30-November-2020 15:03:53 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -45,7 +45,15 @@ Uses
 	StringIO,
 	DfmGlbls,
 	DfmPlots,
-	DfmModls;
+	DfmModls,
+	DfmGraph;
+
+TYPE
+	TP_bdry_list	=	^T_bdry_list;
+	T_bdry_list		=	RECORD
+							x,y		:	INTEGER;
+							next	:	TP_bdry_list;
+						END;
 
 CONST
 	C_1 = 0.193;	{	1/(3.sqrt(3))	}
@@ -57,6 +65,8 @@ VAR
 	LgHN			:	a_real;
 	A, A_dot, Load	:	a_real;
 	H, t, dt			:	a_real;
+	
+	bdry_stack	:	TP_bdry_list;
 
 {---------------------------------------------------------------------------}
 PROCEDURE Fields_Loop_Indent (temp_step: Word);
@@ -614,4 +624,5 @@ END;       {CALC_INDENTATION_MAP.   }
 {---------------------------------------------------------------------------}
 { Unit Initialization }
 BEGIN
+	bdry_stack:=NIL;
 End.
