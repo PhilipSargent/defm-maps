@@ -1,5 +1,5 @@
 Unit DfmGraph;
-{ PMS 30-November-2020 18:27:54 }
+{ PMS 30-November-2020 21:01:45 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,8 +20,6 @@ Unit DfmGraph;
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{$DEFINE  debug} {	always on, pending removal of directive	}
-
 {$R+}	{Range checking on}
 {$B+}	{Boolean complete evaluation on}
 {$S+}	{Stack checking on}
@@ -29,27 +27,27 @@ Unit DfmGraph;
 
 Interface
 
-Uses
-	DfmGlbls;
+USES
+	DfmGlbls,
+	Graph;
 
 PROCEDURE GraphicsErrorDump;
 	
-PROCEDURE myLine(xx1,yy1,xx2,yy2: INTEGER);
+PROCEDURE myLine(xx1,yy1,xx2,yy2: SMALLINT);
 
-PROCEDURE myRectangle(xx1,yy1,xx2,yy2: INTEGER);
+PROCEDURE myRectangle(xx1,yy1,xx2,yy2: SMALLINT);
 
-PROCEDURE myCircle(x,y,r: INTEGER);
+PROCEDURE myCircle(x,y,r: SMALLINT);
 
 PROCEDURE Initialize;
-{ Initialize graphics and report any errors that may occur }
 
 PROCEDURE CloseSVG;
 
 PROCEDURE Show_Msg (s:String);
 
-PROCEDURE ClearTextSpace(x1,y1,x2,y2: REAL);
+PROCEDURE ClearTextSpace(x1,y1,x2,y2: SMALLINT, border:BOOLEAN);
 
-PROCEDURE OurOutTextXY(x,y: INTEGER; s: String);
+PROCEDURE OurOutTextXY(x,y: SMALLINT; s: String);
 
 PROCEDURE MySetColor(color: INTEGER);
 
@@ -61,11 +59,15 @@ PROCEDURE BoxDefaults;
 
 PROCEDURE MySetTextDir(direction: INTEGER);
 
+PROCEDURE MySetViewPort(x, y, MaxX, MaxY: SMALLINT; ClipOn: BOOLEAN);
 
+PROCEDURE MyGetViewPort(vp:	Graph.ViewPortType);
+
+PROCEDURE MyClearViewPort;
 
 VAR
-	MaxX  		:	word;     { The maximum resolution of the device m800x600 0..699}
-	MaxY  		:	word;     { The maximum resolution of the device m800x600 0..599}
+	MaxX		:	word;     { The maximum resolution of the device m800x600 0..699}
+	MaxY		:	word;     { The maximum resolution of the device m800x600 0..599}
 
 	lastcolor,
 	nowcolor	:	INTEGER;
@@ -83,6 +85,9 @@ VAR
 
 
 CONST
+	xVGA = 640;	{	x width  of original Turbo Pascal graphics device }
+	yVGA = 200; {	y height of original Turbo Pascal graphics device }
+
 	xfac0	: a_real	= 0.125196; { x-axis origin }
 	yfac0	: a_real	= 0.050251; { y-axis origin } 
 	xfacN	: a_real	= 0.782473; { x-axis limit }
@@ -92,35 +97,44 @@ CONST
 
 Implementation
 
-Uses
+USES
 	Crt,
 	Dos,
 	Printer,
-	Graph,
 	StringIO,
 	DfmModls;
-
-CONST
-	xVGA = 640;	{	x width  of original Turbo Pascal graphics device }
-	yVGA = 200; {	y height of original Turbo Pascal graphics device }
 
 VAR
 	GraphDriver :	INTEGER;  { The Graphics device driver }
 	GraphMode   :	INTEGER;  { The Graphics mode value }
 	Error		:	INTEGER;
 	ErrorCode   :	INTEGER;  { Reports any graphics errors }
-	MaxColor    :	word;     { The maximum color value available }
+	MaxColor    :	WORD;     { The maximum color value available }
 
 {---------------------------------------------------------------------------}
-PROCEDURE Abort(Msg : string);
-begin
-	Writeln(Msg, 'GraphErrorMsg(GraphResult): ', GraphErrorMsg(GraphResult));
-	Writeln(db,Msg, 'GraphErrorMsg(GraphResult): ', GraphErrorMsg(GraphResult));
-  Halt(10);
-end;
+PROCEDURE MySetViewPort(x, y, MaxX, MaxY: SMALLINT; ClipOn: BOOLEAN);
+{	ViewPorts work very differently in SVG compared with the Graph Unit,
+	so we need to make viewport adjustments whenever we plot anything }
+BEGIN
+	Graph.SetViewPort(x, y,  MaxX, MaxY, ClipOn);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+END;
+{---------------------------------------------------------------------------}
+PROCEDURE MyGetViewPort(vp:	Graph.ViewPortType);
+BEGIN
+	Graph.GetViewSettings(vp);
+END;
+{---------------------------------------------------------------------------}
+PROCEDURE MyClearViewPort;
+BEGIN
+	Graph.ClearViewPort;
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+END;
 {---------------------------------------------------------------------------}
 PROCEDURE GraphicsErrorDump;
-begin
+BEGIN
 	ErrorCode := GraphResult;               { error? }
 	Writeln('Graphics  error: ',
 		GraphErrorMsg(ErrorCode));
@@ -131,14 +145,17 @@ begin
 	CloseSVG;
 	Close(db);
 	Finish(6);
-
-end;
+END;
 {---------------------------------------------------------------------------}
 PROCEDURE MySetColor(color: INTEGER);
+{ It looks as if it would be nicer to have separate colour settings for TEXT
+	and LINES, would reduce color swapping a lot when constructing axes }
 BEGIN
 	lastcolor := nowcolor;
 	nowcolor := color;
 	SetColor(nowcolor);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 
 END; { MySetColor }
 {---------------------------------------------------------------------------}
@@ -150,30 +167,30 @@ BEGIN
 			nowcolor := GetColor;
 		END;
 	MyGetColor := nowcolor;
-
 END; { MyGetColor }
 {---------------------------------------------------------------------------}
-FUNCTION MyGetBitColor(color: SmallInt): String;
+FUNCTION MyGetBitColor(color: SMALLINT): String;
 VAR
 	RedValue, 
 	GreenValue, 
-	BlueValue	:	SmallInt;
+	BlueValue	:	SMALLINT;
 	r, g, b		:	String;
-
 BEGIN 
 	GetRGBPalette(color, RedValue, GreenValue, BlueValue);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+
 	Str(RedValue,r);
 	Str(GreenValue,g);
 	Str(BlueValue,b);
 	MyGetBitColor := 'rgb(' + r + ',' + g + ',' + b + ')';
-
 END; { Function MyGetBitColor() }
 {---------------------------------------------------------------------------}
-procedure 	myLine(xx1,yy1,xx2,yy2: INTEGER);
+procedure	myLine(xx1,yy1,xx2,yy2: SMALLINT);
 { Procedure in the original TurboPascal but unaccountably not documented in fpc }
 VAR
 	rgb:	String;
-begin
+BEGIN
 	IF xx1 < 0 THEN 
 		BEGIN
 			WriteLn(db,'mLine xx1 less than zero! ',xx1);
@@ -208,15 +225,16 @@ begin
 	ELSE
 		rgb := MyGetBitColor(BLACK);
 	writeln(svg,'<line x1="',xx1,'" y1="',yy1,'" x2="',xx2,'" y2="',yy2,'"  style="stroke:',rgb,';"/>');
-
-end; { MyLine }
+END; { MyLine }
 {---------------------------------------------------------------------------}
-PROCEDURE MyRectangle(xx1,yy1,xx2,yy2: INTEGER);
+PROCEDURE MyRectangle(xx1,yy1,xx2,yy2: SMALLINT);
 VAR
 	rgb:	String;
 
 BEGIN 
 	Rectangle(xx1,yy1,xx2,yy2);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	
 	IF (nowcolor <> WHITE) THEN 
 		rgb := MyGetBitColor(nowcolor)
@@ -229,12 +247,14 @@ BEGIN
 
 END; { MyRectangle }
 {---------------------------------------------------------------------------}
-PROCEDURE MyCircle(x,y,r: INTEGER);
+PROCEDURE MyCircle(x,y,r: SMALLINT);
 VAR
 	rgb:	String;
 
 BEGIN 
 	Circle(x,y,r);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	
 	IF (nowcolor <> WHITE) THEN 
 		rgb := MyGetBitColor(nowcolor)
@@ -245,14 +265,6 @@ BEGIN
 	writeln(svg,'    style="fill: ',rgb,'; fill-opacity: 0.5" />');
 
 END; { MyRectangle }
-{---------------------------------------------------------------------------}
-Function Max(a,b:Real): Real;
-begin
-	IF (a>b) THEN
-		Max := a
-	ELSE
-		Max := b;
-end;	{	function Max	}
 {---------------------------------------------------------------------------}
 PROCEDURE Show_Msg (s:String);
 VAR
@@ -309,7 +321,7 @@ VAR
 BEGIN
 	{ We want an 8 bit mode }
 	GraphDriver := D8bit;
-	GraphMode := m800x600; 	{ 0..599 x 0..799 x 0..255 }
+	GraphMode := m800x600;	{ 0..599 x 0..799 x 0..255 }
 	
 	InitGraph(GraphDriver,GraphMode,'');
 	{ Make sure you always check graphresult! }
@@ -341,25 +353,37 @@ BEGIN
 	xfactor		:= MaxX/(MaxX-1);
 	yfactor		:= MaxY/(MaxY-1);
 	
+	Graph.SetTextJustify(LeftText, CenterText);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+	
+	Graph.SetTextStyle(DefaultFont, HorizDir, 1);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+
 	MySetColor(WHITE);
+	MySetTextDir(Graph.HorizDir);
+	MySetViewPort(0, 0, MaxX, MaxY, Graph.ClipOn);
 
 	InitSVG (MaxX+1, MaxY+1); {800x600 not 799x599 }
 END; { Initialize }
 {---------------------------------------------------------------------------}
-PROCEDURE ClearTextSpace(x1,y1,x2,y2: REAL);
+PROCEDURE ClearTextSpace(x1,y1,x2,y2: SMALLINT, border:BOOLEAN);
+{ These x,y are in the original 640,200 = xVGA,yVGA space 
+	This is all very overripe for refactoring! }
 VAR
 	xx1,
 	xx2		:	Word;
 	yy1,
 	yy2		:	Word;
 	Ch			:	CHAR;
-	vp			:	ViewPortType;
+	vp			:	Graph.ViewPortType;
 	ErrorStr	:	String;
-	oldcol		:	ColorType;
+	oldcol		:	Graph.ColorType;
 	bitcolor	:	String;
 
 BEGIN
-	oldcol := GetColor;
+	oldcol := Graph.GetColor;
 
 	xx1:= Round(xfactor*x1*MaxX/xVGA);
 	yy1:= Round(yfactor*y1*MaxY/yVGA);
@@ -385,33 +409,33 @@ BEGIN
 	IF xx2 < xoffset+1 THEN
 		xx2:=xoffset+1;
 
-	MySetColor(green);
-	MyRectangle(xx1,yy1,xx2,yy2);
+{	Now clear the zone by makin a small viewport and Clearing it	}
+	MySetViewPort(xx1,yy1,xx2,yy2,ClipOn);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
+	
+	MyClearViewPort;
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 
-{	Now clear the zone	}
-	SetViewPort(xx1,yy1,xx2,yy2,ClipOn);
+{	restore the viewport to full size plottable area 800x600 }
+	MySetViewPort(0,0,MaxX,MaxY,ClipOn);
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	
-	ClearViewPort;
-	ErrorCode := GraphResult;               { error? }
-	IF ErrorCode <> grOk THEN GraphicsErrorDump;
-	
-	SetViewPort(0,0,MaxX,MaxY,ClipOn);
-	ErrorCode := GraphResult;               { error? }
-	IF ErrorCode <> grOk THEN GraphicsErrorDump;
-	
-	MySetColor(red);
-	MyRectangle(xx1,yy1,xx2,yy2);
-	MySetColor(oldcol);
-
+	IF border THEN
+		BEGIN
+			MySetColor(RED);
+			MyRectangle(xx1,yy1,xx2,yy2);
+			MySetColor(oldcol);
+		END;
 	WRITELN(db,'Exiting ClearTextSpace: ',round(x1),' ',round(y1),' ',round(x2),' ',round(y2));
 END;	{	ClearTextSpace	}
 {---------------------------------------------------------------------------}
-PROCEDURE OurOutTextXY(x,y: INTEGER; s: String);
+PROCEDURE OurOutTextXY(x,y: SMALLINT; s: String);
 	{	This converts 640x200 original coords to current pixel x/y coordinates }
 VAR
-	xx, yy	:	INTEGER;
+	xx, yy	:	SMALLINT;
 	TextInfo: TextSettingsType; { fpc pascal graphics extenson }
 BEGIN
 	xx:= Round(xfactor*x*MaxX/xVGA);
@@ -420,7 +444,7 @@ BEGIN
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	
-	GetTextSettings(TextInfo);
+	{Graph.GetTextSettings(TextInfo);}
 	
 	write(svg,'<text x="',xx,'" y="',yy,'"');
 	IF TextDir = Graph.VertDir THEN
@@ -429,12 +453,12 @@ BEGIN
 END;	{	OurOutTextXY	}
 
 {---------------------------------------------------------------------------}
-PROCEDURE MySetTextDir(direction: INTEGER);
+PROCEDURE MySetTextDir(direction: SMALLINT);
 { These constants are defined by fpc rtl-graph unit }
 BEGIN
 	CASE direction OF
 		Graph.VertDir	:		TextDir := Graph.VertDir;
-		Graph.HorizDir	:		TextDir := Graph.VertDir;
+		Graph.HorizDir	:		TextDir := Graph.HorizDir;
 	ELSE
 		BEGIN
 			WriteLn(db,'FAULT in MySetTextDir');
@@ -442,46 +466,9 @@ BEGIN
 		END;
 	END; { CASE }
 	SetTextStyle(DefaultFont, direction, 1);
+	ErrorCode := GraphResult;               { error? }
+	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 END;
-{---------------------------------------------------------------------------}
-PROCEDURE BoxDefaults;
-{ This is the first time we actually draw graphics on screen }
-VAR
-	vp: ViewPortType;
-BEGIN
-	MySetColor(WHITE);
-	ErrorCode := GraphResult;               { error? }
-	IF ErrorCode <> grOk THEN GraphicsErrorDump;
-	
-	SetTextJustify(LeftText, CenterText);
-	ErrorCode := GraphResult;               { error? }
-	IF ErrorCode <> grOk THEN GraphicsErrorDump;
-	
-	SetTextStyle(DefaultFont, HorizDir, 1);
-	ErrorCode := GraphResult;               { error? }
-	IF ErrorCode <> grOk THEN GraphicsErrorDump;
-	
-	SetViewPort(0, 0, MaxX, MaxY, ClipOn);
-	ErrorCode := GraphResult;               { error? }
-	IF ErrorCode <> grOk THEN GraphicsErrorDump;
-	
-	Writeln(db,'No obvious Graphics  errors in BoxDefaults().');
-
-	GetViewSettings(vp);
-	IF vp.x1 <>0 THEN
-		Writeln(db,'viewport error x1: ',vp.x1);
-	IF vp.y1 <>0 THEN
-		Writeln(db,'viewport error y1: ',vp.x2);
-	IF vp.x2 <>MaxX THEN
-		Writeln(db,'viewport error x2: ',vp.x2);
-	IF vp.y2 <>MaxY THEN
-		Writeln(db,'viewport error y2: ',vp.y2);
-	IF vp.clip <>ClipOn THEN
-		Writeln(db,'viewport error clip: ',vp.Clip);
-	ErrorCode := GraphResult;               { error? }
-	IF ErrorCode <> grOk THEN GraphicsErrorDump;
-	Writeln(db,'No obvious ViewPort  errors in BoxDefaults().');
-END; { BoxDefaults }
 {---------------------------------------------------------------------------}
 { Unit Initialization }
 BEGIN

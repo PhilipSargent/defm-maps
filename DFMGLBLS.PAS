@@ -1,5 +1,5 @@
 { DfmGlbls.pas	}
-{ PMS 30-November-2020 17:42:24 }
+{ PMS 30-November-2020 21:02:15 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -57,7 +57,7 @@ CONST
 	parm_name_length	=	6;
 	desclength			= 28;
 	unitlength			= 10;
-	ref_buflength	 	= 1159;	{	refchars * reflines	}
+	ref_buflength		= 1159;	{	refchars * reflines	}
 	reflines			= 19;
 	refchars			= 61;
 
@@ -69,7 +69,7 @@ CONST
 	stash_width			= 85;
 	list_max			= 150;
 
-	Gamcrit		 		= 0.9;
+	Gamcrit				= 0.9;
 
 {	fpc does not use the extended character set #128-#255 but cp437 should do }
 	CtrlC				= #3;
@@ -229,7 +229,7 @@ VAR
 	stash_index		:	0..stash_max;
 
 	matl_list		:	ARRAY [1..list_max] OF T_matl_name;
-	matl_index 		:	0..list_max;
+	matl_index		:	0..list_max;
 	matl_ok			:	BOOLEAN;	{	Status of material name list	}
 
 	SpeedValue		:	REAL;
@@ -366,7 +366,7 @@ BEGIN
 	textmode(LastMode);
 	Textbackground(black);
 	Textcolor(white);
-	IF (ErrorAddr <> NIL) THEN 	{	run-time error	}
+	IF (ErrorAddr <> NIL) THEN	{	run-time error	}
 		BEGIN
 
 			WriteLn('MyExitProc - exit code intercepted.  See https://www.freepascal.org/docs-html/user/userap4.html#x191-198000D');
@@ -552,7 +552,7 @@ VAR
 
 BEGIN
 	window(1,1,80,25);     textbackground(C_screen);    clrscr;
-	window(10,4,70,22);    textbackground(C_back);    	clrscr;
+	window(10,4,70,22);    textbackground(C_back);	clrscr;
 
 	window(10,1,70,25);
 	textbackground(C_back);
@@ -688,7 +688,7 @@ BEGIN
 	gotoXY(1,5);
 	write('                PARAMETER AND VARIABLES                      ');
 	write('                ');
-		UnderLine(23); 						  writeln('                     ');
+		UnderLine(23);						  writeln('                     ');
 	writeln('                                                            ');
 	writeln('  You start by creating a Data Set for the chosen material, ');
 	writeln('  or by Reading an existing Data Set from disc.             ');

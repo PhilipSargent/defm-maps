@@ -1,5 +1,5 @@
 Unit DfmPlots;
-{ PMS 30-November-2020 18:30:30 }
+{ PMS 30-November-2020 21:03:14 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -100,7 +100,7 @@ TYPE
 	T_field_ids		=	ARRAY [E_n_stress] OF T_field_stress;
 
 VAR
-	Ch          :	CHAR;
+	Ch		:	CHAR;
 	
 	contour			:	T_contour_reals;
 	contourmark		:	T_contour_reals;
@@ -108,23 +108,25 @@ VAR
 	LgSNfirst		:	a_real;
 	LgSNlast		:	a_real;
 	LgSNstep		:	a_real;
-	Lgt_first, Lgt_last, Lgt_step	:	a_real;
+	Lgt_first, 
+	Lgt_last, 
+	Lgt_step		:	a_real;
 	sqrt_factor		:	a_real;
 
-	last_Rate	:	a_real;
-	LgS			:	a_real;
+	last_Rate		:	a_real;
+	LgS				:	a_real;
 	xr, yr			:	a_real;
 
 	code	:	INTEGER;
-	c		:	Char;
-	s	:	String;
-	f	:	Text;
+	c		:	CHAR;
+	s		:	String;
+	f		:	Text;
 
 	x_last, x_now	:	INTEGER;
 	field_ids		:	T_field_ids;
 
 	n_bndrys, last_n_bndrys			:	E_n_bndrys;
-	bndry_tabl, last_bndry_tabl	:	T_bndry_table;
+	bndry_tabl, last_bndry_tabl		:	T_bndry_table;
 
 {---------------------------------------------------------------------------}
 PROCEDURE DETECT_SKIP;
@@ -166,9 +168,6 @@ var
 	minor				:	Byte;	{	The number of minor marks between big marks }
 
 BEGIN
-	{SetGraphMode(GraphMode);}
-	BoxDefaults;
-
 { --------- Draw  Box ----------}
 	MySetColor(white);
 
@@ -197,9 +196,9 @@ BEGIN
 	{	in Mpa, but shmod is in GPa so multiply by 1000	}
 
 	Sfirst	:=	shmod*SNfirst*1.0e3;	{	shmod is at 300 K	}
-	Slast 	:=	shmod*SNlast *1.0e3;	{	shmod is at 300 K	}
+	Slast	:=	shmod*SNlast *1.0e3;	{	shmod is at 300 K	}
 	LgSfirst	:=	Ln(Sfirst)/Ln10;
-	LgSlast 	:=	Ln(Slast)/Ln10;
+	LgSlast	:=	Ln(Slast)/Ln10;
 
 	IF (Sfirst <= 1.0e-9) THEN
 		BEGIN
@@ -326,7 +325,7 @@ BEGIN
 		xoffset+round(3*xlength/4),yoffset);
 
 	{ these calls to ClearTextSpace and OurOutTextXY use 'notional 640x200 scaled pixels'}
-	ClearTextSpace(456,12,630,55);
+	ClearTextSpace(456,12,630,55, True);
 	OurOutTextXY(465,16,matlname);
 	IF (Gsize*1.0e6 < 0.1) THEN	{	less than 0.1 microns, do in nm	}
 		BEGIN
@@ -385,7 +384,7 @@ PROCEDURE IDENTIFY_CONTOURS;
 BEGIN
 	Flush(db);
 
-	ClearTextSpace(96,159,257,183);
+	ClearTextSpace(96,159,257,183, True);
 	OurOutTextXY(96,165,'    CONTOURS     ');
 	IF ((contour[1] < 99999 ) AND ( contour[1] >= 1 )) THEN
 		Str(contour[1]:7:0,st)
@@ -412,6 +411,7 @@ VAR
 	y_shift				:	a_real;
 	crit				:	INTEGER;
 	x0,y0				:	INTEGER;
+	xx1,xx2,yy1,yy2		:	SMALLINT;
 	mech				:	E_mech;
 	
 	{	local versions of these..	}
@@ -440,30 +440,30 @@ BEGIN
 			BEGIN
 				writeln(db,'pointcount[',mechId[mech],']',pointcount[mech]:5:0);
 				CASE { mechID[mech] } mech OF
-					null:  		st:='ELASTIC';
+					null:		st:='ELASTIC';
 					re_cryst:	st:='RECRYST';
-					b_diff:  	st:='DIFF-B';
-					v_diff:  	st:='DIFF-V';
-					plc_ht:  	st:='PL-(HT)';
-					plc_lt:  	st:='PL-(LT)';
-					o_glide:  	st:='OBSTCLE';
-					pls_drag:  	st:='PEIERLS';
-					phn_drag:  	st:='PHONON';
-					rel_drag:  	st:='RLTVSTC';
+					b_diff:	st:='DIFF-B';
+					v_diff:	st:='DIFF-V';
+					plc_ht:	st:='PL-(HT)';
+					plc_lt:	st:='PL-(LT)';
+					o_glide:	st:='OBSTCLE';
+					pls_drag:	st:='PEIERLS';
+					phn_drag:	st:='PHONON';
+					rel_drag:	st:='RLTVSTC';
 					ELSE
 						st:='ERROR';
 				END;	{	Case	}
 
 				writeln(db,st,' ',temp_position[mech]:5:0,stress_position[mech]:5:0,pointcount[mech]:5:0);
-{ 			----- Don't check for validity here in character co-ords, but in
-				graphics co-ords after conversion. PMS 4-February-1988 10:50 	}			
+{			----- Don't check for validity here in character co-ords, but in
+				graphics co-ords after conversion. PMS 4-February-1988 10:50	}			
 				r1  := ((temp_position[mech]/steps)/pointcount[mech]*64) + 7;
 				r2  := (1 - stress_position[mech]/(pointcount[mech]*steps))*22 + 2;
 
-				x1:=(r1-1)*639/80;
-				y1:=(r2-0.7)*199/25;
-				x2:=(r1+Length(st)+0.2)*639/80;
-				y2:=(r2+0.5)*199/25;
+				x1:=(r1-1)*xVGA/80;
+				y1:=(r2-0.7)*yVGA/25;
+				x2:=(r1+Length(st)+0.2)*xVGA/80;
+				y2:=(r2+0.5)*yVGA/25;
 
 				x_shift := 0.0;
 				IF (x1 < xoffset ) THEN
@@ -477,9 +477,13 @@ BEGIN
 				IF (y2 > yend ) THEN
 					y_shift := yend - y2 + 4;
 
-				x0:=Round(r1*639/80 + x_shift);
-				y0:=Round(r2*199/25 + y_shift);
-				ClearTextSpace(x1+x_shift,y1+y_shift, x2+x_shift,y2+y_shift);
+				xx1 := round(x1+x_shift);
+				xx2 := round(x2+x_shift);
+				yy1 := round(y1+y_shift);
+				yy2 := round(y2+y_shift);
+				ClearTextSpace(xx1,yy1, xx2,yy2, True);
+				x0:=Round(r1*xVGA/80 + x_shift);
+				y0:=Round(r2*yVGA/25 + y_shift);
 				OurOutTextXY(x0, y0, st);
 			END
 		ELSE
@@ -514,7 +518,7 @@ VAR
 	root_factor	:	a_real;
 	Rate		:	a_real;
 	LgSN		:	a_real;
-	LgRatio	  	:	a_real;
+	LgRatio		:	a_real;
 	hint_stress	:	a_real;
 	mark_step	:	a_real;
 	min_rate_on_plot	:	a_real;
@@ -571,7 +575,7 @@ BEGIN
 {	Another (better) estimate, if everything is NOT weird	}
 	IF ((previous_rate > contour[1]) 
 		AND (previous_rate < contour[contournumber]))
- 	AND ((strain_rate > contour[1]) 
+	AND ((strain_rate > contour[1]) 
 		AND (strain_rate < contour[contournumber])) THEN
 		BEGIN
 			Rate_ratio	:= (contour[c] - previous_rate)/(strain_rate - previous_rate);
@@ -859,14 +863,14 @@ BEGIN	{	Procedure Contours_Loop	}
 	FOR c := contournumber DOWNTO 1 DO
 		BEGIN
 			IF NOT field_ids[c].visible THEN
-				field_ids[c].id :=  field_ids[c+1].id; 	{	OK, n_actual preset }
+				field_ids[c].id :=  field_ids[c+1].id;	{	OK, n_actual preset }
 		END;
 
 {	Set id for those that popped off the top	}
 	FOR c := 1 TO contournumber DO
 		BEGIN
 			IF NOT field_ids[c].visible THEN
-				field_ids[c].id :=  field_ids[c-1].id; 	{	OK, 0 is preset	}
+				field_ids[c].id :=  field_ids[c-1].id;	{	OK, 0 is preset	}
 		END;
 { ========== E N D == T H E == S E T U P == L O O P ========= }
 {$IFDEF contour}
@@ -967,14 +971,14 @@ VAR
 	re_do		:	BOOLEAN;
 	boundaries_exist	:	BOOLEAN;
 	x_half, y_half, y_now:	INTEGER;
-	c, i, j	 	:	E_n_stress;
+	c, i, j		:	E_n_stress;
 	k			:	E_n_bndrys;
 	s			:	Word;	{	stress_step	}
 
 	{------------------------------------------------------------------------}
 PROCEDURE Find_Boundaries;
 VAR
-	i, j, item 	:	E_n_stress;
+	i, j, item	:	E_n_stress;
 BEGIN
 	{ ----- Find the Field boundaries more accurately  ----- }
 	{	Note the trouble we go to in order to keep the table sorted,
@@ -1010,9 +1014,9 @@ BEGIN
 								FOR item := n_bndrys DOWNTO i+1 DO
 									BEGIN	{	Budge up..	happens infrequently	}
 										bndry_tabl[item].stress_lo := bndry_tabl[item-1].stress_lo;
-										bndry_tabl[item].id_lo 		:= bndry_tabl[item-1].id_lo;
+										bndry_tabl[item].id_lo		:= bndry_tabl[item-1].id_lo;
 										bndry_tabl[item].stress_hi := bndry_tabl[item-1].stress_hi;
-										bndry_tabl[item].id_hi 		:= bndry_tabl[item-1].id_hi;
+										bndry_tabl[item].id_hi		:= bndry_tabl[item-1].id_hi;
 										bndry_tabl[item].stress_mn := bndry_tabl[item-1].stress_mn;
 									END;
 								{	..and now overwrite i+1	}
@@ -1098,7 +1102,7 @@ END;	{	Find_Boundaries	}
 	{------------------------------------------------------------------------}
 PROCEDURE Update_Centroids;
 VAR
-	i	 	:	E_n_stress;
+	i		:	E_n_stress;
 	field	:	E_mech;
 BEGIN
 	{ ----- Keep track of mean position of field on the plot ----- }
@@ -1328,7 +1332,7 @@ END;	{	Fields_Loop_Indent	procedure }
 PROCEDURE CALC_STRAIN_RATES_MAP;
 
 VAR
- 	mech,
+	mech,
 	field			:	E_mech;
 
 	x1,x2,y1,y2		:	INTEGER;
@@ -1345,7 +1349,7 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 	Writeln(db,'**** STRAIN_RATES Map ****');
 	Initialize;		{	graphics display	}
 
-	TNstep		:= (TNlast - TNfirst)/steps;   		{Temperature interval}
+	TNstep		:= (TNlast - TNfirst)/steps;		{Temperature interval}
 
 	LgSNfirst	:= Ln(SNfirst)/Ln10;
 	LgSNlast		:= Ln(SNlast)/Ln10;
@@ -1387,7 +1391,7 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 
 	MySetColor(white);
 	{ This sets the viewport to the data plot area inside the axes }
-	SetViewPort(xoffset, yoffset, xend, yend, ClipOn);
+	MySetViewPort(xoffset, yoffset, xend, yend, ClipOn);
 
 	Contours_Init;
 
@@ -1410,7 +1414,7 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 				x2 := round(xlength*(lastTN - TNfirst)/(TNlast - TNfirst));
 				FOR c := 1 to contournumber DO
 					BEGIN
-						IF (contourmark[c] < 1/steps) THEN 	{ lowest stress }
+						IF (contourmark[c] < 1/steps) THEN	{ lowest stress }
 							contourmark[c]:=0.0;
 						IF (contourmark[c]=0.0) THEN
 							y1 := ylength
@@ -1454,7 +1458,7 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 { ============ E N D == T H E == T E M P E R A T U R E == L O O P =========== }
 
 	{ reset the viewport to the whole plotting area }
-	SetViewPort(0, 0, MaxX, MaxY, ClipOn);
+	MySetViewPort(0, 0, MaxX, MaxY, ClipOn);
 	writeln(db);
 	writeln(db,'SRcount =',SRcount);
 

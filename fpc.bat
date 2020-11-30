@@ -8,8 +8,8 @@ rem - standard printer unit in rtl-extra
 rem - standard graph unit in graph
 
 rem should use a make utility as this will not recompile units
-del *.o
-del *.ppu
+del *.o 2>NUL
+del *.ppu 2>NUL
 REM -dDEBUG is always on, set in the code.
 REM -dCONTOUR and/or-dDETAIL and/or-dCNTRFIX (alternative contour algorithm)
 REM -g debug info for call stack

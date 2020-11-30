@@ -1,5 +1,5 @@
 Unit DfmIndnt;
-{ PMS 30-November-2020 18:34:44 }
+{ PMS 30-November-2020 21:03:12 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -87,10 +87,9 @@ var
 	Hfirst, Hlast		:	a_real;
 	LgHfirst, LgHlast	:	a_real;
 	minor				:	Byte;	{	The number of minor marks between big marks }
+	precolor			:	INTEGER;
 
 BEGIN
-	BoxDefaults;
-
 { --------- Draw  Box ----------}
 	writeln(db,'Draw box');
 	myLine(xoffset,yoffset,xoffset,yend);
@@ -109,7 +108,6 @@ BEGIN
 
 	writeln(db,'For loop from ',round(LgHNfirst*minor), ' to ', round(LgHNfirst*minor) + yscale - 1);
 	writeln(db,'ylength, yscale ',ylength,' ', yscale);
-	MySetColor(yellow);
 	FOR scale := (round(LgHNfirst*minor)) to (round(LgHNfirst*minor) + yscale - 1) DO
 		BEGIN
 			writeln(db,'scale:',scale);
@@ -124,12 +122,14 @@ BEGIN
 { --------- Put on ABSOLUTE STRESS scale ---------- }
 	{	in Mpa, but shmod is in GPa so multiply by 1000	}
 	HNfirst := exp(LgHNfirst);
-	HNlast := exp(LgHNlast);
+	HNlast  := exp(LgHNlast);
 	Hfirst	:=	shmod*HNfirst*1.0e3;	{	shmod is at 300 K	}
-	Hlast 	:=	shmod*HNlast *1.0e3;	{	shmod is at 300 K	}
+	Hlast	:=	shmod*HNlast *1.0e3;	{	shmod is at 300 K	}
 	LgHfirst	:=	Ln(Hfirst)/Ln10;
-	LgHlast 	:=	Ln(Hlast)/Ln10;
+	LgHlast	:=	Ln(Hlast)/Ln10;
 
+	precolor := MyGetColor;
+	MySetColor(yellow);
 	IF (Hfirst <= 1.0e-9) THEN
 		BEGIN
 			WriteLn(db,'Error, low hardness limit too low!');
@@ -155,6 +155,8 @@ BEGIN
 		OurOutTextXY (585,189,st);
 
 	ymark		:= 0;
+
+	MySetColor(precolor);
 	REPEAT
 		IF (H > Hfirst) and (H < Hlast) THEN
 			ymark := yoffset +
@@ -163,6 +165,7 @@ BEGIN
 		IF (ymark >= yoffset) AND (ymark <= yend) THEN
 			myLine(xend,ymark,xend-6,ymark);
 
+	MySetColor(yellow);
 { -----	Nested IFs because of BUG with 8087 chip if IFs too complicated	}
 		Str(H:4:1,st);
 		IF (H >= (Hlast/10)) THEN
@@ -181,6 +184,7 @@ BEGIN
 	IF (t < t_last) THEN
 		OurOutTextXY (75,196,st);
 
+	MySetColor(precolor);
 	xmark		:= 0;
 	REPEAT
 		IF (t > t_first) and (t < t_last) THEN
@@ -190,14 +194,17 @@ BEGIN
 		IF (xmark >= xoffset) AND (xmark <= xend) THEN
 			myLine(xmark,yend,xmark,yend-6);
 
+		MySetColor(yellow);
 { -----	Nested IFs because of BUG with 8087 chip if IFs too complicated	}
 		Str((Ln(t)/Ln10):4:1,st);
 		IF (t >= (t_last/10)) THEN
 			IF (t <= t_last) THEN
 				OurOutTextXY (554,196,st);
 		t := t * 10;
+		MySetColor(precolor);
 	UNTIL (t  >= t_last);
 
+	MySetColor(yellow);
 	Str(t_first:4:2,st);
 	OurOutTextXY(75,5,st);
 	Str(t_last:8,st);
@@ -217,6 +224,7 @@ BEGIN
 	OurOutTextXY(56,100,'LG NORM. HARDNESS');
 	OurOutTextXY(599,100,'HARDNESS (MPa)');
 	MySetTextDir(Graph.HorizDir);
+	MySetColor(precolor);
 END;   {PLOT_Indentation_BOX.    }
 {---------------------------------------------------------------------------}
 PROCEDURE PLOT_Indentation_INFO;
@@ -246,10 +254,10 @@ BEGIN
 		xoffset+round(3*xlength/4),yoffset);
 
 	{ these calls to ClearTextSpace and OurOutTextXY use 'notional 640x200 scaled pixels'}
-	ClearTextSpace(85,122,306,130);
+	ClearTextSpace(85,122,306,130, True);
 	OurOutTextXY(96,126,'Indentation Creep Trajectories');
 	
-	ClearTextSpace(456,12,630,55);
+	ClearTextSpace(456,12,630,55, True);
 	OurOutTextXY(465,16,matlname);
 	Str((Gsize*1.0e6):4:1,st);
 	OurOutTextXY(465,24,'d = '+st+' um');
@@ -259,7 +267,7 @@ BEGIN
 
 END;	{	PLOT_Indentation_INFO	}
 {---------------------------------------------------------------------------}
-procedure Creep_Calc (VAR 	field	:	E_mech);
+procedure Creep_Calc (VAR	field	:	E_mech);
 CONST
 	mult : a_real = 1.3; {increase indentation time by 30% each iteration }
 VAR
@@ -407,7 +415,7 @@ BEGIN
 
 END;	{	IndentTrajectory	}
 {---------------------------------------------------------------------------}
-PROCEDURE 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high: a_real; trajnumber:integer);
+PROCEDURE	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high: a_real; trajnumber:integer);
 VAR
 	first, last	:	a_real;
 { ----- Identify the trajectories  ----- }
@@ -415,7 +423,7 @@ BEGIN
 	Flush(db);
 	MySetColor(brown);
 
-	ClearTextSpace(96,156,260,183);
+	ClearTextSpace(96,156,260,183, True);
 	Str((trajnumber):3,st);
 	OurOutTextXY(96,162,st+' TEMPERATURES');
 	first := TNtraj_low*tmelt;
@@ -457,7 +465,7 @@ END;    { MARK_FIELDS_Indent.    }
 {---------------------------------------------------------------------------}
 PROCEDURE CALC_INDENTATION_MAP;
 VAR
- 	mech,
+	mech,
 	field				:	E_mech;
 
 	count				:	Integer;
@@ -471,7 +479,7 @@ VAR
 	TNtraj_low			:	a_real;
 	TNtraj_high			:	a_real;
 	TNtraj_step			:	a_real;
-	LgHNfirst 			:	a_real;
+	LgHNfirst			:	a_real;
 	LgHNlast			:	a_real;
 	lastTN				:	a_real;
 	BaseRate			:	a_real;
@@ -490,13 +498,13 @@ BEGIN	{Calc_Indentation_Map	}
 	t_last := 5e7;
 
 	Lgt_first	:=	Ln(t_first)/Ln10;
-	Lgt_last 	:=	Ln(t_last)/Ln10;
+	Lgt_last	:=	Ln(t_last)/Ln10;
 	Lgt_step	:= (Lgt_last - Lgt_first)/steps;
 
 	trajnumber := 40;
 	TNtraj_low := 0.15;
 	TNtraj_high := 0.95;
-	TNtraj_step		:= (TNtraj_high - TNtraj_low)/trajnumber;   		{Temperature interval}
+	TNtraj_step		:= (TNtraj_high - TNtraj_low)/trajnumber;		{Temperature interval}
 
 	quit := FALSE;
 	t := t_first;
@@ -569,8 +577,8 @@ BEGIN	{Calc_Indentation_Map	}
 
 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
 
-	SetViewPort(xoffset, yoffset, xend, yend, ClipOn);
-	SetLineStyle(SolidLn,0,NormWidth);
+	MySetViewPort(xoffset, yoffset, xend, yend, ClipOn);
+	Graph.SetLineStyle(SolidLn,0,NormWidth);
 
 { ========== S T A R T == T H E == T E M P E R A T U R E == L O O P ========= }
 	skip:=FALSE;
@@ -609,7 +617,7 @@ BEGIN	{Calc_Indentation_Map	}
 
 	MARK_FIELDS_Indent; { uses a stack of x/y pixel values }
 
-	SetViewPort(0, 0, MaxX, MaxY, ClipOn);
+	MySetViewPort(0, 0, MaxX, MaxY, ClipOn);
 
 	PLOT_Indentation_INFO;
 	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
