@@ -1,5 +1,5 @@
 { DfmGlbls.pas	}
-{ PMS 29-November-2020 13:08:37 }
+{ PMS 30-November-2020 16:20:07 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -112,19 +112,20 @@ CONST
 	max_mult			= 1.0e100;
 
 TYPE
-	a_real				=	double;
+	a_real				=	DOUBLE;
 	E_dominance			=	(max_op, min_op);
 	E_overall			=	(add_op, dom_op, mean_op);
+	E_plottype			=	(strrate, indent, temp);
 	T_ops				=	RECORD
-									dom : E_dominance;
-									all : E_overall;
-								END;
+								dom : E_dominance;
+								all : E_overall;
+							END;
 	E_mech				=	(null, S_diff, S_plc, S_glide, S_drag, re_cryst,
-									b_diff, v_diff, plc_ht, plc_lt, o_glide,
-									pls_drag, phn_drag, rel_drag);
+								b_diff, v_diff, plc_ht, plc_lt, o_glide,
+								pls_drag, phn_drag, rel_drag);
 	R_mech_range		=	null..rel_drag;
 	T_mecharray			=	ARRAY [R_mech_range] OF a_real;
-	T_mechID				=	ARRAY [R_mech_range] OF E_mech;
+	T_mechID			=	ARRAY [R_mech_range] OF E_mech;
 	T_validity			=	ARRAY [R_mech_range] OF BOOLEAN;
 	T_mechset			=	SET OF E_mech;
 	T_imc_classes		= (imc_error,
@@ -155,7 +156,7 @@ TYPE
 	T_descstring		= String[desclength];
 	T_unitstring		= String[unitlength];
 
-	filestring			= string[pathlength];
+	filestring			= String[pathlength];
 	R_pars				= 0..numberofparameters;
 	R_vbls				= 1..numberofvariables;
 	R_refs				= 0..ref_buflength;
@@ -163,8 +164,8 @@ TYPE
 
 	lblstring			= array[1..lbllength] of char;
 	chararray			= array[1..12] of char;
-	datastring			= string[datalabellength];
-	timer_string		= string[12];
+	datastring			= String[datalabellength];
+	timer_string		= String[12];
 	pararray			= array[R_pars] of a_real;
 	vblarray			= array[R_vbls] of a_real;
 	refarray			= array[R_refs] of char;
@@ -225,8 +226,10 @@ CONST	{	Typed 'constant', i.e. variables with a default	}
 VAR
 	imc				:	T_imc_classes;
 	mechID			:	T_mechID;
+	plottype		:	E_plottype;
 
-	stash				:	ARRAY [1..stash_max] OF String[stash_width];
+
+	stash			:	ARRAY [1..stash_max] OF String[stash_width];
 	stash_index		:	0..stash_max;
 
 	matl_list		:	ARRAY [1..list_max] OF T_matl_name;
@@ -319,7 +322,6 @@ PROCEDURE LABELS_FOR_VARIABLES;
 
 PROCEDURE get_imc_string(imc: T_imc_classes; var s: String);
 
-
 {===========================================================================}
 
 Implementation
@@ -384,7 +386,7 @@ BEGIN
 				150..158:	s:='Critical File i/o error';
 				159:		s:='Printer out of paper';
 				160..162:	s:='Critical disc-drive error';
-				ELSE	s:='Contact Philip Sargent, or see Turbo Pascal 5.5 Reference manual pp467-472';
+				ELSE	s:='Codes: https://www.freepascal.org/docs-html/user/userap4.html#x191-198000D';
 			END;	{	Case	}
 			WriteLn(s);
 			Writeln(db);
@@ -427,7 +429,7 @@ END;
 {-------------------------------------------------------------------}
 PROCEDURE DATE_AND_TIME;
 
-var
+VAR
 	hour,min,sec,sec100			: Word;
 	year,month,day,day_of_week	: Word;
 	hour_st,min_st,sec_st		: timer_string;
@@ -479,9 +481,7 @@ BEGIN
 			month_st := 'Jog.';
 	END;	{	Case	}
 	date_string := day_st+' '+month_st+' '+year_st;
-
 END;   {DATE_AND_TIME.    }
-
 {-------------------------------------------------------------------}
 PROCEDURE WRITE_REAL (r: a_real);
 {	Writes a real number to the screen at the current cursor position
@@ -606,9 +606,7 @@ BEGIN
 
 	window(10,1,70,25);
 	textbackground(C_back);
-
 END;     {CLEAN_WINDOW.    }
-
 {---------------------------------------------------------------------------}
 PROCEDURE GiveCommandLineHelp;
 
@@ -630,8 +628,6 @@ BEGIN
 	WRITELN('           /i+  produce, /i- don''t produce, a temperature map');
 	WRITELN(' /w:<fn> write a listing to a file, <fn> is a full filename');
 	WRITELN;
-
-
 END;	{	GiveCommandLineHelp	}
 {-------------------------------------------------------------------}
 PROCEDURE UnderLine (n:Byte);
@@ -713,7 +709,6 @@ BEGIN
 	Ch:=ReadKey;
 	If Ch=CtrlC THEN Finish(0);
 	textcolor(C_text);
-
 END;   { HELP_1.   }
 {-------------------------------------------------------------------}
 PROCEDURE WARRANTY;
@@ -757,7 +752,6 @@ BEGIN
 	Ch:=ReadKey;
 	If Ch=CtrlC THEN Finish(0);
 	textcolor(C_text);
-
 END;   { WARRANTY.   }
 {-------------------------------------------------------------------}
 PROCEDURE COPYING;
@@ -828,7 +822,6 @@ BEGIN
 	Ch:=ReadKey;
 	If Ch=CtrlC THEN Finish(0);
 	textcolor(C_text);
-
 END;   { COPYING.   }
 {-------------------------------------------------------------------}
 PROCEDURE HELP_2;
@@ -869,9 +862,7 @@ BEGIN
 	textcolor(C_text);
 	textbackground(C_screen);  gotoXY(1,24);
 	write('                                                             ');
-
 END;    {HELP_2.     }
-
 {-------------------------------------------------------------------}
 PROCEDURE HELP_3;
 VAR
@@ -902,7 +893,6 @@ BEGIN
 	write('                                                             ');
 
 END;    {HELP_3. }
-
 {-------------------------------------------------------------------}
 PROCEDURE INTRODUCTION;
 
@@ -957,7 +947,6 @@ BEGIN
 		END;
 
 END;   {INTRODUCTION.     }
-
 {-------------------------------------------------------------------}
 PROCEDURE LABELS_FOR_PARAMETERS;
 
@@ -991,9 +980,7 @@ BEGIN
 	22 : BEGIN id:='DffCt';	d:='Diffusion Cut-off Stress    ';  u:='          'END;
 	23 : BEGIN id:='PhsCh';	d:='Phase Change Temperature    ';  u:='K         'END;
 	END;
-
 END;  {LABELS_FOR_PARAMETERS;    }
-
 {-------------------------------------------------------------------}
 PROCEDURE LABELS_FOR_VARIABLES;
 
@@ -1022,10 +1009,8 @@ BEGIN
 END;  {LABELS_FOR_VARIABLES;     }
 {-------------------------------------------------------------------}
 PROCEDURE get_imc_string(imc: T_imc_classes; var s: String);
-
 {	This routine returns the appropriate string when given an
 	isomechanical class identifier.	}
-
 BEGIN
 	CASE imc of
 		fcc              : s:='fcc             ';

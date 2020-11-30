@@ -1,5 +1,5 @@
 Unit DfmIndnt;
-{ PMS 30-November-2020 15:03:53 }
+{ PMS 30-November-2020 16:36:28 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -485,6 +485,9 @@ VAR
 	alternate			:	BOOLEAN;
 
 BEGIN	{Calc_Indentation_Map	}
+	plottype := indent;
+	Writeln(db,'**** INDENTATION  Map ****');
+	Initialize;		{	graphics display	}
 
 	LgHNfirst	:= -7;
 	LgHNlast	:= -1;

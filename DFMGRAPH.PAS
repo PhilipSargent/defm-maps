@@ -1,5 +1,5 @@
 Unit DfmGraph;
-{ PMS 30-November-2020 15:41:16 }
+{ PMS 30-November-2020 16:34:12 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -45,7 +45,7 @@ PROCEDURE Initialize;
 
 PROCEDURE CloseSVG;
 
-PROCEDURE Range_Check (s:String);
+PROCEDURE Show_Msg (s:String);
 
 PROCEDURE ClearTextSpace(x1,y1,x2,y2: REAL);
 
@@ -116,7 +116,6 @@ VAR
 	Error		:	INTEGER;
 	ErrorCode   :	INTEGER;  { Reports any graphics errors }
 	MaxColor    :	word;     { The maximum color value available }
-
 
 {---------------------------------------------------------------------------}
 PROCEDURE Abort(Msg : string);
@@ -210,10 +209,10 @@ begin
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	
-	IF (nowcolor <> white) THEN 
+	IF (nowcolor <> WHITE) THEN 
 		rgb := MyGetBitColor(nowcolor)
 	ELSE
-		rgb := MyGetBitColor(black);
+		rgb := MyGetBitColor(BLACK);
 	writeln(svg,'<line x1="',xx1,'" y1="',yy1,'" x2="',xx2,'" y2="',yy2,'"  style="stroke:',rgb,';"/>');
 
 end; { MyLine }
@@ -225,10 +224,10 @@ VAR
 BEGIN 
 	Rectangle(xx1,yy1,xx2,yy2);
 	
-	IF (nowcolor <> white) THEN 
+	IF (nowcolor <> WHITE) THEN 
 		rgb := MyGetBitColor(nowcolor)
 	ELSE
-		rgb := MyGetBitColor(black);
+		rgb := MyGetBitColor(BLACK);
 	{SVG equivalent is an opaque white filled, red-edged rectangle}
 	writeln(svg,'<rect x="',xx1,'" y="',yy1,'" width="',xx2-xx1,'" height="',yy2-yy1,'"');
 	writeln(svg,'    style="stroke: ',rgb,'; fill: #ffffff; fill-opacity: 1.0;" />');
@@ -243,11 +242,11 @@ VAR
 BEGIN 
 	Circle(x,y,r);
 	
-	IF (nowcolor <> white) THEN 
+	IF (nowcolor <> WHITE) THEN 
 		rgb := MyGetBitColor(nowcolor)
 	ELSE
-		rgb := MyGetBitColor(black);
-	{SVG equivalent is an opaque red-filled circle}
+		rgb := MyGetBitColor(BLACK);
+	{SVG equivalent is a semi-transparent (whatever current colour is)-filled circle}
 	writeln(svg,'<circle cx="',x,'" cy="',y,'" r="',r,'"');
 	writeln(svg,'    style="fill: ',rgb,'; fill-opacity: 0.5" />');
 
@@ -261,18 +260,29 @@ begin
 		Max := b;
 end;	{	function Max	}
 {---------------------------------------------------------------------------}
-PROCEDURE Range_Check (s:String);
+PROCEDURE Show_Msg (s:String);
+VAR
+	precolor	:	INTEGER;
 BEGIN
 	Writeln(db,s);
-	Graph.OutTextXY(0,0,s);
-END;	{	Range_Check	}
+	precolor := MyGetColor;
+	MySetColor(RED);
+	OurOutTextXY(10,10,s);
+	MySetColor(precolor);
+END;	{	Show_Msg	}
 {---------------------------------------------------------------------------}
 PROCEDURE InitSVG (x,y: integer);
-
 VAR
 	svgfilename:	string;
 BEGIN
-	svgfilename := matlname + '.svg';
+	CASE {E_plottype } plottype OF
+		strrate	:		svgfilename := matlname + '.s.svg';
+		indent	:		svgfilename := matlname + '.i.svg';
+		temp	:		svgfilename := matlname + '.t.svg';
+	ELSE
+		svgfilename := matlname + '.ERRROR.svg';
+	END;	{	Case	}
+	
 	IF CannotOpen(svgfilename) THEN
 		BEGIN
 			Writeln(' *** Cannot Open SVG File ***');
@@ -290,18 +300,17 @@ END;	{	InitSVG	}
 PROCEDURE CloseSVG;
 BEGIN
 	Writeln(svg,'</svg>');
-	Flush(svg);
 	Close(svg);
 END;	{	CloseSVG;	}
 {---------------------------------------------------------------------------}
 PROCEDURE Initialize;
 { Initialize graphics and report any errors that may occur }
 VAR
-	st	:	STRING;
+	st		:	STRING;
 	newmode	:	INTEGER;
 
-	lo, hi, tw, th: integer;
-	found: boolean;
+	lo, hi, tw, th: INTEGER;
+	found: BOOLEAN;
 CONST
   Line2 = 'We are now in 800 x 600 x 256 colors! - Press [Return] ';
 
@@ -325,6 +334,7 @@ BEGIN
 			Writeln('This program cannot continue.');
 			Finish(6);
 		END;
+	Writeln(db,'Initializing.. 800x600x256 is OK');
 	MaxX := getMaxX;          { Get screen resolution values only after Initgraph() }
 	MaxY := getMaxY;
 
@@ -339,7 +349,7 @@ BEGIN
 	xfactor		:= MaxX/(MaxX-1);
 	yfactor		:= MaxY/(MaxY-1);
 	
-	MySetColor(white);
+	MySetColor(WHITE);
 
 	InitSVG (MaxX+1, MaxY+1); {800x600 not 799x599 }
 END; { Initialize }
@@ -404,12 +414,10 @@ BEGIN
 	MySetColor(oldcol);
 
 	WRITELN(db,'Exiting ClearTextSpace: ',round(x1),' ',round(y1),' ',round(x2),' ',round(y2));
-
 END;	{	ClearTextSpace	}
 {---------------------------------------------------------------------------}
 PROCEDURE OurOutTextXY(x,y: INTEGER; s: String);
 	{	This converts 640x200 original coords to current pixel x/y coordinates }
-
 VAR
 	xx, yy	:	INTEGER;
 	TextInfo: TextSettingsType; { fpc pascal graphics extenson }
@@ -426,12 +434,10 @@ BEGIN
 	IF TextInfo.direction = VertDir THEN
 		write(svg,' transform="rotate(-90 ',xx,' ',yy,')"');
 	writeln(svg,'>',s,'</text>');
-
 END;	{	OurOutTextXY	}
 
 {---------------------------------------------------------------------------}
 PROCEDURE vertical_text(xstart,ystart:integer; lbl:lblstring);
-
 { Writes a string label vertically in graphics}
 VAR
 	i	:	Byte;
@@ -448,7 +454,7 @@ PROCEDURE BoxDefaults;
 VAR
 	vp: ViewPortType;
 BEGIN
-	MySetColor(white);
+	MySetColor(WHITE);
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	
@@ -480,7 +486,6 @@ BEGIN
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	Writeln(db,'No obvious ViewPort  errors in BoxDefaults().');
-
 END; { BoxDefaults }
 {---------------------------------------------------------------------------}
 { Unit Initialization }

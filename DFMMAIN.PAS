@@ -1,5 +1,5 @@
 Unit Dfmmain;
-{ PMS 30-November-2020 15:42:41 }
+{ PMS 30-November-2020 16:14:44 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -608,7 +608,6 @@ BEGIN
 		Writeln(db, 'modetemp:   ', modetemp);
 		IF modestrate THEN
 			BEGIN
-				Initialize;		{	graphics display	}
 				CALC_STRAIN_RATES_MAP;
 
 				IF modedemo THEN Delay(20000);
@@ -623,7 +622,6 @@ BEGIN
 
 		IF modeindt THEN		
 			BEGIN
-				Initialize;		{	graphics display	}
 				CALC_Indentation_MAP;
 
 				IF modedemo THEN Delay(20000);

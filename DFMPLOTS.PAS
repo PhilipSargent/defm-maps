@@ -1,5 +1,5 @@
 Unit DfmPlots;
-{ PMS 30-November-2020 15:41:30 }
+{ PMS 30-November-2020 16:36:13 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -84,18 +84,18 @@ TYPE
 	E_n_bndrys		=	1..C_num_bndrys;
 	T_bndry_item	=	RECORD
 								stress_hi	:	a_real;
-								id_hi			:	E_mech;
+								id_hi		:	E_mech;
 								stress_lo	:	a_real;
-								id_lo			:	E_mech;
+								id_lo		:	E_mech;
 								stress_mn	:	a_real;
-							END;
+						END;
 	T_bndry_table	=	ARRAY [E_n_bndrys] OF T_bndry_item;
 
 	E_n_stress		=	0..C_num_cntrs;	
 	T_field_stress	=	RECORD
 								stress	:	a_real;
-								id			:	E_mech;
-								rate		:	a_real;
+								id		:	E_mech;
+								rate	:	a_real;
 								visible	:	BOOLEAN;
 								converged:	BOOLEAN;
 							END;
@@ -510,16 +510,17 @@ VAR
 	field			:	E_mech;
 
 	c,cc,
-	n_actual		:	E_n_stress;
+	n_actual	:	E_n_stress;
 	root_factor	:	a_real;
-	Rate			:	a_real;
-	LgSN			:	a_real;
+	Rate		:	a_real;
+	LgSN		:	a_real;
 	LgRatio	  	:	a_real;
 	hint_stress	:	a_real;
 	mark_step	:	a_real;
 	min_rate_on_plot	:	a_real;
 	max_rate_on_plot	:	a_real;
-	prev_stress, prev_rate	:	a_real;
+	prev_stress, 
+	prev_rate	:	a_real;
 
 	{------------------------------------------------------------------------}
 PROCEDURE Contours_debug;
@@ -957,20 +958,20 @@ VAR
 	field_last,
 	next_down_now,
 	next_up_now	:	E_mech;
-	n_actual		:	E_n_stress;
+	n_actual	:	E_n_stress;
 	centroid	:	T_mecharray;
 	spread	:	T_mecharray;
-	Rate			:	a_real;
-	LgSN			:	a_real;
+	Rate		:	a_real;
+	LgSN		:	a_real;
 	hint_stress	:	a_real;
 	weight		:	a_real;
-	top, bot		:	a_real;
-	re_do			:	BOOLEAN;
+	top, bot	:	a_real;
+	re_do		:	BOOLEAN;
 	boundaries_exist	:	BOOLEAN;
 	x_half, y_half, y_now:	INTEGER;
 	c, i, j	 	:	E_n_stress;
-	k				:	E_n_bndrys;
-	s		:	Word;	{	stress_step	}
+	k			:	E_n_bndrys;
+	s			:	Word;	{	stress_step	}
 
 	{------------------------------------------------------------------------}
 PROCEDURE Find_Boundaries;
@@ -983,7 +984,7 @@ BEGIN
 	i := 0;				
 	REPEAT
 		IF (i+1 > C_num_cntrs) THEN
-			Range_Check('Too many boundaries found on first pass')
+			Show_Msg('Too many boundaries found on first pass')
 		ELSE
 			Inc(i);
 		re_do := FALSE;
@@ -1005,7 +1006,7 @@ BEGIN
 						AND (field <> id_lo) THEN
 							BEGIN	{	a new field in the middle ! }
 								IF (n_bndrys+1 > C_num_bndrys) THEN
-									Range_Check('Too many boundaries found on interpolation')
+									Show_Msg('Too many boundaries found on interpolation')
 								ELSE
 									Inc(n_bndrys);						{	make array bigger	}
 								FOR item := n_bndrys DOWNTO i+1 DO
@@ -1332,11 +1333,11 @@ PROCEDURE CALC_STRAIN_RATES_MAP;
 
 VAR
  	mech,
-	field				:	E_mech;
+	field			:	E_mech;
 
 	x1,x2,y1,y2		:	INTEGER;
 	i, step			:	Word;
-	c					:	Byte;
+	c				:	Byte;
 
 	lastTN			:	a_real;
 	TNstep			:	a_real;
@@ -1344,6 +1345,9 @@ VAR
 {	contourlevels	:	T_all_contours;		SAVE SPACE for DEBUGGING	}
 
 BEGIN	{Calc_STRAIN_RATES_Map	}
+	plottype := strrate;
+	Writeln(db,'**** STRAIN_RATES Map ****');
+	Initialize;		{	graphics display	}
 
 	TNstep		:= (TNlast - TNfirst)/steps;   		{Temperature interval}
 
