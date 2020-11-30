@@ -1,5 +1,5 @@
 Unit DfmPlots;
-{ PMS 30-November-2020 21:03:14 }
+{ PMS 30-November-2020 22:00:45 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -299,22 +299,9 @@ END;   {PLOT_STRAIN_RATES_BOX.    }
 PROCEDURE PLOT_STRAIN_RATES_INFO;
 
 { ----- Information box in top-right corner ----- }
-VAR
-	xof,yof,xl,yl	:	REAL;
-	delta_x			:	REAL;
-	delta_y			:	REAL;
-
 BEGIN
 
 	DATE_AND_TIME;
-
-	xof    := xfac0 * MaxX;
-	yof    := yfac0 * MaxY;
-	xl     := xfacN * MaxX;
-	yl     := yfacN * MaxY;
-
-	delta_x := 6/xfactor;										{ avoid axes marks }
-	delta_y := 6/yfactor;										{ avoid axes marks }
 
 	MySetColor(white);
 
@@ -325,7 +312,7 @@ BEGIN
 		xoffset+round(3*xlength/4),yoffset);
 
 	{ these calls to ClearTextSpace and OurOutTextXY use 'notional 640x200 scaled pixels'}
-	ClearTextSpace(456,12,630,55, True);
+	ClearTextSpace(456,12,630,55, False);
 	OurOutTextXY(465,16,matlname);
 	IF (Gsize*1.0e6 < 0.1) THEN	{	less than 0.1 microns, do in nm	}
 		BEGIN
@@ -414,23 +401,15 @@ VAR
 	xx1,xx2,yy1,yy2		:	SMALLINT;
 	mech				:	E_mech;
 	
-	{	local versions of these..	}
-	xoffset, yoffset	:	a_real;
-	xend, yend			:	a_real;
-
 BEGIN
+{	----- RE FACTOR THIS BIT - uses 80x25 character coordinates for the window! ----- }
 { This procedure had the implicit assumption that there were 80
 	lines to the screen, even though it was general with respect to
 	the number of graphics pixels on the screen.
 }
 
-	xoffset	:=	xfac0*(MaxX-1);
-	yoffset	:=	yfac0*(MaxY-1);
-	xend	:=	xoffset + xfacN*(MaxX-1);
-	yend	:=	yoffset + yfacN*(MaxY-1);
-
 { ----- Position and print the remaining field labels ----- }
-	MySetColor(brown);
+	MySetColor(BROWN);
 
 	writeln(db,'IDENTIFY_FIELDS');
 	crit := round(steps*steps/100);
@@ -442,41 +421,42 @@ BEGIN
 				CASE { mechID[mech] } mech OF
 					null:		st:='ELASTIC';
 					re_cryst:	st:='RECRYST';
-					b_diff:	st:='DIFF-B';
-					v_diff:	st:='DIFF-V';
-					plc_ht:	st:='PL-(HT)';
-					plc_lt:	st:='PL-(LT)';
+					b_diff:		st:='DIFF-B';
+					v_diff:		st:='DIFF-V';
+					plc_ht:		st:='PL-(HT)';
+					plc_lt:		st:='PL-(LT)';
 					o_glide:	st:='OBSTCLE';
 					pls_drag:	st:='PEIERLS';
 					phn_drag:	st:='PHONON';
 					rel_drag:	st:='RLTVSTC';
-					ELSE
-						st:='ERROR';
+				ELSE
+					st:='ERROR';
 				END;	{	Case	}
 
+{	----- RE FACTOR THIS BIT - uses 80x25 character coordinates for the window! ----- }
 				writeln(db,st,' ',temp_position[mech]:5:0,stress_position[mech]:5:0,pointcount[mech]:5:0);
 {			----- Don't check for validity here in character co-ords, but in
 				graphics co-ords after conversion. PMS 4-February-1988 10:50	}			
 				r1  := ((temp_position[mech]/steps)/pointcount[mech]*64) + 7;
 				r2  := (1 - stress_position[mech]/(pointcount[mech]*steps))*22 + 2;
-
+{	----- RE FACTOR THIS BIT - uses 80x25 character coordinates for the window! ----- }
 				x1:=(r1-1)*xVGA/80;
 				y1:=(r2-0.7)*yVGA/25;
 				x2:=(r1+Length(st)+0.2)*xVGA/80;
 				y2:=(r2+0.5)*yVGA/25;
-
+{	----- RE FACTOR THIS BIT - uses 80x25 character coordinates for the window! ----- }
 				x_shift := 0.0;
 				IF (x1 < xoffset ) THEN
 					x_shift := xoffset - x1 + 1.6;
 				IF (x2 > xend ) THEN
 					x_shift := xend - x2 + 1.6;
-
+{	----- RE FACTOR THIS BIT - uses 80x25 character coordinates for the window! ----- }
 				y_shift := 0.0;
 				IF (y1 < yoffset ) THEN
 					y_shift := yoffset - y1 + 4;
 				IF (y2 > yend ) THEN
 					y_shift := yend - y2 + 4;
-
+{	----- RE FACTOR THIS BIT - uses 80x25 character coordinates for the window! ----- }
 				xx1 := round(x1+x_shift);
 				xx2 := round(x2+x_shift);
 				yy1 := round(y1+y_shift);
@@ -485,6 +465,7 @@ BEGIN
 				x0:=Round(r1*xVGA/80 + x_shift);
 				y0:=Round(r2*yVGA/25 + y_shift);
 				OurOutTextXY(x0, y0, st);
+{	----- RE FACTOR THIS BIT - uses 80x25 character coordinates for the window! ----- }
 			END
 		ELSE
 			writeln(db,st,' not shown as too small',pointcount[mech]:5:0);			

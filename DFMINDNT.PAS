@@ -1,5 +1,5 @@
 Unit DfmIndnt;
-{ PMS 30-November-2020 21:03:12 }
+{ PMS 30-November-2020 21:57:49 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -229,21 +229,8 @@ END;   {PLOT_Indentation_BOX.    }
 {---------------------------------------------------------------------------}
 PROCEDURE PLOT_Indentation_INFO;
 { ----- Label horizontal and vertical axes of graph window ----- }
-VAR
-	xof,yof,xl,yl	:	REAL;
-	delta_x			:	REAL;
-	delta_y			:	REAL;
-
 BEGIN
 	DATE_AND_TIME;
-
-	xof    := xfac0 * MaxX;
-	yof    := yfac0 * MaxY;
-	xl     := xfacN * MaxX;
-	yl     := yfacN * MaxY;
-
-	delta_x := 6/xfactor;										{ avoid axes marks }
-	delta_y := 6/yfactor;										{ avoid axes marks }
 
 	MySetColor(white);
 
@@ -257,7 +244,7 @@ BEGIN
 	ClearTextSpace(85,122,306,130, True);
 	OurOutTextXY(96,126,'Indentation Creep Trajectories');
 	
-	ClearTextSpace(456,12,630,55, True);
+	ClearTextSpace(456,12,630,55, False);
 	OurOutTextXY(465,16,matlname);
 	Str((Gsize*1.0e6):4:1,st);
 	OurOutTextXY(465,24,'d = '+st+' um');
