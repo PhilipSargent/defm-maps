@@ -1,5 +1,5 @@
 Unit DfmIndnt;
-{ PMS 01-December-2020 18:31:00 }
+{ PMS 01-December-2020 22:11:31 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -39,6 +39,7 @@ Uses
 	Dos,
 	Printer,
 	Graph,
+	math,
 	StringIO,
 	DfmGlbls,
 	DfmPlots,
@@ -58,18 +59,18 @@ CONST
 	C_3 = 25.504;	{	Vickers indenters	}
 
 VAR
-	Lgt_first, Lgt_last, Lgt_step	:	a_real;
+	Lgt_first,
+	Lgt_last, 
+	Lgt_step		:	a_real;
 	LgHN			:	a_real;
 	A, A_dot, Load	:	a_real;
-	H, t, dt			:	a_real;
+	H, t, dt		:	a_real;
+	CentroidX		:	T_mecharray;
+	CentroidY		:	T_mecharray;
+	n_trajectories	:	INTEGER;
 	
-	bdry_stack	:	TP_bdry_list;
+	bdry_stack		:	TP_bdry_list;
 
-{---------------------------------------------------------------------------}
-PROCEDURE LABEL_FIELDS_Indent;
-BEGIN
-
-END;	{	LABEL_FIELDS_Indent	procedure }
 {---------------------------------------------------------------------------}
 PROCEDURE PLOT_Indentation_BOX (t_first, t_last, LgHNfirst, LgHNlast: a_real);
 
@@ -336,6 +337,38 @@ BEGIN
 		END;
 END;	{	PopBdry	procedure }
 {---------------------------------------------------------------------------}
+PROCEDURE LABEL_FIELDS_INIT;
+VAR
+	mech	: 	E_mech;
+BEGIN
+	n_trajectories := 0;
+	FOR mech := null TO rel_drag DO
+		BEGIN
+			CentroidX[mech] := 0.0;
+			CentroidY[mech] := 0.0;
+		END;
+END;	{	LABEL_FIELDS_INITT	procedure }
+{---------------------------------------------------------------------------}
+PROCEDURE LABEL_FIELDS_PLOT;
+VAR
+	mech	: 	E_mech;
+	x, y	:	SMALLINT;
+BEGIN
+	FOR mech := null TO rel_drag DO
+		BEGIN
+			CentroidX[mech] := CentroidX[mech]/n_trajectories;
+			CentroidY[mech] := CentroidY[mech]/n_trajectories;
+			x := round(CentroidX[mech]);
+			y := round(CentroidY[mech]);
+			IF x >0 THEN
+				BEGIN
+					MyCentredLabel(x,y,mechLabel[mech]);
+				END;
+			writeln(db,mechLabel[mech], ' (',x,',',y,')');
+		END;
+
+END;	{	LABEL_FIELDS_PLOT	procedure }
+{---------------------------------------------------------------------------}
 PROCEDURE IndentTrajectory (LgHNfirst,lgHNlast: a_real; plot: BOOLEAN; color: INTEGER);
 {	Plots the line for any given temperature TN and load Load	}
 
@@ -344,8 +377,12 @@ VAR
 	x,y,x1,x2,y1,y2	:	Integer;
 	Lgt				:	a_real;
 	d				:	Integer;
+	i, j, count		:	Integer;
 	trjcolor		:	INTEGER;
 	precolor		:	INTEGER;
+	xvalues			:	T_mecharray;
+	yvalues			:	T_mecharray;
+	mech			: 	E_mech;
 
 BEGIN
 	A := 2e-5;		{	mm^2	}
@@ -355,8 +392,12 @@ BEGIN
 	
 	{ Size of blob marking field boundaries , in pixels}
 	d := 5;
-	
-	
+	FOR mech := null TO rel_drag DO
+		BEGIN
+			xvalues[mech] := 0.0;
+			yvalues[mech] := 0.0;
+		END;
+		
 	x2 := xoffset;
 	y2 := yoffset;
 	field2 := null;
@@ -364,13 +405,11 @@ BEGIN
 	precolor := MyGetColor;
 	trjcolor := color;
 
-{	Writeln(db,'++Trajectory begin.');
-	Writeln(db,'TN= ',TN:5:2,'  t(s)       dt(s)      LgHN',
-		'        A(mm^2)   A_dot(mm^2)');}
+	MySetColor(trjcolor);;
 		
 { ----- Calculate the diffusion rates at the new Temperature TN ------- }
 	DIFFUSION_RATES;
-	
+	i := 0;
 	REPEAT
 		x1 := x2;
 		y1 := y2;
@@ -380,11 +419,14 @@ BEGIN
 		x2 := round(xlength*(Lgt - Lgt_first)/(Lgt_last - Lgt_first));
 		y2 := round(ylength*(LgHNlast - LgHN)/(LgHNlast - LgHNfirst));
 
-{		Write(db,'|');
-		WRITE_FIELDNAME (field2);
-		`(db,'|');
-		Writeln(db);}
-
+	{ ----- Record the mechanisms - if they are visible ----- }
+		IF ((x2 >= 0) AND (y2 >= 0)) THEN
+			BEGIN
+				i := i + 1;
+				xvalues[field2] := xvalues[field2] + x2;
+				yvalues[field2] := yvalues[field2] + y2;
+			END;
+	
 	{ ----- Draw the contours ----- }
 		IF (Lgt > Lgt_first) THEN
 			BEGIN
@@ -399,10 +441,21 @@ BEGIN
 			END;
 		DETECT_SKIP;
 	UNTIL (Lgt > Lgt_last) OR skip;
-	
-	MySetColor(precolor);;
-{	Writeln(db,'++Trajectory end.');}
+	count := i;
 
+	{ ----- For each mechanism, add the centroid
+	of this particular trajectory in data plot units ----- }	
+	n_trajectories := n_trajectories + 1;
+	FOR mech := null TO rel_drag DO
+		IF count > 0 THEN
+			BEGIN
+				CentroidX[mech] := CentroidX[mech] + xvalues[mech]/count;
+				CentroidY[mech] := CentroidY[mech] + yvalues[mech]/count;
+				IF CentroidX[mech] > 0 THEN
+					writeln(db,mechLabel[mech],' Centroids:',CentroidX[mech]/n_trajectories:10:0,' ',CentroidY[mech]/n_trajectories:10:0);
+			END;
+		
+	MySetColor(precolor);;
 END;	{	IndentTrajectory	}
 {---------------------------------------------------------------------------}
 PROCEDURE	TRAJECTORIES_BOX (TNtraj_low,TNtraj_high: a_real; trajnumber:integer);
@@ -414,7 +467,7 @@ BEGIN
 	MySetColor(brown);
 
 	ClearTextSpace(96,156,260,183, True);
-	Str((trajnumber):3,st);
+	Str((round(trajnumber/2)):3,st); { ALTERNATE trajectory plotted }
 	MyPlotText(96,162,st+' TEMPERATURES');
 	first := TNtraj_low*tmelt;
 	last := TNtraj_high*tmelt;
@@ -566,7 +619,7 @@ BEGIN	{Calc_Indentation_Map	}
 
 	MySetViewPort(xoffset, yoffset, xend, yend, ClipOn);
 	Graph.SetLineStyle(SolidLn,0,NormWidth);
-	MySetColor(GREEN);
+	LABEL_FIELDS_INIT;
 
 { ========== S T A R T == T H E == T E M P E R A T U R E == L O O P ========= }
 	skip:=FALSE;
@@ -577,7 +630,7 @@ BEGIN	{Calc_Indentation_Map	}
 	REPEAT
 { ----- Calculate and Plot the Hardness/time trajectory ------- }
 		IndentTrajectory (LgHNfirst,lgHNlast, alternate, GREEN);
-		alternate := NOT alternate;
+		alternate := NOT alternate; { skip showing alternate trajectories }
 
 { ----- Detect <CtrlC> key if pressed  ----- }
 		DETECT_SKIP;
@@ -597,7 +650,7 @@ BEGIN	{Calc_Indentation_Map	}
 	MARK_FIELDS_Indent;
 
 { ----- Calculate where the feld boundaries are ------- }
-	LABEL_FIELDS_Indent;	{ needs rewriting completely to work for the indentation map }
+	LABEL_FIELDS_PLOT;
 
 	MySetViewPort(0, 0, MaxX, MaxY, ClipOn);
 

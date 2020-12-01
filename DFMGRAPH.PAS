@@ -1,5 +1,5 @@
 Unit DfmGraph;
-{ PMS 01-December-2020 17:27:12 }
+{ PMS 01-December-2020 22:14:22 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -66,9 +66,15 @@ PROCEDURE CloseSVG;
 
 PROCEDURE Show_Msg (s:String);
 
+PROCEDURE ClearPlotSpace(xx1,yy1,xx2,yy2: SMALLINT; border:BOOLEAN);
+
 PROCEDURE ClearTextSpace(x1,y1,x2,y2: SMALLINT; border:BOOLEAN);
 
 PROCEDURE MyPlotText(x,y: SMALLINT; s: String);
+
+PROCEDURE MyDirectText(x,y: SMALLINT; s: String);
+
+PROCEDURE MyCentredLabel(x,y: SMALLINT; s: String);
 
 PROCEDURE MySetColor(color: INTEGER);
 
@@ -415,14 +421,9 @@ BEGIN
 	InitSVG (MaxX+1, MaxY+1); {800x600 not 799x599 }
 END; { Initialize }
 {---------------------------------------------------------------------------}
-PROCEDURE ClearTextSpace(x1,y1,x2,y2: SMALLINT; border:BOOLEAN);
-{ These x,y are in the original 640,200 = xVGA,yVGA space 
-	This is all very overripe for refactoring! }
+PROCEDURE ClearPlotSpace(xx1,yy1,xx2,yy2: SMALLINT; border:BOOLEAN);
+{ These x,y are in the MaxX, MaxY space }
 VAR
-	xx1,
-	xx2		:	Word;
-	yy1,
-	yy2		:	Word;
 	Ch			:	CHAR;
 	vp			:	Graph.ViewPortType;
 	ErrorStr	:	String;
@@ -431,11 +432,6 @@ VAR
 
 BEGIN
 	oldcol := Graph.GetColor;
-
-	xx1:= Round(xfactor*x1*MaxX/xVGA);
-	yy1:= Round(yfactor*y1*MaxY/yVGA);
-	xx2:= Round(xfactor*x2*MaxX/xVGA);
-	yy2:= Round(yfactor*y2*MaxY/yVGA);
 
 {	Check that we are inside GRAPH plotting area, not full screen.	}
 	IF yy2 > yend-1 THEN
@@ -489,35 +485,83 @@ BEGIN
 			writeln(svg,'    style="stroke: #ffffff; fill: #ffffff; fill-opacity: 1.0;" />');
 		END;
 	
-	WRITELN(db,'Exiting ClearTextSpace: ',round(x1),' ',round(y1),' ',round(x2),' ',round(y2));
+	WRITELN(db,'Exiting ClearPlotSpace: ',round(xx1),' ',round(yy1),' ',round(xx2),' ',round(yy2));
+END;	{	ClearPlotSpace	}
+{---------------------------------------------------------------------------}
+PROCEDURE ClearTextSpace(x1,y1,x2,y2: SMALLINT; border:BOOLEAN);
+{ These x,y are in the original 640,200 = xVGA,yVGA space 
+	This is all very overripe for refactoring! }
+VAR
+	xx1,
+	xx2		:	Word;
+	yy1,
+	yy2		:	Word;
+BEGIN
+	xx1:= Round(xfactor*x1*MaxX/xVGA);
+	yy1:= Round(yfactor*y1*MaxY/yVGA);
+	xx2:= Round(xfactor*x2*MaxX/xVGA);
+	yy2:= Round(yfactor*y2*MaxY/yVGA);
+	
+	ClearPlotSpace(xx1,yy1,xx2,yy2, border);
+
+	WRITELN(db,'Exiting ClearTextSpace: ',x1,' ',y1,' ',x2,' ',y2);
 END;	{	ClearTextSpace	}
 {---------------------------------------------------------------------------}
 PROCEDURE MyPlotText(x,y: SMALLINT; s: String);
 	{	This converts 640x200 original coords to current pixel x/y coordinates }
-CONST
-	SVGOFFX = 4;
-	SVGOFFY = 5;
+
 VAR
 	xx, yy	:	SMALLINT;
 	TextInfo: TextSettingsType; { fpc pascal graphics extenson }
 BEGIN
 	xx:= Round(xfactor*x*MaxX/xVGA);
 	yy:= Round(yfactor*y*MaxY/yVGA);
-	Graph.OutTextXY(xx,yy,s);
+	
+	MyDirectText(xx,yy,s);
+
+END;	{	MyPlotText	}
+{---------------------------------------------------------------------------}
+PROCEDURE MyDirectText(x,y: SMALLINT; s: String);
+	{	This uses the current pixel x/y coordinates }
+CONST
+	SVGOFFX = 5;
+	SVGOFFY = 5;
+VAR
+	TextInfo: TextSettingsType; { fpc pascal graphics extenson }
+BEGIN
+	Graph.OutTextXY(x,y,s);
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	
 { --- SVG section --- }	
 {		the origin for SVG text is not quite the same as for the Graph Unit
 		so we need ot give a little offset }
-	xx := xx + SVGOFFX;
-	yy := yy + SVGOFFY;
-	write(svg,'<text x="',xx,'" y="',yy,'"');
+	x := x + SVGOFFX;
+	y := y + SVGOFFY;
+	write(svg,'<text x="',x,'" y="',y,'"');
 	IF TextDir = Graph.VertDir THEN
-		write(svg,' transform="rotate(-90 ',xx,' ',yy,')"');
+		write(svg,' transform="rotate(-90 ',x,' ',y,')"');
 	writeln(svg,'>',s,'</text>');
-END;	{	MyPlotText	}
+END;	{	MyDirectText	}
+{---------------------------------------------------------------------------}
+PROCEDURE MyCentredLabel(x,y: SMALLINT; s: String);
+CONST
+	charx = 9;  { width of a character in pixels }
+	chary = 18; { height of a character in pixels }
+VAR
+	xd, yd	:	SMALLINT;
+BEGIN
+	yd := 1 + round(chary/2);
+	xd := round(charx * (length(s) + 2)/2);
+	if x<charx THEN
+		x:= x+xd;
+	if y<chary THEN
+		y:= y+yd;
+	ClearPlotSpace(x-xd,y-yd,x+xd,y+yd,True);
+	MyDirectText(x-xd+charx,y,s);
+	writeln(db,s,' (',x,',',y,') LABEL');
 
+END;	{ MyCentredLabel }
 {---------------------------------------------------------------------------}
 PROCEDURE MySetTextDir(direction: SMALLINT);
 { These constants are defined by fpc rtl-graph unit }
