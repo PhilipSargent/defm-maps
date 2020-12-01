@@ -1,5 +1,5 @@
 Unit DfmGraph;
-{ PMS 30-November-2020 22:41:13 }
+{ PMS 01-December-2020 16:30:48 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -68,7 +68,7 @@ PROCEDURE Show_Msg (s:String);
 
 PROCEDURE ClearTextSpace(x1,y1,x2,y2: SMALLINT; border:BOOLEAN);
 
-PROCEDURE OurOutTextXY(x,y: SMALLINT; s: String);
+PROCEDURE MyPlotText(x,y: SMALLINT; s: String);
 
 PROCEDURE MySetColor(color: INTEGER);
 
@@ -306,7 +306,7 @@ BEGIN
 	{SVG equivalent is a semi-transparent (whatever current colour is)-filled circle}
 	writeln(svg,'<circle cx="',x,'" cy="',y,'" r="',r,'"');
 	writeln(svg,'    style="fill: ',rgb,'; fill-opacity: 0.5" />');
-END; { MyRectangle }
+END; { MyCircle }
 {---------------------------------------------------------------------------}
 PROCEDURE Show_Msg (s:String);
 VAR
@@ -315,7 +315,7 @@ BEGIN
 	Writeln(db,s);
 	precolor := MyGetColor;
 	MySetColor(RED);
-	OurOutTextXY(10,10,s);
+	MyPlotText(10,10,s);
 	MySetColor(precolor);
 END;	{	Show_Msg	}
 {---------------------------------------------------------------------------}
@@ -466,6 +466,9 @@ BEGIN
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 
 {	restore the viewport to full size plottable area 800x600 }
+{ --- BUT SUPPOSE WE HAD PREVIOUSLY SET THE VIEWPORT TO SOMETHING ELSE ?
+	we should restore it to previous setting, not reset to default !
+	PMS 1/12/2020 --- }
 	MySetViewPort(0,0,MaxX,MaxY,ClipOn);
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
@@ -473,14 +476,27 @@ BEGIN
 	IF border THEN
 		BEGIN
 			MySetColor(RED);
-			MyRectangle(xx1,yy1,xx2,yy2);
+			MyRectangle(xx1,yy1,xx2,yy2); {includes SVG bit }
 			MySetColor(oldcol);
+		END
+	ELSE
+		BEGIN
+		{ --- SVG section --- }	
+			MyTransformPoint(xx1,yy1);
+			MyTransformPoint(xx2,yy2);
+			{SVG equivalent is an opaque white filled, white-edged rectangle}
+			writeln(svg,'<rect x="',xx1,'" y="',yy1,'" width="',xx2-xx1,'" height="',yy2-yy1,'"');
+			writeln(svg,'    style="stroke: #ffffff; fill: #ffffff; fill-opacity: 1.0;" />');
 		END;
+	
 	WRITELN(db,'Exiting ClearTextSpace: ',round(x1),' ',round(y1),' ',round(x2),' ',round(y2));
 END;	{	ClearTextSpace	}
 {---------------------------------------------------------------------------}
-PROCEDURE OurOutTextXY(x,y: SMALLINT; s: String);
+PROCEDURE MyPlotText(x,y: SMALLINT; s: String);
 	{	This converts 640x200 original coords to current pixel x/y coordinates }
+CONST
+	SVGOFFX = 4;
+	SVGOFFY = 5;
 VAR
 	xx, yy	:	SMALLINT;
 	TextInfo: TextSettingsType; { fpc pascal graphics extenson }
@@ -491,13 +507,16 @@ BEGIN
 	ErrorCode := GraphResult;               { error? }
 	IF ErrorCode <> grOk THEN GraphicsErrorDump;
 	
-	{Graph.GetTextSettings(TextInfo);}
-	
+{ --- SVG section --- }	
+{		the origin for SVG text is not quite the same as for the Graph Unit
+		so we need ot give a little offset }
+	xx := xx + SVGOFFX;
+	yy := yy + SVGOFFY;
 	write(svg,'<text x="',xx,'" y="',yy,'"');
 	IF TextDir = Graph.VertDir THEN
 		write(svg,' transform="rotate(-90 ',xx,' ',yy,')"');
 	writeln(svg,'>',s,'</text>');
-END;	{	OurOutTextXY	}
+END;	{	MyPlotText	}
 
 {---------------------------------------------------------------------------}
 PROCEDURE MySetTextDir(direction: SMALLINT);

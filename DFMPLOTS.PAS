@@ -1,5 +1,5 @@
 Unit DfmPlots;
-{ PMS 30-November-2020 22:00:45 }
+{ PMS 01-December-2020 17:05:04 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -202,9 +202,9 @@ BEGIN
 
 	IF (Sfirst <= 1.0e-9) THEN
 		BEGIN
-			OurOutTextXY(xoffset+2,100,'Error, low stress limit too low!');
+			MyPlotText(xoffset+2,100,'Error, low stress limit too low!');
 			Str(Sfirst:4:1,st);
-			OurOutTextXY(xoffset+2,105,st);
+			MyPlotText(xoffset+2,105,st);
 			IF NOT modefast THEN
 				Repeat Until Keypressed;
 		END;
@@ -215,7 +215,7 @@ BEGIN
 
 	Str(S:4:1,st);
 	IF (S < Slast) THEN
-		OurOutTextXY (585,189,st);
+		MyPlotText (585,189,st);
 
 	ymark		:= 0;
 	REPEAT
@@ -230,15 +230,15 @@ BEGIN
 		Str(S:4:1,st);
 		IF (S >= (Slast/10)) THEN
 			IF (S <= Slast) THEN
-				OurOutTextXY (585,10,st);
+				MyPlotText (585,10,st);
 		S := S * 10;
 	UNTIL (S  >= Slast);
 
 { --------- Label Normalised Stress Axes           ---------- }
 	Str(LgSNlast:4:2,st);
-	OurOutTextXY(42,10,st);
+	MyPlotText(42,10,st);
 	Str(LgSNfirst:4:2,st);
-	OurOutTextXY(42,189,st);
+	MyPlotText(42,189,st);
 
 { --------- Put on NORMALIZED TEMPERATURE scale ---------- }
 
@@ -273,24 +273,24 @@ BEGIN
 		Str(round(T):6,st);
 		IF (Tnormalised>=TNfirst) THEN
 			IF (Tnormalised<(TNfirst+(Tinterval/tmelt))) THEN
-				OurOutTextXY(80,5,st);
+				MyPlotText(80,5,st);
 	until (Tnormalised > TNlast);
 
 	Str(TNfirst:4:2,st);
-	OurOutTextXY(70,196,st);
+	MyPlotText(70,196,st);
 	Str(TNlast:4:2,st);
-	OurOutTextXY(569,196,st);
+	MyPlotText(569,196,st);
 
 	Str(round(T - Tinterval):6,st);
-	OurOutTextXY(511,5,st);
+	MyPlotText(511,5,st);
 
 { ----- Label horizontal and vertical axes of graph window ----- }
 
-	OurOutTextXY(200,196,' NORMALISED TEMPERATURE T/Tm');
-	OurOutTextXY(216,5,'     TEMPERATURE  (C)     ');
+	MyPlotText(200,196,' NORMALISED TEMPERATURE T/Tm');
+	MyPlotText(216,5,'     TEMPERATURE  (C)     ');
 	MySetTextDir(Graph.VertDir);
-	OurOutTextXY(56,100,'NORM SHEARSTRESS');
-	OurOutTextXY(599,100,'STRESS   (MPa)  ');
+	MyPlotText(56,100,'NORM SHEARSTRESS');
+	MyPlotText(599,100,'STRESS   (MPa)  ');
 	MySetTextDir(Graph.HorizDir);
 
 END;   {PLOT_STRAIN_RATES_BOX.    }
@@ -311,20 +311,20 @@ BEGIN
 	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
 		xoffset+round(3*xlength/4),yoffset);
 
-	{ these calls to ClearTextSpace and OurOutTextXY use 'notional 640x200 scaled pixels'}
+	{ these calls to ClearTextSpace and MyPlotText use 'notional 640x200 scaled pixels'}
 	ClearTextSpace(456,12,630,55, False);
-	OurOutTextXY(465,16,matlname);
+	MyPlotText(465,16,matlname);
 	IF (Gsize*1.0e6 < 0.1) THEN	{	less than 0.1 microns, do in nm	}
 		BEGIN
 			Str((Gsize*1.0e9):4:1,st);
-			OurOutTextXY(465,24,'d = '+st+' nm');
+			MyPlotText(465,24,'d = '+st+' nm');
 		END
 	ELSE
 		BEGIN
 			Str((Gsize*1.0e6):4:1,st);
-			OurOutTextXY(465,24,'d = '+st+' um');
+			MyPlotText(465,24,'d = '+st+' um');
 		END;
-	OurOutTextXY(465,48,date_string);
+	MyPlotText(465,48,date_string);
 
 END;	{	PLOT_STRAIN_RATES_INFO	}
 {---------------------------------------------------------------------------}
@@ -372,19 +372,19 @@ BEGIN
 	Flush(db);
 
 	ClearTextSpace(96,159,257,183, True);
-	OurOutTextXY(96,165,'    CONTOURS     ');
+	MyPlotText(96,165,'    CONTOURS     ');
 	IF ((contour[1] < 99999 ) AND ( contour[1] >= 1 )) THEN
 		Str(contour[1]:7:0,st)
 	ELSE
 		Str(contour[1]:7,st);
 	convert_number (contour[1], st, -1);
-	OurOutTextXY(96,170,' First = '+st+' /s ');
+	MyPlotText(96,170,' First = '+st+' /s ');
 	IF ((contour[contournumber] < 99999 ) AND ( contour[contournumber] >= 1 )) THEN
 		Str(contour[contournumber]:7:0,st)
 	ELSE
 		Str(contour[contournumber]:7,st);
 	convert_number (contour[contournumber], st, -1);
-	OurOutTextXY(96,178,' Last  = '+st+' /s ');
+	MyPlotText(96,178,' Last  = '+st+' /s ');
 
 END;    {IDENTIFY_CONTOURS.    }
 {---------------------------------------------------------------------------}
@@ -464,7 +464,7 @@ BEGIN
 				ClearTextSpace(xx1,yy1, xx2,yy2, True);
 				x0:=Round(r1*xVGA/80 + x_shift);
 				y0:=Round(r2*yVGA/25 + y_shift);
-				OurOutTextXY(x0, y0, st);
+				MyPlotText(x0, y0, st);
 {	----- RE FACTOR THIS BIT - uses 80x25 character coordinates for the window! ----- }
 			END
 		ELSE
@@ -746,16 +746,13 @@ BEGIN	{	Procedure Contours_Loop	}
 	field_ids[n_actual].id     := field;
 	field_ids[n_actual].rate   := Rate;
 	max_rate_on_plot := Rate;
-
 	Writeln(db);
-
 
 	STRAIN_RATES (TN, LgSNfirst, Rate, field, hint_stress);
 	field_ids[0].stress := LgSNfirst;
 	field_ids[0].id     := field;
 	field_ids[0].rate   := Rate;
 	min_rate_on_plot := Rate;
-
 	Writeln(db);
 
 {$IFDEF contour}
@@ -835,9 +832,8 @@ BEGIN	{	Procedure Contours_Loop	}
 			STRAIN_RATES (TN, LgSN, Rate, field, hint_stress);
 			field_ids[c].id     := field;				{	and update..	}
 			field_ids[c].rate   := Rate;
-{$IFDEF detail}
 			Writeln(db);
-{$ENDIF}
+
 		END;
 
 {	Set id for those that dropped off the bottom	}
@@ -1306,10 +1302,6 @@ BEGIN	{	Fields_Loop	}
 
 END;	{	Fields_Loop	procedure }
 {---------------------------------------------------------------------------}
-PROCEDURE Fields_Loop_Indent (temp_step: Word);
-BEGIN
-END;	{	Fields_Loop_Indent	procedure }
-{---------------------------------------------------------------------------}
 PROCEDURE CALC_STRAIN_RATES_MAP;
 
 VAR
@@ -1381,7 +1373,6 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 	i:=0;
 	REPEAT
 		TN         := TNfirst + i*TNstep;
-
 { ----- Calculate the diffusion rates at the new Temperature ------- }
 		DIFFUSION_RATES;
 		
@@ -1422,7 +1413,6 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 			END;
 
 { ----- Set values of last_contour ----- }
-
 		lastTN       := TN;
 		FOR c := 1 to contournumber DO
 			BEGIN

@@ -1,5 +1,5 @@
 Unit DfmIndnt;
-{ PMS 30-November-2020 21:57:49 }
+{ PMS 01-December-2020 17:03:42 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -68,10 +68,10 @@ VAR
 	bdry_stack	:	TP_bdry_list;
 
 {---------------------------------------------------------------------------}
-PROCEDURE Fields_Loop_Indent (temp_step: Word);
+PROCEDURE LABEL_FIELDS_Indent;
 BEGIN
 
-END;	{	Fields_Loop_Indent	procedure }
+END;	{	LABEL_FIELDS_Indent	procedure }
 {---------------------------------------------------------------------------}
 PROCEDURE PLOT_Indentation_BOX (t_first, t_last, LgHNfirst, LgHNlast: a_real);
 
@@ -90,7 +90,9 @@ var
 	precolor			:	INTEGER;
 
 BEGIN
+	precolor := MyGetColor;
 { --------- Draw  Box ----------}
+	MySetColor(WHITE);
 	writeln(db,'Draw box');
 	myLine(xoffset,yoffset,xoffset,yend);
 	myLine(xoffset,yoffset,xend,yoffset);
@@ -128,19 +130,18 @@ BEGIN
 	LgHfirst	:=	Ln(Hfirst)/Ln10;
 	LgHlast	:=	Ln(Hlast)/Ln10;
 
-	precolor := MyGetColor;
-	MySetColor(yellow);
+	MySetColor(YELLOW);
 	IF (Hfirst <= 1.0e-9) THEN
 		BEGIN
 			WriteLn(db,'Error, low hardness limit too low!');
 			WriteLn(db,'Hfirst: ', Hfirst,'shmod: ', shmod,'HNfirst: ', HNfirst );
-			OurOutTextXY(xoffset+2,100,'Error, low hardness limit too low!');
+			MyPlotText(xoffset+2,100,'Error, low hardness limit too low!');
 			Str(Hfirst:4:1,st);
-			OurOutTextXY(xoffset+2,106,st);
+			MyPlotText(xoffset+2,106,st);
 			Str(shmod:4:1,st);
-			OurOutTextXY(xoffset+2,112,st);
+			MyPlotText(xoffset+2,112,st);
 			Str(HNfirst:4:1,st);
-			OurOutTextXY(xoffset+2,118,st);
+			MyPlotText(xoffset+2,118,st);
 			
 			{ ERROR detection... wait for a moment..}
 			repeat until keypressed;
@@ -152,7 +153,7 @@ BEGIN
 
 	Str(H:4:1,st);
 	IF (H < Hlast) THEN
-		OurOutTextXY (585,189,st);
+		MyPlotText (585,189,st);
 
 	ymark		:= 0;
 
@@ -165,12 +166,12 @@ BEGIN
 		IF (ymark >= yoffset) AND (ymark <= yend) THEN
 			myLine(xend,ymark,xend-6,ymark);
 
-	MySetColor(yellow);
+	MySetColor(YELLOW);
 { -----	Nested IFs because of BUG with 8087 chip if IFs too complicated	}
 		Str(H:4:1,st);
 		IF (H >= (Hlast/10)) THEN
 			IF (H <= Hlast) THEN
-				OurOutTextXY (585,10,st);
+				MyPlotText (585,10,st);
 		H := H * 10;
 	UNTIL (H  >= Hlast);
 
@@ -182,7 +183,7 @@ BEGIN
 
 	Str((Ln(t)/Ln10):4:1,st);
 	IF (t < t_last) THEN
-		OurOutTextXY (75,196,st);
+		MyPlotText (75,196,st);
 
 	MySetColor(precolor);
 	xmark		:= 0;
@@ -194,35 +195,35 @@ BEGIN
 		IF (xmark >= xoffset) AND (xmark <= xend) THEN
 			myLine(xmark,yend,xmark,yend-6);
 
-		MySetColor(yellow);
+		MySetColor(YELLOW);
 { -----	Nested IFs because of BUG with 8087 chip if IFs too complicated	}
 		Str((Ln(t)/Ln10):4:1,st);
 		IF (t >= (t_last/10)) THEN
 			IF (t <= t_last) THEN
-				OurOutTextXY (554,196,st);
+				MyPlotText (554,196,st);
 		t := t * 10;
 		MySetColor(precolor);
 	UNTIL (t  >= t_last);
 
-	MySetColor(yellow);
+	MySetColor(YELLOW);
 	Str(t_first:4:2,st);
-	OurOutTextXY(75,5,st);
+	MyPlotText(75,5,st);
 	Str(t_last:8,st);
-	OurOutTextXY(554,5,st);
+	MyPlotText(554,5,st);
 
 { --------- Label Normalised Hardness Axes           ---------- }
 	Str(LgHNlast:4:2,st);
-	OurOutTextXY(42,10,st);
+	MyPlotText(42,10,st);
 	Str(LgHNfirst:4:2,st);
-	OurOutTextXY(42,189,st);
+	MyPlotText(42,189,st);
 
 { ----- Label horizontal and vertical axes of graph window ----- }
 
-	OurOutTextXY(216,5,'          TIME   (s)      ');
-	OurOutTextXY(200,196,'       Ln(TIME)  (s)      ');
+	MyPlotText(216,5,'          TIME   (s)      ');
+	MyPlotText(200,196,'       Ln(TIME)  (s)      ');
 	MySetTextDir(Graph.VertDir);
-	OurOutTextXY(56,100,'LG NORM. HARDNESS');
-	OurOutTextXY(599,100,'HARDNESS (MPa)');
+	MyPlotText(56,100,'LG NORM. HARDNESS');
+	MyPlotText(599,100,'HARDNESS (MPa)');
 	MySetTextDir(Graph.HorizDir);
 	MySetColor(precolor);
 END;   {PLOT_Indentation_BOX.    }
@@ -232,7 +233,7 @@ PROCEDURE PLOT_Indentation_INFO;
 BEGIN
 	DATE_AND_TIME;
 
-	MySetColor(white);
+	MySetColor(WHITE);
 
 	{ these calls to myLine use actual pixels in the viewport}
 	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
@@ -240,17 +241,17 @@ BEGIN
 	myLine(xoffset+round(3*xlength/4),yoffset+round(ylength/4),
 		xoffset+round(3*xlength/4),yoffset);
 
-	{ these calls to ClearTextSpace and OurOutTextXY use 'notional 640x200 scaled pixels'}
-	ClearTextSpace(85,122,306,130, True);
-	OurOutTextXY(96,126,'Indentation Creep Trajectories');
+	{ these calls to ClearTextSpace and MyPlotText use 'notional 640x200 scaled pixels'}
+	ClearTextSpace(85,126,306,134, True);
+	MyPlotText(96,130,'Indentation Creep Trajectories');
 	
 	ClearTextSpace(456,12,630,55, False);
-	OurOutTextXY(465,16,matlname);
+	MyPlotText(465,16,matlname);
 	Str((Gsize*1.0e6):4:1,st);
-	OurOutTextXY(465,24,'d = '+st+' um');
+	MyPlotText(465,24,'d = '+st+' um');
 	Str(Load:4:0,st);
-	OurOutTextXY(465,32,'L = '+st+' N');
-	OurOutTextXY(465,48,date_string);
+	MyPlotText(465,32,'L = '+st+' N');
+	MyPlotText(465,48,date_string);
 
 END;	{	PLOT_Indentation_INFO	}
 {---------------------------------------------------------------------------}
@@ -368,6 +369,10 @@ BEGIN
 {	Writeln(db,'++Trajectory begin.');
 	Writeln(db,'TN= ',TN:5:2,'  t(s)       dt(s)      LgHN',
 		'        A(mm^2)   A_dot(mm^2)');}
+		
+{ ----- Calculate the diffusion rates at the new Temperature TN ------- }
+	DIFFUSION_RATES;
+	
 	REPEAT
 		x1 := x2;
 		y1 := y2;
@@ -402,7 +407,7 @@ BEGIN
 
 END;	{	IndentTrajectory	}
 {---------------------------------------------------------------------------}
-PROCEDURE	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high: a_real; trajnumber:integer);
+PROCEDURE	TRAJECTORIES_BOX (TNtraj_low,TNtraj_high: a_real; trajnumber:integer);
 VAR
 	first, last	:	a_real;
 { ----- Identify the trajectories  ----- }
@@ -412,21 +417,21 @@ BEGIN
 
 	ClearTextSpace(96,156,260,183, True);
 	Str((trajnumber):3,st);
-	OurOutTextXY(96,162,st+' TEMPERATURES');
+	MyPlotText(96,162,st+' TEMPERATURES');
 	first := TNtraj_low*tmelt;
 	last := TNtraj_high*tmelt;
 	IF ((first < 99999 ) AND ( first >= 1 )) THEN
 		Str(first:7:0,st)
 	ELSE
 		Str(first:7:2,st);
-	OurOutTextXY(96,170,' First = '+st+' K');
+	MyPlotText(96,170,' First = '+st+' K');
 	IF ((last < 99999 ) AND ( last >= 1 )) THEN
 		Str(last:7:0,st)
 	ELSE
 		Str(last:7:2,st);
-	OurOutTextXY(96,178,' Last  = '+st+' K');
+	MyPlotText(96,178,' Last  = '+st+' K');
 
-END;    {IDENTIFY_TRAJECTORIES.    }
+END;    {TRAJECTORIES_BOX.    }
 {---------------------------------------------------------------------------}
 PROCEDURE MARK_FIELDS_Indent;
 VAR
@@ -523,7 +528,6 @@ BEGIN	{Calc_Indentation_Map	}
 	home_in := 1.05;
 	Writeln(db,' Iterate to find strain rate for Stress in middle of range ');
 	Writeln(db,' Stress Begin count   Rate      LgSN     epsilon');
-	Flush(db);
 	REPEAT
 		count:= count + 1;
 		STRAIN_RATES (TN, LgSN, Rate, field, hint_stress);
@@ -557,15 +561,14 @@ BEGIN	{Calc_Indentation_Map	}
 
 { ----- Draw the Indentation box ----- }
 	Writeln(db,' call PLOT_Indentation_BOX');
-	Flush(db);
-
 	PLOT_Indentation_BOX (t_first, t_last, LgHNfirst, LgHNlast);
 	Flush(db);
 
-	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
+	TRAJECTORIES_BOX (TNtraj_low,TNtraj_high,trajnumber);
 
 	MySetViewPort(xoffset, yoffset, xend, yend, ClipOn);
 	Graph.SetLineStyle(SolidLn,0,NormWidth);
+	MySetColor(GREEN);
 
 { ========== S T A R T == T H E == T E M P E R A T U R E == L O O P ========= }
 	skip:=FALSE;
@@ -574,18 +577,9 @@ BEGIN	{Calc_Indentation_Map	}
 	i:=0;
 	TN := TNtraj_low;
 	REPEAT
-
-{ ----- Calculate the diffusion rates at the new Temperature ------- }
-		DIFFUSION_RATES;
-
-
 { ----- Calculate and Plot the Hardness/time trajectory ------- }
 		IndentTrajectory (LgHNfirst,lgHNlast, alternate, GREEN);
 		alternate := NOT alternate;
-
-
-{ ----- Calculate where the feld boundaries are ------- }
-		Fields_Loop_Indent(i);	{ needs rewriting completely to work for the indentation map }
 
 { ----- Detect <CtrlC> key if pressed  ----- }
 		DETECT_SKIP;
@@ -597,17 +591,21 @@ BEGIN	{Calc_Indentation_Map	}
 { ============ E N D == T H E == T E M P E R A T U R E == L O O P =========== }
 
 {	Plot the 300K trajectory AGAIN in White	}
+	MySetColor(WHITE);
 	TN := 300/tmelt;
-	DIFFUSION_RATES;
-	MySetColor(white);
 	IndentTrajectory (LgHNfirst,lgHNlast, True, WHITE);
 
-	MARK_FIELDS_Indent; { uses a stack of x/y pixel values }
+{ ----- Mark feld boundaries on trajectories ------- }
+	MARK_FIELDS_Indent;
+
+{ ----- Calculate where the feld boundaries are ------- }
+	LABEL_FIELDS_Indent;	{ needs rewriting completely to work for the indentation map }
 
 	MySetViewPort(0, 0, MaxX, MaxY, ClipOn);
 
 	PLOT_Indentation_INFO;
-	IDENTIFY_TRAJECTORIES (TNtraj_low,TNtraj_high,trajnumber);
+	TRAJECTORIES_BOX (TNtraj_low,TNtraj_high,trajnumber);
+
 	CloseSVG;
 END;       {CALC_INDENTATION_MAP.   }
 { =========================================================================== }
