@@ -123,6 +123,7 @@ TYPE
 	R_mech_range		=	null..rel_drag;
 	T_mecharray			=	ARRAY [R_mech_range] OF a_real;
 	T_mechID			=	ARRAY [R_mech_range] OF E_mech;
+	T_mechLabel			=	ARRAY [R_mech_range] OF String;
 	T_validity			=	ARRAY [R_mech_range] OF BOOLEAN;
 	T_mechset			=	SET OF E_mech;
 	T_imc_classes		= (imc_error,
@@ -222,8 +223,9 @@ CONST	{	Typed 'constant', i.e. variables with a default	}
 VAR
 	imc				:	T_imc_classes;
 	mechID			:	T_mechID;
+	mechLabel		:	T_mechLabel;
 	plottype		:	E_plottype;
-
+	mech			:	E_mech;
 
 	stash			:	ARRAY [1..stash_max] OF String[stash_width];
 	stash_index		:	0..stash_max;
@@ -1050,22 +1052,46 @@ BEGIN
 {$IFDEF  detail}
 	compiler_opts := compiler_opts+'+Detail';
 {$ENDIF}
+{
+	E_mech				=	(null, S_diff, S_plc, S_glide, S_drag, re_cryst,
+								b_diff, v_diff, plc_ht, plc_lt, o_glide,
+								pls_drag, phn_drag, rel_drag);
+}
+	FOR mech := null TO rel_drag DO
+		CASE { mechID[mech] } mech OF
+			null:		mechLabel[mech]:='ELASTIC';
+			S_diff:		mechLabel[mech]:='S-DIFF';
+			S_plc: 		mechLabel[mech]:='S-PLC';
+			S_glide:	mechLabel[mech]:='S-GLIDE';
+			S_drag:		mechLabel[mech]:='S-DRAG';
+			re_cryst:	mechLabel[mech]:='RECRYST';
+			b_diff:		mechLabel[mech]:='DIFF-B';
+			v_diff:		mechLabel[mech]:='DIFF-V';
+			plc_ht:		mechLabel[mech]:='PL-(HT)';
+			plc_lt:		mechLabel[mech]:='PL-(LT)';
+			o_glide:	mechLabel[mech]:='OBSTCLE';
+			pls_drag:	mechLabel[mech]:='PEIERLS';
+			phn_drag:	mechLabel[mech]:='PHONON';
+			rel_drag:	mechLabel[mech]:='RLTVSTC';
+		ELSE
+			mechLabel[mech]:='ERROR';
+		END;	{	Case	}
 
 	{ ----- Open DEBUG file	----- }
-		IF CannotOpen(dbgfilename) THEN
-			BEGIN
-				Writeln(' *** Cannot Open Debug File ***');
-				Halt(4); 
-			END
-		ELSE
-			BEGIN
-				Assign(db,dbgfilename);
-				Rewrite(db);
-				Writeln(db,Version,' v',Release,' (',VersionDate,')');
-				Writeln(db,'       ',copyright);
+	IF CannotOpen(dbgfilename) THEN
+		BEGIN
+			Writeln(' *** Cannot Open Debug File ***');
+			Halt(4); 
+		END
+	ELSE
+		BEGIN
+			Assign(db,dbgfilename);
+			Rewrite(db);
+			Writeln(db,Version,' v',Release,' (',VersionDate,')');
+			Writeln(db,'       ',copyright);
 
-				Writeln(db,'(DFM-specific Compiler options:',compiler_opts,')');
-			END;
+			Writeln(db,'(DFM-specific Compiler options:',compiler_opts,')');
+		END;
 
 	{ ----- Check for DATA files	----- }
 	IF FileNotThere (parfilename) THEN

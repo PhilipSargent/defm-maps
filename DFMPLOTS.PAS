@@ -418,20 +418,7 @@ BEGIN
 		IF (pointcount[mech] > crit) and (pointcount[mech] > 4) THEN
 			BEGIN
 				writeln(db,'pointcount[',mechId[mech],']',pointcount[mech]:5:0);
-				CASE { mechID[mech] } mech OF
-					null:		st:='ELASTIC';
-					re_cryst:	st:='RECRYST';
-					b_diff:		st:='DIFF-B';
-					v_diff:		st:='DIFF-V';
-					plc_ht:		st:='PL-(HT)';
-					plc_lt:		st:='PL-(LT)';
-					o_glide:	st:='OBSTCLE';
-					pls_drag:	st:='PEIERLS';
-					phn_drag:	st:='PHONON';
-					rel_drag:	st:='RLTVSTC';
-				ELSE
-					st:='ERROR';
-				END;	{	Case	}
+				st := mechLabel[mech];
 
 {	----- RE FACTOR THIS BIT - uses 80x25 character coordinates for the window! ----- }
 				writeln(db,st,' ',temp_position[mech]:5:0,stress_position[mech]:5:0,pointcount[mech]:5:0);
