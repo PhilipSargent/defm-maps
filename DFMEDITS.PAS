@@ -1,5 +1,5 @@
 Unit DfmEdits;
-{ PMS 27-November-2020 21:22:07 }
+{ PMS 01-December-2020 18:29:44 }
 {---------------------------------------------------------------------------}
 {  *************   COPYRIGHT (C) Materials Group,   **************
    *************   Cambridge University Engineering **************
@@ -20,8 +20,6 @@ Unit DfmEdits;
    altered in any way. If it is missing, write to the Free Software
    Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ---------------------------------------------------------------------------}
-{$DEFINE  debug} {	always on, pending removal of directive	}
-
 {$R+}	{Range checking on}
 {$B+}	{Boolean complete evaluation on}
 {$S+}	{Stack checking on}

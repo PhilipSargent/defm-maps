@@ -1,5 +1,5 @@
 { DFM2020.pas }
-{ PMS 28-November-2020 19:50:00 }
+{ PMS 01-December-2020 18:30:01 }
 
 Program DFM2020(input,output);
 {---------------------------------------------------------------------------}
@@ -28,8 +28,6 @@ Program DFM2020(input,output);
 	emulation.
 	22-November-2020 17:30 PMS
 }
-{$DEFINE  debug} {	always on, pending removal of directive	}
-
 {$M 8000, 0, 655360}	{	stacksize, heapmin, heapmax	-  still valid in fpc} 
 {$R+}	{Range checking on}
 {$B+}	{Boolean complete evaluation on}
