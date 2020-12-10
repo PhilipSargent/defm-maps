@@ -819,7 +819,6 @@ BEGIN	{	Procedure Contours_Loop	}
 			STRAIN_RATES (TN, LgSN, Rate, field, hint_stress);
 			field_ids[c].id     := field;				{	and update..	}
 			field_ids[c].rate   := Rate;
-			Writeln(db);
 
 		END;
 
@@ -1024,7 +1023,6 @@ BEGIN
 					END;
 		END;
 {$ENDIF}
-	Writeln(db);
 	FOR i := 1 to n_bndrys DO
 		WITH bndry_tabl[i] DO
 			BEGIN
@@ -1040,7 +1038,6 @@ BEGIN
 					BEGIN
 						write(db,' FIX !');
 					END;
-				Writeln(db);
 			END;
 
 	{ ----- Draw a thick, dashed line for the field boundary  ----- }
@@ -1396,7 +1393,6 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 							myLine(x1,y1,x2,y2);
 						MySetColor(white);
 					END;
-{				Writeln(db);	}
 			END;
 
 { ----- Set values of last_contour ----- }
@@ -1417,7 +1413,6 @@ BEGIN	{Calc_STRAIN_RATES_Map	}
 
 	{ reset the viewport to the whole plotting area }
 	MySetViewPort(0, 0, MaxX, MaxY, ClipOn);
-	writeln(db);
 	writeln(db,'SRcount =',SRcount);
 
 	IDENTIFY_FIELDS;
