@@ -12,7 +12,7 @@ the Fortran software written by Harold Frost. Earlier maps in the book were gene
 The new version is DFM2020, ported in November 2020 to run on Windows 10 using the Free Pascal Compiler. 
 This newer version generates deformation mechanism maps as SVG files as well as producing an on-screen
 image. It also generates Indentation Creep maps which show the dominant mechanisms over different 
-time/temperature doamins of indentation creep. These indentaiotn mechanism maps are unpublished.
+time/temperature doamins of indentation creep. These indentation mechanism maps are unpublished.
 
 
 The DFM290.* files are the most recent documentation. They refer to the DOS version. 
